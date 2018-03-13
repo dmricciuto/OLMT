@@ -101,8 +101,8 @@ for v in range(0,len(var_names2d)):
   ierr = nffun.putvar(fname_restart, var_names2d[v].lower(), rest_vals)
 
 #Remove negative Ppool values
-os.system("ncap2 -O -s 'ppool=0.2*npool' "+fname_restart+" "+fname_restart)
-os.system("ncap2 -O -s 'defdim(\"cohort\",5663)' -s 'defdim(\"levurb\",5)' -s " \
-   +"'defdim(\"string_length\",64)' -s 'defdim(\"levtrc\",10)' " + \
-   fname_restart+" "+fname_restart)
+#os.system("ncap2 -O -s 'ppool=0.2*npool' "+fname_restart+" "+fname_restart)
+#os.system("ncap2 -O -s 'defdim(\"cohort\",5663)' -s 'defdim(\"levurb\",5)' -s " \
+#   +"'defdim(\"string_length\",64)' -s 'defdim(\"levtrc\",10)' " + \
+#   fname_restart+" "+fname_restart)
 
