@@ -63,6 +63,8 @@ parser.add_option("--nopointdata", action="store_true", dest="nopointdata", \
                   default=False, help="do not generate point data")
 parser.add_option("--nyears_final_spinup", dest="nyears_final_spinup", default='200', \
                   help="base no. of years for final spinup")
+parser.add_option('--project', dest='project',default='', \
+                 help='Set project')
 parser.add_option('--region', dest="region", default='', \
                  help="Set pre-defined region")
 parser.add_option('--runblock', dest="runblock", default=9999, \
@@ -354,6 +356,8 @@ if (mycaseid != ''):
     basecmd = basecmd+' --caseidprefix '+mycaseid
 if (options.nopointdata):
     basecmd = basecmd+' --nopointdata'
+if (options.project != ''):
+    basecmd = basecmd+' --project '+options.project
 if (options.parm_vals != ''):
     basecmd = basecmd+' --parm_vals '+options.parm_vals
 if (options.clean_build):

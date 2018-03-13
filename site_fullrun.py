@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import getpass, os, sys, csv, math
+import socket, getpass, os, sys, csv, math
 from optparse import OptionParser
 import subprocess
 import numpy
@@ -12,6 +12,8 @@ parser.add_option("--caseidprefix", dest="mycaseid", default="", \
                   help="Unique identifier to include as a prefix to the case name")
 parser.add_option("--caseroot", dest="caseroot", default='', \
                   help = "case root directory (default = ./, i.e., under scripts/)")
+parser.add_option("--compare_cases", dest="compare", default='', \
+                 help = 'caseidprefix(es) to compare')
 parser.add_option("--exeroot", dest="exeroot", default="", \
                  help="Location of executable")
 parser.add_option("--ccsm_input", dest="ccsm_input", \
@@ -35,8 +37,8 @@ parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-9
                   help = 'output file timestep (transient only)')
 parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="-24", \
                   help = 'output file timestep (transient only)')
-parser.add_option("--machine", dest="machine", default = 'oic2', \
-                  help = "machine to use (default = oic2)")
+parser.add_option("--machine", dest="machine", default = '', \
+                  help = "machine to use")
 parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
                       help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
 parser.add_option("--noad", action="store_true", dest="noad", default=False, \
@@ -163,6 +165,38 @@ def submit(fname, project='', submit_type='qsub', job_depend=''):
     return thisjob
 
 #----------------------------------------------------------
+
+#Set default model root
+if (options.csmdir == ''):
+   if (os.path.exists('../ACME')):
+       options.csmdir = os.path.abspath('../ACME')
+       print 'Model root not specified.  Defaulting to '+options.csmdir
+   else:
+       print 'Error:  Model root not specified.  Please set using --model_root'
+       sys.exit(1)
+elif (not os.path.exists(options.csmdir)):
+     print 'Error:  Model root '+options.csmdir+' does not exist.'
+     sys.exit(1)
+
+#get machine info if not specified
+if (options.machine == ''):
+   hostname = socket.gethostname()
+   print 'Machine not specified.  Using hostname '+hostname+' to determine machine'
+   if ('or-condo' in hostname):
+       options.machine = 'cades'
+   elif ('edison' in hostname):
+       options.machine = 'edision'
+   elif ('cori' in hostname):
+       print 'Cori machine not specified.  Setting to cori-haswell'
+       options.machine = 'cori-haswell'
+   elif ('titan' in hostname):
+       options.machine = 'titan'
+   elif ('eos' in hostname):
+       options.machine = 'eos'
+   else:
+       print 'ERROR in site_fullrun.py:  Machine not specified.  Aborting'
+       sys.exit(1)
+
 if (options.ccsm_input != ''):
     ccsm_input = options.ccsm_input
 elif (options.machine == 'titan' or options.machine == 'eos'):
@@ -304,8 +338,11 @@ for row in AFdatareader:
         #print year_align, fsplen
         basecmd = 'python runcase.py --site '+site+' --ccsm_input '+ \
             os.path.abspath(ccsm_input)+' --rmold --no_submit --sitegroup ' + \
-            options.sitegroup+' --machine '+options.machine+' --model_root '+ \
-            options.csmdir
+            options.sitegroup
+        if (options.machine != ''):
+            basecmd = basecmd+' --machine '+options.machine
+        if (options.csmdir != ''):
+            basecmd = basecmd+' --model_root '+options.csmdir
         if (srcmods != ''):
             srcmods    = os.path.abspath(srcmods)
             basecmd = basecmd+' --srcmods_loc '+srcmods
@@ -610,7 +647,7 @@ for row in AFdatareader:
                 elif (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/.case.run')):
                     input = open(caseroot+'/'+ad_case_firstsite+'/.case.run')
                 else:
-                    print 'case.run file not found.  Aborting'
+                    print caseroot+'/'+ad_case_firstsite+'/case.run file not found.  Aborting'
                     sys.exit(1)
                 output = open('./temp/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
@@ -698,13 +735,16 @@ for row in AFdatareader:
                  else:
                      mycompsetcb = 'I1850'+mycompset
                  output.write("cd "+os.path.abspath(".")+'\n')
-                 output.write("python plotcase.py --site "+site+" --spinup --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars NEE --ylog --csmdir "+os.path.abspath(runroot)+ \
-                               " --pdf --yend "+str(int(ny_ad)+30)+"\n")
-                 output.write("python plotcase.py --site "+site+" --spinup --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars TLAI,NPP,GPP,TOTVEGC,TOTSOMC " \
-	                       +" --csmdir "+os.path.abspath(runroot)+" --pdf --yend "+str(int(ny_ad)+30)+"\n")
-                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
+                 plotcmd = "python plotcase.py --site "+site+" --spinup --compset "+mycompsetcb \
+                               +" --csmdir "+os.path.abspath(runroot)+" --pdf --yend "+str(int(ny_ad)+30)
+                 if (options.compare != ''):
+                     plotcmd = plotcmd + ' --case '+mycaseid+','+options.compare
+                 else:
+                     plotcmd = plotcmd + ' --case '+mycaseid
+                 output.write(plotcmd+' --vars NEE --ylog\n')
+                 output.write(plotcmd+' --vars TLAI,NPP,GPP,TOTVEGC,TOTSOMC\n') 
+                 if (options.machine == 'cades'):
+                     output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             if (sitenum == 0 and 'fn_spinup' in c):
                 output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"\n")
                 output.write('./case.submit --no-batch &\n')
@@ -723,47 +763,29 @@ for row in AFdatareader:
                  else:
                      mycompsetcb = 'I20TR'+mycompset
                  output2 = open('./temp/transdiag_'+site+'.csh','w')
-                 #Average seasonal cycle
                  output.write("cd "+os.path.abspath(".")+'\n')
                  output2.write("cd "+os.path.abspath(".")+'\n')
-
-                 output2.write("python plotcase.py --site "+site+" --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars NEE,GPP,EFLX_LH_TOT,FSH,FPG,FPG_P,"+ \
-                               "FPI,FPI_P,NPP,QOVER --csmdir "+os.path.abspath(runroot)+ \
-                               " --obs --seasonal --pdf --yend "+str(site_endyear)+"\n")
-                 #Diurnal cycle (JF)
-                 output2.write("python plotcase.py --site "+site+" --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars NEE,GPP,EFLX_LH_TOT,FSH --csmdir "+ \
-                              os.path.abspath(runroot)+' --h1 --timezone '+str(timezone)+ \
-                               " --obs --diurnal --dstart 1 --dend 59 --pdf --yend "+str(site_endyear)+"\n")
-                 #Diurnal cycle (MAM)
-                 output2.write("python plotcase.py --site "+site+" --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars NEE,GPP,EFLX_LH_TOT,FSH --csmdir "+ \
-                              os.path.abspath(runroot)+' --h1 --timezone '+str(timezone)+ \
-                               " --obs --diurnal --dstart 60 --dend 151 --pdf --yend "+str(site_endyear)+"\n")
-                 #Diurnal cycle (JJA)
-                 output2.write("python plotcase.py --site "+site+" --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars NEE,GPP,EFLX_LH_TOT,FSH --csmdir "+ \
-                              os.path.abspath(runroot)+' --h1 --timezone '+str(timezone)+ \
-                               " --obs --diurnal --dstart 152 --dend 243 --pdf --yend "+str(site_endyear)+"\n")
-                 #Diurnal cycle (SON)
-                 output2.write("python plotcase.py --site "+site+" --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars NEE,GPP,EFLX_LH_TOT,FSH --csmdir "+ \
-                              os.path.abspath(runroot)+' --h1 --timezone '+str(timezone)+ \
-                               " --obs --diurnal --dstart 244 --dend 334 --pdf --yend "+str(site_endyear)+"\n")
+                 plotcmd = "python plotcase.py --site "+site+" --compset "+mycompsetcb \
+                          +" --csmdir "+os.path.abspath(runroot)+" --pdf --yend "+str(site_endyear)
+                 if (options.compare != ''):
+                     plotcmd = plotcmd + ' --case '+mycaseid+','+options.compare
+                 else:
+                     plotcmd = plotcmd + ' --case '+mycaseid
+                 #average seasonal cycle
+                 output2.write(plotcmd+' --vars NEE,GPP,EFLX_LH_TOT,FSH,FPG,FPG_P,FPI,FPI_P,NPP,'+ \
+                                    'QOVER --seasonal --obs\n')
+                 #seasonal diurnal cycles
+                 diurnalvars='NEE,GPP,EFLX_LH_TOT,FSH'
+                 output2.write(plotcmd+' --vars '+diurnalvars+' --obs --diurnal --dstart 1 --dend 59 --h1\n')
+                 output2.write(plotcmd+' --vars '+diurnalvars+' --obs --diurnal --dstart 60 --dend 151 --h1\n')
+                 output2.write(plotcmd+' --vars '+diurnalvars+' --obs --diurnal --dstart 152 --dend 243 --h1\n')
+                 output2.write(plotcmd+' --vars '+diurnalvars+' --obs --diurnal --dstart 244 --dend 334 --h1\n')
                  #Interannual variability
-                 output2.write("python plotcase.py --site "+site+" --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars NEE,GPP,EFLX_LH_TOT,FSH --csmdir "+ \
-                               os.path.abspath(runroot)+" --obs --h4 --pdf\n")
+                 output2.write(plotcmd+' --vars NEE,GPP,EFLX_LH_TOT,FSH --obs --h4\n')
                  #monthly data
-                 output2.write("python plotcase.py --site "+site+" --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars NEE,GPP,EFLX_LH_TOT,FSH,FPG,FPG_P,"+ \
-                               "FPI,FPI_P,NPP,QOVER --csmdir "+os.path.abspath(runroot)+ \
-                               " --obs --pdf --yend "+str(site_endyear)+"\n")
+                 output2.write(plotcmd+' --vars NEE,GPP,EFLX_LH_TOT,FSH,FPG,FPG_P,FPI,FPI_P,NPP,QOVER --obs\n')
                  #1850-present
-                 output2.write("python plotcase.py --site "+site+" --compset "+mycompsetcb \
-                               +" --case "+mycaseid+" --vars TOTLITC,CWDC,TOTVEGC,TOTSOMC --csmdir " \
-                               +os.path.abspath(runroot)+" --ystart 1850 --yend "+str(site_endyear)+" --h4 --pdf\n")
+                 output2.write(plotcmd+' --vars TOTLITC,CWDC,TOTVEGC,TOTSOMC --ystart 1850 --h4\n')
                  output2.close()
                  os.system('chmod u+x '+'./temp/transdiag_'+site+'.csh')
                  output.write('./temp/transdiag_'+site+'.csh &\n')
@@ -794,7 +816,7 @@ if (options.ensemble_file == ''):
         for thiscase in case_list:
             output = open('./temp/'+thiscase+'_group'+str(g)+'.pbs','a')
             output.write('wait\n')
-            if ('trans_diags' in thiscase):
+            if ('trans_diags' in thiscase and options.machine == 'cades'):
                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             output.close()
             job_depend_run = submit('temp/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \

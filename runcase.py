@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import netcdf_functions as nffun
-import os, sys, csv, time, math, numpy
+import socket, os, sys, csv, time, math, numpy
 import re, subprocess
 from optparse import OptionParser
 #from Numeric import *
@@ -33,6 +33,8 @@ parser.add_option("--debug", dest="debug", default=False, \
                  action="store_true", help='Use debug queue and options')
 parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
+parser.add_option('--project', dest='project',default='', \
+                 help='Set project')
 parser.add_option("--exeroot", dest="exeroot", default="", \
 	         help="Location of executable")
 parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
@@ -73,8 +75,8 @@ parser.add_option("--livneh", dest="livneh", default=False, \
                   action="store_true", help = "Livneh correction to CRU precip (CONUS only)")
 parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = "Daymet correction to GSWP3 precip (CONUS only)")
-parser.add_option("--machine", dest="machine", default = 'oic2', \
-                  help = "machine to use (default = oic2)\n")
+parser.add_option("--machine", dest="machine", default = '', \
+                  help = "machine to\n")
 parser.add_option("--compiler", dest="compiler", default='gnu', \
 	          help = "compiler to use (pgi, gnu)")
 parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
@@ -219,6 +221,18 @@ parser.add_option("--walltime", dest="walltime", default=6, \
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
+
+#Set default model root
+if (options.csmdir == ''):
+   if (os.path.exists('../ACME')):
+       options.csmdir = os.path.abspath('../ACME')
+       print 'Model root not specified.  Defaulting to '+options.csmdir
+   else:
+       print 'Error:  Model root not specified.  Please set using --model_root'
+       sys.exit(1)
+elif (not os.path.exists(options.csmdir)):
+     print 'Error:  Model root '+options.csmdir+' does not exist.'
+     sys.exit(1)
 
 #machine info:  cores per node
 ppn=1
@@ -408,6 +422,7 @@ if (caseroot != "./"):
 else:
     casedir=casename
 
+print('Machine is: '+options.machine)
 #Check for existing case directory
 if (os.path.exists(casedir)):
     
@@ -648,6 +663,8 @@ cmd = './create_newcase --case '+casename+' --mach '+options.machine+' --compset
           ':00:00'
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
+if (options.project != ''):
+   cmd = cmd+' --project '+options.project
 resut = os.system(cmd)
 
 if (os.path.isdir(casename)):
