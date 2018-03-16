@@ -1015,18 +1015,6 @@ for i in range(1,int(options.ninst)+1):
             output.write(" use_lch4 = .true.\n")
         if (options.nofire):
             output.write(" use_nofire = .true.\n")
-        if (options.c_only):
-            options.write(" suplphos = 'ALL'\n")
-            options.write(" suplnitro  = 'ALL'\n")
-        elif (options.cn_only or options.ad_spinup):
-            output.write(" suplphos = 'ALL'\n")
-            output.write(" suplnitro = 'NONE'\n")
-        elif (options.cp_only):
-            output.write(" suplphos = 'NONE'\n")
-            output.write(" suplnitro = 'ALL'\n")
-        else:
-            output.write(" suplphos = 'NONE'\n")
-            output.write(" suplnitro = 'NONE'\n")
         if (options.C13):
             output.write(" use_c13 = .true.\n")
         if (options.C14):
@@ -1156,7 +1144,11 @@ if (options.clean_build):
 #compile cesm
 if (options.no_build == False):
     print 'Running case.build'
-    result = os.system('./case.build > case_build.log')
+    if ('edison' in options.machine or 'titan' in options.machine):
+        #send output to screen since build times are very slow
+        result = os.system('./case.build') 
+    else:
+        result = os.system('./case.build > case_build.log')
     if (result > 0):
         print 'Error:  Pointclm.py failed to build case.  Aborting'
         print 'See '+os.getcwd()+'/case_build.log for details'
