@@ -345,6 +345,12 @@ for n in range(0,n_grids):
         pct_urban    = nffun.getvar(surffile_new, 'PCT_URBAN')
         if (options.mymodel == 'CLM5'):
             pct_crop = nffun.getvar(surffile_new, 'PCT_CROP')
+        else:
+          soil_order   = nffun.getvar(surffile_new, 'SOIL_ORDER')
+          labilep      = nffun.getvar(surffile_new, 'LABILE_P')
+          primp        = nffun.getvar(surffile_new, 'APATITE_P')
+          secondp      = nffun.getvar(surffile_new, 'SECONDARY_P')
+          occlp        = nffun.getvar(surffile_new, 'OCCLUDED_P')
 
         #input from site-specific information
         soil_color   = nffun.getvar(surffile_new, 'SOIL_COLOR')
@@ -402,6 +408,13 @@ for n in range(0,n_grids):
             pct_glacier[0][0] = 0.0
             if (options.mymodel == 'CLM5'):
                 pct_crop[0][0] = 0.0
+            if ('US-SPR' in options.site):
+                soil_order[0][0] = 3
+                labilep[0][0]    = 4.0
+                primp[0][0]      = 1.0
+                secondp[0][0]    = 10.0
+                occlp[0][0]      = 5.0
+
             pct_nat_veg[0][0] = 100.0
             for k in range(0,3):
                 pct_urban[k][0][0] = 0.0
@@ -413,7 +426,10 @@ for n in range(0,n_grids):
                     pct_sand[k][0][0]   = mypct_sand
                     pct_clay[k][0][0]   = mypct_clay
                 if ('US-SPR' in options.site):
-                    organic[k][0][0] = 140.0
+                    if (k < 8):
+                        organic[k][0][0] = 130.0
+                    elif (k == 8):
+                        organic[k][0][0] = 65.0
             pft_names=['Bare ground','ENF Temperate','ENF Boreal','DNF Boreal','EBF Tropical', \
                        'EBF Temperate', 'DBF Tropical', 'DBF Temperate', 'DBF Boreal', 'EB Shrub' \
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
@@ -445,6 +461,12 @@ for n in range(0,n_grids):
         ierr = nffun.putvar(surffile_new, 'PCT_URBAN', pct_urban)
         if (options.mymodel == 'CLM5'):
             ierr = nffun.putvar(surffile_new, 'PCT_CROP', pct_crop)
+        else:
+            ierr = nffun.putvar(surffile_new, 'SOIL_ORDER', soil_order)
+            ierr = nffun.putvar(surffile_new, 'LABILE_P', labilep)
+            ierr = nffun.putvar(surffile_new, 'APATITE_P', primp)
+            ierr = nffun.putvar(surffile_new, 'SECONDARY_P', secondp)
+            ierr = nffun.putvar(surffile_new, 'OCCLUDED_P', occlp)
         ierr = nffun.putvar(surffile_new, 'SOIL_COLOR', soil_color)
         ierr = nffun.putvar(surffile_new, 'FMAX', fmax)
         ierr = nffun.putvar(surffile_new, 'ORGANIC', organic)

@@ -8,6 +8,8 @@ import re
 
 parser = OptionParser();
 
+parser.add_option("--ad_Pinit", dest="ad_Pinit", default=False, action="store_true",\
+                  help="Initialize AD spinup with P pools and use CNP mode")
 parser.add_option("--caseidprefix", dest="mycaseid", default="", \
                   help="Unique identifier to include as a prefix to the case name")
 parser.add_option("--caseroot", dest="caseroot", default='', \
@@ -37,6 +39,8 @@ parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-9
                   help = 'output file timestep (transient only)')
 parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="-24", \
                   help = 'output file timestep (transient only)')
+parser.add_option("--humhol", dest="humhol", default=False, \
+                  help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
 parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
@@ -217,6 +221,11 @@ if (options.compiler != ''):
 
 mycaseid   = options.mycaseid
 srcmods    = options.srcmods_loc
+if (mycaseid == ''):
+  myscriptsdir = 'none'
+else:
+  myscriptsdir = mycaseid
+
 
 #get start and year of input meteorology from site data file
 PTCLMfiledir = ccsm_input+'/lnd/clm2/PTCLM'
@@ -346,6 +355,9 @@ for row in AFdatareader:
         if (srcmods != ''):
             srcmods    = os.path.abspath(srcmods)
             basecmd = basecmd+' --srcmods_loc '+srcmods
+        elif (options.ad_Pinit):
+            srcmods    = os.path.abspath('srcmods_Pinit')
+            basecmd = basecmd+' --srcmods_loc '+srcmods
         if (mycaseid != ''):
             basecmd = basecmd+' --caseidprefix '+mycaseid
         if (options.parm_file != ''):
@@ -370,6 +382,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --nofire'
         if (options.harvmod):
             basecmd = basecmd+' --harvmod'
+        if (options.humhol):
+            basecmd = basecmd+' --humhol'
         if (options.nopftdyn):
             basecmd = basecmd+' --nopftdyn'
         if (options.no_dynroot):
@@ -429,10 +443,15 @@ for row in AFdatareader:
         else:
             mycompset = nutrients+'RD'+decomp_model+'BC'
 
-        mycompset_adsp = mycompset.replace('CNP','CN')
+        if (not options.ad_Pinit):
+            mycompset_adsp = mycompset.replace('CNP','CN')
+        else:
+            mycompset_adsp = mycompset
+        myexe = 'e3sm.exe'
         if ('clm5' in options.csmdir):
             mycompset = 'Clm50BgcGs'
             mycompset_adsp = 'Clm50BgcGs'
+            myexe = 'cesm.exe'
 
         #AD spinup
         cmd_adsp = basecmd+' --ad_spinup --nyears_ad_spinup '+ \
@@ -445,8 +464,7 @@ for row in AFdatareader:
                    +' --hist_nhtfrq '+str(options.hist_nhtfrq_spinup)
         if (sitenum == 0):
             if (options.exeroot != ''):
-                if (os.path.isfile(options.exeroot+'/acme.exe') == False and \
-                    os.path.isfile(options.exeroot+'/cesm.exe') == False):
+                if (os.path.isfile(options.exeroot+'/'+myexe) == False):
                     print 'Error:  '+options.exeroot+' does not exist or does '+ \
                           'not contain an executable. Exiting'
                     sys.exit(1)
@@ -552,6 +570,7 @@ for row in AFdatareader:
         if (mycaseid != ''):
                 basecase = mycaseid+'_'+site
         os.system('mkdir -p temp')
+        os.system('mkdir -p scripts/'+myscriptsdir)
 
         mymodel = 'ELM'
         if ('clm5' in csmdir):
@@ -590,7 +609,7 @@ for row in AFdatareader:
         print('\nSetting up final spinup case\n')
         if (sitenum == 0):
             fin_case_firstsite = ad_case_firstsite.replace('_ad_spinup','')
-            if (nutrients == 'CNP'):
+            if (nutrients == 'CNP' and not options.ad_Pinit):
                 fin_case_firstsite = fin_case_firstsite.replace('1850CN','1850CNP')
             result = os.system(cmd_fnsp)
         else:
@@ -649,7 +668,7 @@ for row in AFdatareader:
                 else:
                     print caseroot+'/'+ad_case_firstsite+'/case.run file not found.  Aborting'
                     sys.exit(1)
-                output = open('./temp/'+c+'_group'+str(groupnum)+'.pbs','w')
+                output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
                     if ("perl" in s or "python" in s):
                         output.write("#!/bin/csh -f\n")
@@ -704,7 +723,7 @@ for row in AFdatareader:
                     output.write('module load python/2.7-anaconda\n')
                     output.write('module load nco\n')     
             else:
-                output = open('./temp/'+c+'_group'+str(groupnum)+'.pbs','a')   
+                output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','a')   
                 
             modelst = 'I1850'+mycompset
             if (options.cpl_bypass):
@@ -714,11 +733,17 @@ for row in AFdatareader:
             if (mycaseid != ''):
                 basecase = mycaseid+'_'+site
             if (sitenum == 0 and 'ad_spinup' in c):
-                output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/\n")
+                if (options.ad_Pinit):
+                    output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_ad_spinup/\n")
+                else:
+                    output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/\n")
                 output.write("./case.submit --no-batch &\n")
             elif ('ad_spinup' in c):
-                output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/run\n")
-                output.write(runroot+'/'+ad_case_firstsite+'/bld/acme.exe &\n')
+                if (options.ad_Pinit):
+                    output.write("cd "+runroot+'/'+basecase+"_"+modelst+"_ad_spinup/run\n")
+                else:
+                    output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/run\n")
+                output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
             if ('iniadjust' in c):
                 output.write("cd "+os.path.abspath(".")+'\n')
                 if (options.centbgc):
@@ -741,6 +766,8 @@ for row in AFdatareader:
                      plotcmd = plotcmd + ' --case '+mycaseid+','+options.compare
                  else:
                      plotcmd = plotcmd + ' --case '+mycaseid
+                 if (options.ad_Pinit):
+                     plotcmd = plotcmd + ' --ad_Pinit'
                  output.write(plotcmd+' --vars NEE --ylog\n')
                  output.write(plotcmd+' --vars TLAI,NPP,GPP,TOTVEGC,TOTSOMC\n') 
                  if (options.machine == 'cades'):
@@ -750,19 +777,19 @@ for row in AFdatareader:
                 output.write('./case.submit --no-batch &\n')
             elif ('fn_spinup' in c):
                 output.write("cd "+runroot+'/'+basecase+"_"+modelst+"/run\n")
-                output.write(runroot+'/'+ad_case_firstsite+'/bld/acme.exe &\n')
+                output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
             if (sitenum == 0 and 'transient' in c):
                 output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"\n")
                 output.write('./case.submit --no-batch &\n')
             elif ('transient' in c):
                 output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"/run\n")
-                output.write(runroot+'/'+ad_case_firstsite+'/bld/acme.exe &\n')
+                output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
             if ('trans_diags' in c):
                  if (options.cpl_bypass):
                      mycompsetcb = 'ICB20TR'+mycompset
                  else:
                      mycompsetcb = 'I20TR'+mycompset
-                 output2 = open('./temp/transdiag_'+site+'.csh','w')
+                 output2 = open('./scripts/'+myscriptsdir+'/transdiag_'+site+'.csh','w')
                  output.write("cd "+os.path.abspath(".")+'\n')
                  output2.write("cd "+os.path.abspath(".")+'\n')
                  plotcmd = "python plotcase.py --site "+site+" --compset "+mycompsetcb \
@@ -787,8 +814,8 @@ for row in AFdatareader:
                  #1850-present
                  output2.write(plotcmd+' --vars TOTLITC,CWDC,TOTVEGC,TOTSOMC --ystart 1850 --h4\n')
                  output2.close()
-                 os.system('chmod u+x '+'./temp/transdiag_'+site+'.csh')
-                 output.write('./temp/transdiag_'+site+'.csh &\n')
+                 os.system('chmod u+x '+'./scripts/'+myscriptsdir+'/transdiag_'+site+'.csh')
+                 output.write('./scripts/'+myscriptsdir+'/transdiag_'+site+'.csh &\n')
             output.write('sleep 1\n')
             output.close()
 
@@ -797,13 +824,16 @@ for row in AFdatareader:
             cases=[]
             #build list of cases for fullrun
             if (options.noad == False):
-                cases.append(basecase+'_'+modelst.replace('CNP','CN')+'_ad_spinup')
+                 if (options.ad_Pinit):
+                    cases.append(basecase+'_'+modelst+'_ad_spinup')
+                 else:
+                    cases.append(basecase+'_'+modelst.replace('CNP','CN')+'_ad_spinup')
             cases.append(basecase+'_'+modelst)
             if (options.notrans == False):
                 cases.append(basecase+'_'+modelst.replace('1850','20TR'))
             job_depend_run=''    
             for thiscase in cases:
-                job_depend_run = submit('temp/ensemble_run_'+thiscase+'.pbs',job_depend= \
+                job_depend_run = submit('scripts/'+myscriptsdir+'/ensemble_run_'+thiscase+'.pbs',job_depend= \
                                         job_depend_run, project=myproject, submit_type=mysubmit_type)
         #else:  #submit single job
         #    job_fullrun = submit('temp/site_fullrun.pbs', submit_type=mysubmit_type)
@@ -814,10 +844,10 @@ if (options.ensemble_file == ''):
     for g in range(0,groupnum+1):
         job_depend_run=''
         for thiscase in case_list:
-            output = open('./temp/'+thiscase+'_group'+str(g)+'.pbs','a')
+            output = open('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs','a')
             output.write('wait\n')
             if ('trans_diags' in thiscase and options.machine == 'cades'):
                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             output.close()
-            job_depend_run = submit('temp/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
+            job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
                                     job_depend_run, project=myproject, submit_type=mysubmit_type)

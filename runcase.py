@@ -41,6 +41,8 @@ parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
                   help = 'latitude range for regional run')
 parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
                   help = 'longitude range for regional run')
+parser.add_option("--humhol", dest="humhol", default=False, \
+                  help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 parser.add_option("--model", dest="mymodel", default='', \
@@ -550,7 +552,10 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            numxpts=1
+            if ('US-SPR' in options.site):
+                numxpts=2
+            else:
+                numxpts=1
             numypts=1
 else:
     if (use_reanalysis):
@@ -1106,6 +1111,8 @@ for s in infile:
             stemp = stemp[:-1]+' -DHARVMOD\n'
         if (cpl_bypass):
             stemp = stemp[:-1]+' -DCPL_BYPASS\n'
+        if (options.humhol):
+            stemp = stemp[:-1]+' -DHUM_HOL\n'
         outfile.write(stemp) 
     elif (s[0:13] == "NETCDF_PATH:=" and options.machine == 'userdefined'):
         try:
