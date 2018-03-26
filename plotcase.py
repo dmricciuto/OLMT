@@ -28,6 +28,8 @@ def getvar(fname, varname, npf, index, scale_factor):
 
 
 parser = OptionParser()
+parser.add_option("--ad_Pinit", dest="ad_Pinit", default=False, action="store_true",\
+                  help="Initialize AD spinup with P pools and use CNP mode")
 parser.add_option("--csmdir", dest="mycsmdir", default='', \
                   help = 'Base CESM directory (default = ..)')
 parser.add_option("--cases", dest="mycase", default='', \
@@ -136,7 +138,7 @@ if (options.titles != ''):
   mytitles = options.titles.split(',')
 
 obs     = options.myobs
-myobsdir = '/home/dmricciuto/fluxnet'
+myobsdir = '/lustre/or-hydra/cades-ccsi/scratch/dmricciuto/fluxnet'
 
 #get list of variables from varfile
 myvars=[]
@@ -293,7 +295,7 @@ for c in range(0,ncases):
                         yend = min(int(s[0:4]), int(options.myyend))
                 thisrow=thisrow+1
             myobs_input.close
-        print ystart, yend
+        #print ystart, yend
         for v in range(0,nvar):
             if (os.path.exists(myobsfile)):
                 myobs_in = open(myobsfile)
@@ -415,12 +417,20 @@ for c in range(0,ncases):
             for n in range(0,nc):
                 if ((options.spinup)and n== 0):
                     if (mycases[c] == ''):
-                        mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c].replace('CNP','CN')+ \
+                        if (options.ad_Pinit):
+                            mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'_ad_spinup/run/'
+                        else:
+                            mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c].replace('CNP','CN')+ \
 	                          '_ad_spinup/run/'
                     else:
-                        mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
-                                mycompsets[c].replace('CNP','CN')+'_ad_spinup/run/'
-                    thiscompset = mycompsets[c].replace('CNP','CN')+'_ad_spinup'
+                        if (options.ad_Pinit):
+                            mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
+                                    mycompsets[c]+'_ad_spinup/run/'
+                            thiscompset = mycompsets[c]+'_ad_spinup'
+                        else:
+                            mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
+                                    mycompsets[c].replace('CNP','CN')+'_ad_spinup/run/'
+                            thiscompset = mycompsets[c].replace('CNP','CN')+'_ad_spinup'
                 else:
                     if (mycases[c] == ''):
                         mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'/run/'
@@ -464,7 +474,7 @@ for c in range(0,ncases):
                             mylon_vals.append(nffile.variables['lon'][0])
                             nffile.close()
 
-                        print npf, nypf, y, myscalefactors, v
+                        #print npf, nypf, y, myscalefactors, v
                         myvar_temp = getvar(myfile,myvars[v],npf,int(options.index), \
                                             myscalefactors[v])
                         if (myvars[v] == 'RAIN'):
@@ -496,7 +506,7 @@ for c in range(0,ncases):
                                  x[myind] = ystart+(ylast*n*nypf+y*nypf) + nypf*(i*1.0-0.5)/npf
                                  mydata[v,myind] = numpy.NaN
                                  nsteps=nsteps+1
-                                 print nsteps, myind, ylast, y, x[myind]
+                                 #print nsteps, myind, ylast, y, x[myind]
                          #print v, nsteps
 
     #perform averaging and write output files 
@@ -511,7 +521,7 @@ for c in range(0,ncases):
                     err_toplot[c,v,snum[c]] = 0
                 else:
                     err_toplot[c, v, snum[c]]  = sum(myerr[v,s*avpd:(s+1)*avpd])/avpd
-                print c,v,data_toplot[c,v,snum[c]],err_toplot[c,v,snum[c]]
+                #print c,v,data_toplot[c,v,snum[c]],err_toplot[c,v,snum[c]]
                 snum[c] = snum[c]+1
           
 
@@ -625,7 +635,9 @@ for v in range(0,len(myvars)):
             if (c == 0):
                 #myvar = outdata.createVariable(myvars[v],'f',('time','lat','lon'))
                 myvar = outdata.createVariable(myvars[v],'f',('time','gridcell'))
-                #print v, myvars[v]
+                #print var_units
+                #print v, myvars[v], var_units[v]
+                
                 myvar.units=var_units[v]
                 myvar.missing_value=1e36
                 myvar[:,:]=1e36   #changed for gridcell
@@ -688,53 +700,11 @@ for v in range(0,len(myvars)):
         if (options.ylog):
             plt.yscale('log')
 
-        os.system('mkdir -p ./plots/'+mycases[c]+'/'+analysis_type)
+        os.system('mkdir -p ./plots/'+mycases[0]+'/'+analysis_type)
         if (options.pdf):
-            fig_filename = './plots/'+mycases[c]+'/'+analysis_type+'/'+mysites[c]+'_'+myvars[v]
+            fig_filename = './plots/'+mycases[0]+'/'+analysis_type+'/'+mysites[0]+'_'+myvars[v]
             fig_filename = fig_filename+'_'+analysis_type
             fig.savefig(fig_filename+'.pdf')
 
 if (not options.pdf and not options.noplot):
     plt.show()
-
-outdata = open('./plots/'+mycases[c]+'/'+mysites[c]+'_summary_'+analysis_type+'.txt','w')
-outdata.write(mysites[c]+'\n')
-outdata.write('RMSE\n')
-varst='               '
-for v in range(0,len(myvars)):
-   varst = varst+'  '+myvars[v]
-outdata.write(varst+'\n')
-for c in range(0,ncases):
-    varst = mycases[c]
-    for v in range(0,len(myvars)):
-        varst = varst+' '+str(rmse[v,c])
-    outdata.write(varst+'\n')
-
-outdata.write('BIAS\n')
-varst='               '
-for v in range(0,len(myvars)):
-   varst = varst+'  '+myvars[v]
-outdata.write(varst+'\n')
-for c in range(0,ncases):
-    varst = mycases[c]
-    for v in range(0,len(myvars)):
-        varst = varst+' '+str(bias[v,c])
-    outdata.write(varst+'\n')
-
-outdata.write('CORR\n')
-varst='               '
-for v in range(0,len(myvars)):
-   varst = varst+'  '+myvars[v]
-outdata.write(varst+'\n')
-for c in range(0,ncases):
-    varst = mycases[c]
-    for v in range(0,len(myvars)):
-        varst = varst+' '+str(corr[v,c])
-    outdata.write(varst+'\n')
-outdata.close()
-
-
-
-
-
-

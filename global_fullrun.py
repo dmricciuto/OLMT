@@ -169,7 +169,7 @@ def submit(fname, submit_type='qsub', job_depend=''):
 
 def get_regional_bounds(myregion):
     if (myregion == 'noam'):  #North America
-        bounds = [-170.25,-60.25,9.75,79.75]
+        bounds = [-170.25,-45.25,9.75,79.75]
     elif (myregion == 'bona'):  #Boreal North America
         bounds = [-170.25,-60.25,49.75,79.75]
     elif (myregion == 'tena'):  #Temperate North America
