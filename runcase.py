@@ -47,6 +47,8 @@ parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 parser.add_option("--model", dest="mymodel", default='', \
                   help = 'Model to use (ELM,CLM5)')
+parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
+                  help = "File containing met data (cpl_bypass only)")
 parser.add_option("--ilambvars", dest="ilambvars", default=False, \
                  action="store_true", help="Write special outputs for diagnostics")
 parser.add_option("--dailyvars", dest="dailyvars", default=False, \
@@ -523,6 +525,7 @@ if (options.nopointdata == False):
         #Clean up
         os.system('rm makepointdata_rhea*') 
     else:
+        print ptcmd
         result = os.system(ptcmd)
         if (result > 0):
             print ('PointCLM:  Error creating point data.  Aborting')
@@ -1081,6 +1084,8 @@ for i in range(1,int(options.ninst)+1):
             output.write("metdata_type = 'site'\n")
             output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                              +"CLM1PT_data/"+ptstr+"_"+options.site+"/'\n")
+        if (options.monthly_metdata != ''):
+            output.write(" metdata_biases = '"+options.monthly_metdata+"'\n")
         output.write(" co2_file = '"+options.ccsm_input+"/atm/datm7/CO2/" \
                          +options.co2_file+"'\n")
         output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \

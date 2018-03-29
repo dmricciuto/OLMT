@@ -49,6 +49,8 @@ parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
+parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
+                  help = "File containing met data")
 parser.add_option("--mpilib", dest="mpilib", default="", \
                       help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
 parser.add_option("--noad", action="store_true", dest="noad", default=False, \
@@ -373,6 +375,8 @@ if (options.C14):
     basecmd = basecmd+' --C14 '
 if (options.debug):
     basecmd = basecmd+' --debug'
+if (options.monthly_metdata != ''):
+    basecmd = basecmd+' --monthly_metdata '+options.monthly_metdata
 if (options.nofire):
     basecmd = basecmd+' --nofire'
 if (options.harvmod):
