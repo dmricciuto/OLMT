@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import netcdf_functions as nffun
+import netcdf4_functions as nffun
 import socket, os, sys, csv, time, math, numpy
 import re, subprocess
 from optparse import OptionParser
@@ -313,14 +313,14 @@ if (options.mymodel == 'ELM'):
     if ('ECA' in compset):
         parm_file = 'clm_params.c160709.nc'
     else:
-        parm_file = 'clm_params_c170808.nc'
+        parm_file = 'clm_params_c180312.nc'
 if (options.mymodel == 'CLM5'):
     parm_file = 'clm5_params.c171117.nc'
 
 #pftphys_stamp = '_c160711' #'c160711_root'
 #pftphys_stamp = '_c160711_test170303'
 #CNPstamp = 'c131108'
-CNPstamp = 'c170306'
+CNPstamp = 'c180312'
 
 #check consistency of options
 if ('20TR' in compset):
@@ -584,6 +584,12 @@ os.chdir(csmdir+'/cime/scripts')
 
 #parameter (pft-phys) modifications if desired
 tmpdir = PTCLMdir+'/temp'
+
+if (options.mycaseid == ''):
+  myscriptsdir = 'none'
+else:
+  myscriptsdir = options.mycaseid
+
 os.system('mkdir -p '+tmpdir)
 if (options.mod_parm_file != ''):
     os.system('nccopy -3 '+options.mod_parm_file+' '+tmpdir+'/clm_params.nc')
@@ -603,14 +609,15 @@ if (options.parm_file != ''):
             values = s.split()
             thisvar = nffun.getvar(pftfile, values[0])
             if (len(values) == 2):
-                thisvar[:] = float(values[1])
+                thisvar[...] = float(values[1])
             elif (len(values) == 3):
                 if (float(values[1]) > 0):
                     thisvar[int(values[1])] = float(values[2])
                 else:
-                    thisvar[:] = float(values[2])
+                  thisvar[...] = float(values[2])
             ierr = nffun.putvar(pftfile, values[0], thisvar)
     input.close()
+
 if (options.parm_vals != ''):
     pftfile = tmpdir+'/clm_params.nc'
     parms = options.parm_vals.split('/')
@@ -619,12 +626,12 @@ if (options.parm_vals != ''):
 	parm_data=parms[n].split(',')
         thisvar = nffun.getvar(pftfile, parm_data[0])
         if (len(parm_data) == 2):
-	   thisvar[:] = float(parm_data[1])
+	   thisvar[...] = float(parm_data[1])
         elif (len(parm_data) == 3): 
            if (float(parm_data[1]) >= 0):
                thisvar[int(parm_data[1])] = float(parm_data[2])
            else: 
-               thisvar[:] = float(parm_data[2])
+               thisvar[...] = float(parm_data[2])
         ierr =  nffun.putvar(pftfile, parm_data[0], thisvar)
            
 #parameter (soil order dependent) modifications if desired    ::X.YANG 
@@ -649,12 +656,12 @@ if (options.mymodel == 'ELM'):
                 values = s.split()
                 thisvar = nffun.getvar(soilorderfile, values[0])
                 if (len(values) == 2):
-                    thisvar[:] = float(values[1])
+                    thisvar[...] = float(values[1])
                 elif (len(values) == 3):
                     if (float(values[1]) >= 0):
                         thisvar[int(values[1])] = float(values[2])
                     else:
-                        thisvar[:] = float(values[2])
+                        thisvar[...] = float(values[2])
                 ierr = nffun.putvar(soilorderfile, values[0], thisvar)
         input.close()
 
@@ -688,7 +695,7 @@ os.chdir(casedir)
 result = os.system('./xmlchange SAVE_TIMING=FALSE')
 result = os.system('./xmlchange EXEROOT='+exeroot)
 if (options.mymodel == 'ELM'):
-    result = os.system('./xmlchange RTM_MODE=NULL')
+    result = os.system('./xmlchange MOSART_MODE=NULL')
 if (options.debug):
     result = os.system('./xmlchange DEBUG=TRUE')
 
@@ -902,7 +909,8 @@ for i in range(1,int(options.ninst)+1):
             elif (options.dailyrunoff):
                 output.write(" hist_nhtfrq = "+ str(options.hist_nhtfrq)+",-24\n")
                 output.write(" hist_fincl2 = 'TBOT','QBOT','RAIN','SNOW','QBOT','PBOT','WIND','FPSN','QVEGT'," \
-                        +"'QVEGE','QSOIL','QRUNOFF','QDRAI','QOVER','H2OSFC','ZWT','SNOWDP','H2OSOI','TSOI','TWS'\n")
+                        +"'QVEGE','QSOIL','QRUNOFF','QDRAI','QOVER','H2OSFC','ZWT','SNOWDP','H2OSOI','TSOI','TWS'," \
+                        +"'FSDS','FLDS'\n")
             else:
                 output.write(" hist_nhtfrq = "+ str(options.hist_nhtfrq)+"\n")
 
@@ -1039,9 +1047,6 @@ for i in range(1,int(options.ninst)+1):
     if (cpl_bypass):
         if (use_reanalysis):
             if (options.cruncep):
-                output.write(" metdata_type = 'cru-ncep'\n")
-                output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715/cpl_bypass_full'\n")
                 if (options.livneh):
                     output.write(" metdata_type = 'cru-ncep_livneh'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
@@ -1052,10 +1057,11 @@ for i in range(1,int(options.ninst)+1):
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                          +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715.CONUS_Daymet3" + \
                          "/cpl_bypass_full'\n")
+                else:
+                    output.write(" metdata_type = 'cru-ncep'\n")
+                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715/cpl_bypass_full'\n")
             elif (options.gswp3):
-                output.write(" metdata_type = 'gswp3'\n")
-                output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
                 if (options.livneh):
                     output.write(" metdata_type = 'gswp3_livneh'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
@@ -1064,10 +1070,11 @@ for i in range(1,int(options.ninst)+1):
                     output.write(" metdata_type = 'gswp3_daymet'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                          +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516.CONUS_Daymet3/cpl_bypass_full'\n")
+                else:
+                    output.write(" metdata_type = 'gswp3'\n")
+                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
             elif (options.princeton):
-                output.write(" metdata_type = 'princeton'\n")
-                output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.Princeton.0.5d.v1.c180222/cpl_bypass_full'\n")
                 if (options.livneh):
                     output.write(" metdata_type = 'princeton_livneh'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
@@ -1076,6 +1083,10 @@ for i in range(1,int(options.ninst)+1):
                     output.write(" metdata_type = 'princeton_daymet'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                          +"atm_forcing.datm7.Princeton.0.5d.v1.c180222.CONUS_Daymet3/cpl_bypass_full'\n")
+                else:
+                    output.write(" metdata_type = 'princeton'\n")
+                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.Princeton.0.5d.v1.c180222/cpl_bypass_full'\n")
             elif (options.cplhist):
                 output.write(" metdata_type = 'cplhist'\n")
                 output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
@@ -1338,44 +1349,33 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
     if ('cori' in options.machine or options.machine == 'edison'):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
-        #write the PBS scripts to copy directories and run the ensembles for this case
-        if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
-            myinput = open(caseroot+'/'+ad_case_firstsite+'/case.run')
-        elif (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/.case.run')):
-            myinput = open(caseroot+'/'+ad_case_firstsite+'/.case.run')
-        else:
-            print 'case.run file not found.  Aborting'
-            sys.exit(1)
-        output_run  = open(tmpdir+'/ensemble_run_'+casename+'.pbs','w')
+        output_run  = open(PTCLMdir+'/scripts/'+myscriptsdir+'/ensemble_run_'+casename+'.pbs','w')
         timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
                                      int(float(options.walltime)))*60))+':00'
-        for s in myinput:
-            if ("perl" in s or 'python' in s):
-                output_run.write("#!/bin/csh -f\n")
-                if (mysubmit_type == 'qsub'):
-                    output_run.write('#PBS -l walltime='+timestr+'\n')
-                else:
-                    output_run.write('#SBATCH --time='+timestr+'\n')
-                    if ('edison' in options.machine or 'cori' in options.machine):
-                        if (options.debug):
-                            output_run.write('#SBATCH --partition=debug\n')
-                        else:
-	                    output_run.write('#SBATCH --partition=regular\n')
+        output_run.write("#!/bin/csh -f\n")
+        if (mysubmit_type == 'qsub'):
+            output_run.write('#PBS -l walltime='+timestr+'\n')
+            output_run.write('#PBS -N ens_'+casename+'\n')
+            if (options.project != ''):
+                output_run.write('#PBS -A '+options.project+'\n')
+            if (options.machine == 'cades'):
+                output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
+                                    ':ppn='+str(ppn)+'\n')
+                output_run.write('#PBS -W group_list=cades-ccsi\n')
+            else:
+                output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
+                                     '\n')
+        else:
+            output_run.write('#SBATCH --time='+timestr+'\n')
+            output_run.write('#SBATCH -J ens_'+casename+'\n')
+            if ('edison' in options.machine or 'cori' in options.machine):
+              if (options.debug):
+                output_run.write('#SBATCH --partition=debug\n')
+              else:
+	        output_run.write('#SBATCH --partition=regular\n')
             elif ("#PBS" in s or "#!" in s or '#SBATCH' in s):
                 #edit number of required nodes for ensemble runs
-                if ('nodes' in s):
-                    if (options.machine == 'cades'):
-                        output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
-                                             ':ppn='+str(ppn)+'\n')
-                    elif (mysubmit_type == 'qsub'):
-                        output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
-                                         '\n')
-                    else:
-                        output_run.write('#SBATCH --nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
-                                         '\n')
-                else:
-                    output_run.write(s)
-        myinput.close()
+                output_run.write('#SBATCH --nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+'\n')
 
         output_run.write("\n")
         if (options.machine == 'eos'):
@@ -1406,7 +1406,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
             output_run.write('module load python/2.7-anaconda\n')
             output_run.write('module load nco\n')
 
-        output_run.write('cd '+PTCLMDir+'\n')
+        output_run.write('cd '+PTCLMdir+'\n')
         cnp = 'True'
         if (options.cn_only or options.c_only):
             cnp= 'False'
@@ -1434,4 +1434,4 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
         output_run.write(cmd+'\n')
         output_run.close()
         if (options.no_submit == False):
-            os.system('qsub '+tmpdir+'/ensemble_run_'+casename+'.pbs')
+            os.system('qsub '+PTCLMdir+'/scripts/'+myscriptsdir+'/ensemble_run_'+casename+'.pbs')

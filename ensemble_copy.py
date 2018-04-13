@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import netcdf_functions as nffun
+import netcdf4_functions as nffun
 import os, sys, csv, time, math, numpy
 from optparse import OptionParser
 
@@ -175,10 +175,10 @@ for p in parm_names:
       elif (parm_indices[pnum] == 0):
          param = parm_values[pnum]
       else:
-         param[:] = parm_values[pnum]
+         param[...] = parm_values[pnum]
       ierr = nffun.putvar(myfile, p, param)
       if ('fr_flig' in p):
          param=nffun.getvar(myfile, 'fr_fcel')
-         param[:]=1.0-parm_values[pnum]-parm_values[pnum-1]
+         param[...]=1.0-parm_values[pnum]-parm_values[pnum-1]
          ierr = nffun.putvar(myfile, 'fr_fcel', param)
    pnum = pnum+1

@@ -523,6 +523,8 @@ if (options.ilambvars):
     cmd_trns = cmd_trns + ' --ilambvars'
 if (options.dailyvars):
     cmd_trns = cmd_trns + ' --dailyvars'        
+if (options.dailyrunoff):
+    cmd_trns = cmd_trns+' --dailyrunoff'
 
 #transient phase 2 (CRU-NCEP only, without coupler bypass)
 if ((options.cruncep or options.gswp3) and not options.cpl_bypass):

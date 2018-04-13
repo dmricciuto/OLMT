@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys,os, time
 import numpy as np
-import netcdf_functions as nffun
+import netcdf4_functions as nffun
 import subprocess
 from mpi4py import MPI
 from optparse import OptionParser
@@ -177,7 +177,13 @@ else:
                 rundir = options.runroot+'/UQ/'+options.casename+'/g'+jobst[1:]+'/'
                 os.chdir(rundir)
                 #Run the executable
-                os.system(options.exeroot+'/acme.exe > acme.log')
+                exedir = options.exeroot
+                if os.path.isfile(exedir+'/acme.exe'):
+                   os.system(exedir+'/acme.exe > acme_log.txt')
+                elif os.path.isfile(exedir+'/e3sm.exe'):
+                   os.system(exedir+'/e3sm.exe > e3sm_log.txt')
+                elif os.path.isfile(exedir+'/cesm.exe'):
+                   os.system(exedir+'/cesm.exe > cesm_log.txt')
             if (do_postproc):
                 ierr = postproc(myvars, myyear_start, myyear_end, myday_start, \
                          myday_end, myavg_pd, myfactor, myoffset, myjob, \

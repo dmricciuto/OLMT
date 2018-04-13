@@ -1,7 +1,7 @@
 #!/usr/bin/env/python
 import os, sys, csv, time, math
 from optparse import OptionParser
-import netcdf_functions as nffun
+import netcdf4_functions as nffun
 import glob
 
 parser = OptionParser()

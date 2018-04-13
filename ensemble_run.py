@@ -197,7 +197,13 @@ for casename in casenames:
     if (isfirstcase):
         exedir = os.path.abspath(orig_dir+'/../bld/')
     if (options.norun == False):
-        os.system(exedir+'/acme.exe > ccsm_log.txt')
+        if os.path.isfile(exedir+'/acme.exe'):
+           os.system(exedir+'/acme.exe > acme_log.txt')
+        elif os.path.isfile(exedir+'/e3sm.exe'):
+           os.system(exedir+'/e3sm.exe > e3sm_log.txt')
+        elif os.path.isfile(exedir+'/cesm.exe'):
+           os.system(exedir+'/cesm.exe > cesm_log.txt')
+
     isfirstcase=False
 
 #---------  code to post-process ensebmle member and cacluate total normalized SSE ----------

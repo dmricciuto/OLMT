@@ -837,7 +837,7 @@ for row in AFdatareader:
                                         job_depend_run, project=myproject, submit_type=mysubmit_type)
         #else:  #submit single job
         #    job_fullrun = submit('temp/site_fullrun.pbs', submit_type=mysubmit_type)
-        sitenum=sitenum+1
+        sitenum = sitenum+1
 
 #Submit PBS scripts for multi-site simualtions on 1 node
 if (options.ensemble_file == ''):
@@ -851,3 +851,4 @@ if (options.ensemble_file == ''):
             output.close()
             job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
                                     job_depend_run, project=myproject, submit_type=mysubmit_type)
+

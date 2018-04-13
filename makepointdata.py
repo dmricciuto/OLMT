@@ -2,7 +2,7 @@
 import os, sys, csv, time, math
 from optparse import OptionParser
 import numpy
-import netcdf_functions as nffun
+import netcdf4_functions as nffun
 
 parser = OptionParser()
 
@@ -269,11 +269,11 @@ for n in range(0,n_grids):
         xv = nffun.getvar(domainfile_new, 'xv')
         yv = nffun.getvar(domainfile_new, 'yv')
         area = nffun.getvar(domainfile_new, 'area')
-        frac = 1.0
-        mask = 1
+        frac[0] = 1.0
+        mask[0] = 1
         if (options.site != ''):
-            xc= lon[n]
-            yc = lat[n]
+            xc[0] = lon[n]
+            yc[0] = lat[n]
             xv[0][0][0] = lon[n]-resx/2
             xv[0][0][1] = lon[n]+resx/2
             xv[0][0][2] = lon[n]-resx/2
@@ -282,7 +282,7 @@ for n in range(0,n_grids):
             yv[0][0][1] = lat[n]-resy/2
             yv[0][0][2] = lat[n]+resy/2
             yv[0][0][3] = lat[n]+resy/2
-            area = resx*resy*math.pi/180*math.pi/180
+            area[0] = resx*resy*math.pi/180*math.pi/180
             ierr = nffun.putvar(domainfile_new, 'xc', xc)
             ierr = nffun.putvar(domainfile_new, 'yc', yc)
             ierr = nffun.putvar(domainfile_new, 'xv', xv)
@@ -400,7 +400,7 @@ for n in range(0,n_grids):
         if (options.site != ''):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
-            area = 111.2*resy*111.321*math.cos((lon[n]*resx)*math.pi/180)*resx
+            area[0] = 111.2*resy*111.321*math.cos((lon[n]*resx)*math.pi/180)*resx
 
         if (not options.surfdata_grid):
             pct_wetland[0][0] = 0.0
