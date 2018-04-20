@@ -25,11 +25,11 @@ parser.add_option("--clean_build", action="store_true", default=False, \
                   help="Perform a clean build")
 parser.add_option("--model_root", dest="csmdir", default='', \
                   help = "base CESM directory")
-parser.add_option("--compiler", dest="compiler", default = 'gnu', \
+parser.add_option("--compiler", dest="compiler", default = '', \
                   help = "compiler to use (pgi*, gnu)")
 parser.add_option("--diags", dest="diags", default=False, \
                  action="store_true", help="Write special outputs for diagnostics")
-parser.add_option("--debug", dest="debug", default=False, \
+parser.add_option("--debugq", dest="debug", default=False, \
                  action="store_true", help='Use debug queue and options')
 parser.add_option("--hist_mfilt_trans", dest="hist_mfilt", default="365", \
                   help = 'number of output timesteps per file (transient only)')
@@ -210,13 +210,13 @@ elif (options.machine == 'cades'):
 elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
 
-if (options.compiler != ''):
-    if (options.machine == 'titan'):
-        options.compiler = 'pgi'
-    if (options.machine == 'eos' or options.machine == 'edison' or 'cori' in options.machine):
-        options.compiler = 'intel'
-    if (options.machine == 'cades'):
-        options.compiler = 'gnu'
+#if (options.compiler != ''):
+#    if (options.machine == 'titan'):
+#        options.compiler = 'pgi'
+#    if (options.machine == 'eos' or options.machine == 'edison' or 'cori' in options.machine):
+#        options.compiler = 'intel'
+#    if (options.machine == 'cades'):
+#        options.compiler = 'gnu'
     
 
 mycaseid   = options.mycaseid
@@ -375,7 +375,7 @@ for row in AFdatareader:
         if (options.C14):
             basecmd = basecmd+' --C14 '
         if (options.debug):
-            basecmd = basecmd+' --debug'
+            basecmd = basecmd+' --debugq'
         if (options.ninst > 1):
             basecmd = basecmd+' --ninst '+str(options.ninst)
         if (options.nofire):
@@ -419,7 +419,8 @@ for row in AFdatareader:
         basecmd = basecmd + ' --np '+str(options.np)
         basecmd = basecmd + ' --tstep '+str(options.tstep)
         basecmd = basecmd + ' --co2_file '+options.co2_file
-        basecmd = basecmd + ' --compiler '+options.compiler
+        if (options.compiler != ''):
+            basecmd = basecmd + ' --compiler '+options.compiler
         basecmd = basecmd + ' --mpilib '+options.mpilib
         basecmd = basecmd+' --caseroot '+caseroot
         basecmd = basecmd+' --runroot '+runroot
@@ -648,7 +649,8 @@ for row in AFdatareader:
             case_list.append('ad_spinup')
             case_list.append('iniadjust')
         case_list.append('fn_spinup')
-        case_list.append('spinup_diags')
+        if (options.diags):
+            case_list.append('spinup_diags')
         if (options.notrans == False):
             case_list.append('transient')
             if (options.diags):
@@ -674,6 +676,8 @@ for row in AFdatareader:
                         output.write("#!/bin/csh -f\n")
                         timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
                                      int(float(options.walltime)))*60))+':00'
+                        if (options.debug):
+                            timestr = '00:30:00'
                         if (mysubmit_type == 'qsub'):
                             output.write('#PBS -l walltime='+timestr+'\n')
                         else:

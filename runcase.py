@@ -29,8 +29,8 @@ parser.add_option("--dailyrunoff", dest="dailyrunoff", default=False, \
                  action="store_true", help="Write daily output for hydrology")
 parser.add_option("--diags", dest="diags", default=False, \
                  action="store_true", help="Write special outputs for diagnostics")
-parser.add_option("--debug", dest="debug", default=False, \
-                 action="store_true", help='Use debug queue and options')
+parser.add_option("--debugq", dest="debug", default=False, \
+                 action="store_true", help='Use debug queue')
 parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
 parser.add_option('--project', dest='project',default='', \
@@ -69,6 +69,8 @@ parser.add_option("--compset", dest="compset", default='I1850CNPRDCTCBC', \
                          "Currently supports ONLY *CLM45(CN) compsets")
 parser.add_option("--cruncep", dest="cruncep", default=False, \
                   help = "use cru-ncep data", action="store_true")
+parser.add_option("--cruncepv7", dest="cruncepv7", default=False, \
+                  help = "use cru-ncep data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
 parser.add_option("--gswp3", dest="gswp3", default=False, \
@@ -81,7 +83,7 @@ parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = "Daymet correction to GSWP3 precip (CONUS only)")
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to\n")
-parser.add_option("--compiler", dest="compiler", default='gnu', \
+parser.add_option("--compiler", dest="compiler", default='', \
 	          help = "compiler to use (pgi, gnu)")
 parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
                       help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
@@ -405,7 +407,7 @@ if (options.mycaseid != ""):
 
 #CRU-NCEP 2 transient phases
 if ('CRU' in compset or options.cruncep or options.gswp3 or \
-            options.princeton or options.cplhist):
+            options.cruncepv7 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
     use_reanalysis = False
@@ -673,13 +675,15 @@ elif (options.exit_spinup):
 
 #create new case
 cmd = './create_newcase --case '+casename+' --mach '+options.machine+' --compset '+ \
-	   options.compset+' --res '+options.res+' --compiler '+options.compiler+' --mpilib '+ \
+	   options.compset+' --res '+options.res+' --mpilib '+ \
            options.mpilib+' > create_newcase.log'+' --walltime '+str(options.walltime)+ \
           ':00:00'
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
 if (options.project != ''):
    cmd = cmd+' --project '+options.project
+if (options.compiler != ''):
+   cmd = cmd+' --compiler '+options.compiler
 resut = os.system(cmd)
 
 if (os.path.isdir(casename)):
@@ -696,13 +700,13 @@ result = os.system('./xmlchange SAVE_TIMING=FALSE')
 result = os.system('./xmlchange EXEROOT='+exeroot)
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
-if (options.debug):
-    result = os.system('./xmlchange DEBUG=TRUE')
+#if (options.debug):
+#    result = os.system('./xmlchange DEBUG=TRUE')
 
 #clm 4_5 cn config options
-clmcn_opts = "'-phys clm4_5'"
-if (options.mymodel == 'ELM'):
-    os.system("./xmlchange CLM_CONFIG_OPTS="+clmcn_opts)
+#clmcn_opts = "'-phys clm4_5 -cppdefs -DMODAL_AER'"
+#if (options.mymodel == 'ELM'):
+#    os.system("./xmlchange CLM_CONFIG_OPTS="+clmcn_opts)
 
 if (options.machine == 'userdefined'):
     os.system("./xmlchange COMPILER="+options.compiler)
@@ -889,8 +893,13 @@ for i in range(1,int(options.ninst)+1):
         if (options.ad_spinup):
             output.write(" hist_mfilt = "+str(options.hist_mfilt)+", "+str(options.hist_mfilt)+"\n")
         else:
-            if (options.dailyrunoff or options.dailyvars):
+            if (options.dailyrunoff):
+                #include daily variables related to runoff only
                 output.write(" hist_mfilt = "+ str(options.hist_mfilt)+",365\n")
+            if (options.dailyvars):
+                #include daily column and PFT level output
+                output.write(" hist_dov2xy = .true., .true., .false.\n")
+                output.write(" hist_mfilt = "+ str(options.hist_mfilt)+",365,365\n")
             else:
                 output.write(" hist_mfilt = "+ str(options.hist_mfilt)+"\n")
 
@@ -899,13 +908,17 @@ for i in range(1,int(options.ninst)+1):
             output.write(" hist_nhtfrq = "+ str(options.hist_nhtfrq)+", "+str(options.hist_nhtfrq)+"\n")
         else:
             if (options.dailyvars):
-                output.write(" hist_nhtfrq = "+ str(options.hist_nhtfrq)+",-24\n")
+                output.write(" hist_nhtfrq = "+ str(options.hist_nhtfrq)+",-24,-24\n")
                 h1varst = "fincl2 = "
+                h2varst = "fincl3 = "
                 for v in var_list_hourly:
                     h1varst = h1varst+"'"+v+"',"
                 for v in var_list_daily:
                     h1varst = h1varst+"'"+v+"',"
-                output.write(h1varst+"\n")
+                for v in var_list_pft:
+                    h2varst = h2varst+"'"+v+"',"
+                output.write(h1varst[:-1]+"\n")
+                output.write(h2varst[:-1]+"\n")
             elif (options.dailyrunoff):
                 output.write(" hist_nhtfrq = "+ str(options.hist_nhtfrq)+",-24\n")
                 output.write(" hist_fincl2 = 'TBOT','QBOT','RAIN','SNOW','QBOT','PBOT','WIND','FPSN','QVEGT'," \
@@ -1046,7 +1059,12 @@ for i in range(1,int(options.ninst)+1):
             output.write(" spinup_mortality_factor = 10\n")
     if (cpl_bypass):
         if (use_reanalysis):
-            if (options.cruncep):
+            if (options.cruncepv7):
+                    output.write(" metdata_type = 'cru-ncep'\n")
+                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.cruncep_qianFill.0.5d.V7.c160715" + \
+                         "/cpl_bypass_full'\n")
+            elif (options.cruncep):
                 if (options.livneh):
                     output.write(" metdata_type = 'cru-ncep_livneh'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
@@ -1217,7 +1235,7 @@ if (not cpl_bypass):
         elif ('streams' in s):
             continue  #do nothing
         elif ('taxmode' in s):
-            if (options.cruncep):
+            if (options.cruncep or options.cruncepv7):
                 taxst = "taxmode = 'cycle', 'cycle', 'cycle', 'extend', 'extend'"
             else:
                 taxst = "taxmode = 'cycle', 'extend', 'extend'"
@@ -1352,6 +1370,8 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
         output_run  = open(PTCLMdir+'/scripts/'+myscriptsdir+'/ensemble_run_'+casename+'.pbs','w')
         timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
                                      int(float(options.walltime)))*60))+':00'
+        if (options.debug):
+           timestr='00:30:00'
         output_run.write("#!/bin/csh -f\n")
         if (mysubmit_type == 'qsub'):
             output_run.write('#PBS -l walltime='+timestr+'\n')

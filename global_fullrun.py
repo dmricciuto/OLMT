@@ -23,7 +23,7 @@ parser.add_option("--clean_build", action="store_true", default=False, \
                   help="Perform a clean build")
 parser.add_option("--compiler", dest="compiler", default = '', \
                   help = "compiler to use (pgi*, gnu)")
-parser.add_option("--debug", dest="debug", default=False, \
+parser.add_option("--debugq", dest="debug", default=False, \
                  action="store_true", help='Use debug queue and options')
 parser.add_option("--dailyrunoff", dest="dailyrunoff", default=False, \
                  action="store_true", help="Write daily output for hydrology")
@@ -123,6 +123,8 @@ parser.add_option("--CH4", dest="CH4", default=False, \
                   help = 'To turn on CN with CLM4me', action="store_true")
 parser.add_option("--cruncep", dest="cruncep", default=False, \
                   action="store_true", help = 'Use CRU-NCEP meteorology')
+parser.add_option("--cruncepv7", dest="cruncepv7", default=False, \
+                  help = "use cru-ncep data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
 parser.add_option("--gswp3", dest="gswp3", default=False, \
@@ -237,7 +239,7 @@ elif (options.machine == 'cades' or options.machine == 'metis'):
     ccsm_input = '/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
-
+print options.machine
 #default compilers
 if (options.compiler == ''):
     if (options.machine == 'titan' or options.machine == 'metis'):
@@ -289,18 +291,23 @@ else:
     caseroot = os.path.abspath(options.caseroot)
 
 
-if (options.cruncep or options.gswp3 or options.princeton):
+if (options.cruncep or options.cruncepv7 or options.gswp3 or options.princeton):
     startyear = 1901
     endyear = 1920
-    site_endyear = 2010
+    if (options.cruncep):
+       site_endyear = 2013
+    elif (options.cruncepv7):
+       site_endyear = 2016   
+    elif (options.gswp3):
+       site_endyear = 2010
+    elif (options.princeton):
+       site_endyear = 2012
     if (options.livneh):
         startyear = 1950
         endyear = 1969
-        site_endyear = 2013
     if (options.daymet):
         startyear = 1980
         endyear = 2010
-        site_endyear = 2010
 else:
     #Qian input data
     startyear = 1948
@@ -318,7 +325,7 @@ if (int(options.nyears_final_spinup) % ncycle !=0):
 
 if (translen == -1):
     translen = endyear-1850+1        #length of transient run
-    if (options.cpl_bypass and (options.cruncep or options.gswp3 or options.princeton)):
+    if (options.cpl_bypass and (options.cruncep or options.cruncepv7 or options.gswp3 or options.princeton)):
         translen = site_endyear-1850+1
 
 fsplen = int(ny_fin)
@@ -374,7 +381,7 @@ if (options.C13):
 if (options.C14):
     basecmd = basecmd+' --C14 '
 if (options.debug):
-    basecmd = basecmd+' --debug'
+    basecmd = basecmd+' --debugq'
 if (options.monthly_metdata != ''):
     basecmd = basecmd+' --monthly_metdata '+options.monthly_metdata
 if (options.nofire):
@@ -397,6 +404,8 @@ if (options.CH4):
     basecmd = basecmd+' --CH4'
 if (options.cruncep):
     basecmd = basecmd+' --cruncep'
+if (options.cruncepv7):
+    basecmd = basecmd+' --cruncepv7'
 if (options.gswp3):
     basecmd = basecmd+' --gswp3'
 if (options.princeton):
@@ -527,7 +536,7 @@ if (options.dailyrunoff):
     cmd_trns = cmd_trns+' --dailyrunoff'
 
 #transient phase 2 (CRU-NCEP only, without coupler bypass)
-if ((options.cruncep or options.gswp3) and not options.cpl_bypass):
+if ((options.cruncep or options.gswp3 or options.cruncepv7) and not options.cpl_bypass):
     basecase=basecase.replace('1850','20TR')+'_phase1'
     thistranslen = site_endyear - 1921 + 1
     cmd_trns2 = basecmd+' --trans2 --finidat_case '+basecase+ \
@@ -552,7 +561,7 @@ if (options.nofn == False):
 if (options.notrans == False):
     print('\nSetting up transient case\n')
     os.system(cmd_trns)
-if ((options.cruncep or options.gswp3) and not options.cpl_bypass):
+if ((options.cruncep or options.gswp3 or options.cruncepv7) and not options.cpl_bypass):
     print('\nSetting up transient case phase 2\n')
     os.system(cmd_trns2)
         
@@ -605,6 +614,8 @@ for c in cases:
             if ("perl" in s or "python" in s):
                 timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
                             int(float(options.walltime)))*60))+':00'
+                if (options.debug):
+                    timestr='00:30:00'
                 output.write("#!/bin/csh -f\n")
                 if (mysubmit_type == 'qsub'):
                     output.write('#PBS -l walltime='+timestr+'\n')
