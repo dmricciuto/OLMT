@@ -269,17 +269,25 @@ else:
 #csmdir = os.getcwd()+'/'+options.csmdir
 csmdir = options.csmdir
 
+#get project information
+myuser = getpass.getuser()
+if (options.project != ''):
+  myproject = options.project
+else: 
+  if (os.path.exists(os.environ.get('HOME')+'/.cesm_proj')):
+    print 'Getting project from '+os.environ.get('HOME')+'/.cesm_proj'
+    myinput = open(os.environ.get('HOME')+'/.cesm_proj','r')
+    for s in myinput:
+        myproject=s[:-1]
+    print 'Project = '+myproject
+ 
 #case run and case root directories
 if (options.runroot == ''):
-    myuser = getpass.getuser()
     if (options.machine == 'titan' or options.machine == 'eos'):
-        myinput = open('/ccs/home/'+myuser+'/.cesm_proj','r')
-        for s in myinput:
-	   myproject=s[:-1]
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
     elif (options.machine == 'cades' or options.machine == 'metis'):
         runroot='/lustre/or-hydra/cades-ccsi/scratch/'+myuser
-    elif ('cori' in options.machine or 'edison' in options.machine):
+    elif (options.project == '' and 'cori' in options.machine or 'edison' in options.machine):
         runroot=os.environ.get('CSCRATCH')+'/acme_scratch/'+options.machine+'/'
     else:
         runroot = csmdir+'/run'
@@ -620,6 +628,7 @@ for c in cases:
                 if (mysubmit_type == 'qsub'):
                     output.write('#PBS -l walltime='+timestr+'\n')
                 else:
+                    output.write('#SBATCH -A '+myproject+'\n')
                     output.write('#SBATCH --time='+timestr+'\n')
                     if ('cori' in options.machine or 'edison' in options.machine):
                          if (options.debug):
