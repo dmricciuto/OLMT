@@ -172,8 +172,8 @@ def submit(fname, project='', submit_type='qsub', job_depend=''):
 
 #Set default model root
 if (options.csmdir == ''):
-   if (os.path.exists('../ACME')):
-       options.csmdir = os.path.abspath('../ACME')
+   if (os.path.exists('../E3SM')):
+       options.csmdir = os.path.abspath('../E3SM')
        print 'Model root not specified.  Defaulting to '+options.csmdir
    else:
        print 'Error:  Model root not specified.  Please set using --model_root'
