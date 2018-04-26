@@ -269,7 +269,7 @@ if (options.hist_vars != ''):
 if (options.mymodel == ''):
   if ('clm5' in options.csmdir): 
       options.mymodel = 'CLM5'
-  elif ('ACME' in options.csmdir):
+  elif ('E3SM' in options.csmdir or 'ACME' in options.csmdir):
       options.mymodel = 'ELM'
   else:
       print 'Error:  Model not specified'
@@ -989,15 +989,18 @@ for i in range(1,int(options.ninst)+1):
     if (options.ad_spinup):
         #Write long-term average pool values
         output.write(" hist_dov2xy = .true., .false.\n")
-        h1_advars = ['CWDX_vr', 'SOIL2X_vr', 'SOIL3X_vr', 'DEADSTEMX','DEADCROOTX', 'LITR3X_vr']
+        h1_advars = ['CWDX_vr', 'SOIL2X_vr', 'SOIL3X_vr', 'DEADSTEMX','DEADCROOTX', 'LITR3X_vr','LEAFC','TOTVEGC','TLAI']
         if ('CTC' in compset):
             h1_advars.append('SOIL4X_vr')
         outst = "hist_fincl2 = "
         for h in h1_advars:
-            outst = outst+"'"+h.replace('X','C')+"',"
-            outst = outst+"'"+h.replace('X','N')+"',"
-            if (options.mymodel == 'ELM'):
-                outst = outst+"'"+h.replace('X','P')+"',"
+            if 'X' in h:
+              outst = outst+"'"+h.replace('X','C')+"',"
+              outst = outst+"'"+h.replace('X','N')+"',"
+              if (options.mymodel == 'ELM'):
+                  outst = outst+"'"+h.replace('X','P')+"',"
+            else:
+              outst = outst+"'"+h+"',"
         output.write(outst[:-1]+'\n')
         if (options.mymodel == 'ELM'):
             output.write(" finidat = ''\n")
