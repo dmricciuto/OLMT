@@ -4,14 +4,14 @@ import netcdf4_functions as nffun
 import os, sys, csv, time, math, numpy
 from optparse import OptionParser
 
-#Create, run and process a CLM/ALM model ensemble member
+#Create, run and process a CLM/ELM model ensemble member
 #  given specified case and parameters (see parm_list and parm_data files)
 #  Parent case must be pre-built and all namelists in run directory.
 #  Post-processing calcuates normalized sum of squared errors (SSE) given
 #  data constraints specified in "constraints" directory"
 #  DMRicciuto 12/1/2015
 #
-#  Note:  This will only work for single-point CLM/ALM compiled with MPI_SERIAL
+#  Note:  This will only work for single-point CLM/ELM compiled with MPI_SERIAL
 
 #-------------------Parse options-----------------------------------------------
 
@@ -29,6 +29,8 @@ parser.add_option("--nyears", dest="nyears", default=0, \
                   help = 'Number of years to run')
 parser.add_option("--finidat_year", dest='finyr', default=0, \
                   help = 'Year for initial data file')
+parser.add_option("--finidat_thiscase", dest='fincase', default=False, \
+                  action="store_true", help = 'Use this case for finidat')
 parser.add_option('--spin_cycle', dest='spin_cycle', default=0, \
                   help = 'Number of years in spinup cycle')
 parser.add_option('--1850_landuse', dest='nolanduse', default=False, \
@@ -41,8 +43,10 @@ parser.add_option('--suffix', dest='suffix', default='', \
                   help = 'use 1850 NDep')
 parser.add_option('--machine', dest='machine', default='cades', \
                   help = 'machine')
-
+parser.add_option('--warming', dest='warming', default='0.0', \
+                  help = 'warming level to apply')
 (options, args) = parser.parse_args()
+
 
 casename = options.casename
 

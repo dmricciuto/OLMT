@@ -185,16 +185,30 @@ for n in range(0,n_grids):
     xgrid_max.append(-1)
     ygrid_min.append(-1)
     ygrid_max.append(-1)
-    for i in range(0,longxy.shape[0]-1):
+    if ('ne' in options.res):
+      if (lon_bounds[0] != lon_bounds[1] or lat_bounds[0] != lat_bounds[1]):
+        print('Regional subsets not allowed for ne resolutions.  Use point lists instead')
+        sys.exit()
+      ygrid_min[n] = 0
+      ygrid_max[n] = 0
+      mindist=99999
+      for i in range(0,longxy.shape[0]-1):
+        thisdist = (lon_bounds[0]-longxy[i])**2 + (lat_bounds[0]-latixy[i])**2
+        if (thisdist < mindist):
+          xgrid_min[n] = i
+          xgrid_max[n] = i
+          mindist=thisdist
+    else:
+      for i in range(0,longxy.shape[0]-1):
         if (lon_bounds[0] >= longxy[i]):
             xgrid_min[n] = i
             xgrid_max[n] = i
         elif (lon_bounds[1] >= longxy[i+1]):
             xgrid_max[n] = i
-    if (lon_bounds[0] == 180 and lon_bounds[1] == 180):  #global
+      if (lon_bounds[0] == 180 and lon_bounds[1] == 180):  #global
         xgrid_min[n] = 0
         xgrid_max[n] = longxy.shape[0]-2
-    for i in range(0,latixy.shape[0]-1):
+      for i in range(0,latixy.shape[0]-1):
         if (lat_bounds[0] >= latixy[i]):
             ygrid_min[n] = i
             ygrid_max[n] = i
@@ -330,7 +344,11 @@ for n in range(0,n_grids):
     if (isglobal):
         os.system('cp '+surffile_orig+' '+surffile_new)
     else:
-        os.system('ncks --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
+        if ('ne' in options.res):
+          os.system('ncks --fix_rec_dmn time -d gridcell,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
+            ' '+surffile_orig+' '+surffile_new)
+        else:
+          os.system('ncks --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
              ' -d lsmlat,'+str(ygrid_min[n])+','+str(ygrid_max[n])+' '+surffile_orig+' '+surffile_new)
 
     if (issite):
@@ -373,6 +391,7 @@ for n in range(0,n_grids):
         mypft_frac=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         mypct_sand = 0.0 
         mypct_clay = 0.0
+ 
         if (options.surfdata_grid == False and options.site != ''):
             AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','rb'))
             for row in AFdatareader:
@@ -381,7 +400,6 @@ for n in range(0,n_grids):
                         mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
             if (sum(mypft_frac[0:npft]) == 0.0):
                 print('*** Warning:  PFT data NOT found.  Using gridded data ***')
-
         #read file for site-specific soil information
             AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','rb'))
             for row in AFdatareader:
@@ -394,15 +412,15 @@ for n in range(0,n_grids):
         elif (point_pfts[n] > 0):
             mypft_frac[point_pfts[n]] = 100.0
 
-        landfrac_pft[0][0] = 1.0
-        pftdata_mask[0][0] = 1
+        #landfrac_pft[0][0] = 1.0
+        #pftdata_mask[0][0] = 1
 
         if (options.site != ''):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
             area[0] = 111.2*resy*111.321*math.cos((lon[n]*resx)*math.pi/180)*resx
 
-        if (not options.surfdata_grid):
+        if (not options.surfdata_grid or sum(mypft_frac[0:npft]) > 0.0):
             pct_wetland[0][0] = 0.0
             pct_lake[0][0]    = 0.0
             pct_glacier[0][0] = 0.0
@@ -434,7 +452,12 @@ for n in range(0,n_grids):
                        'EBF Temperate', 'DBF Tropical', 'DBF Temperate', 'DBF Boreal', 'EB Shrub' \
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
-            for p in range(0,npft):
+            if (options.mypft >= 0):
+              print 'Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%'
+              pct_pft[:,0,0] = 0.0
+              pct_pft[int(options.mypft),0,0] = 100.0
+            else:
+              for p in range(0,npft):
                 if (sum(mypft_frac[0:npft]) > 0.0):
                     if (mypft_frac[p] > 0.0):
                         if (p < 16):
@@ -477,6 +500,13 @@ for n in range(0,n_grids):
         ierr = nffun.putvar(surffile_new, 'MONTHLY_HEIGHT_TOP', monthly_height_top)
         ierr = nffun.putvar(surffile_new, 'MONTHLY_HEIGHT_BOT', monthly_height_bot)
         ierr = nffun.putvar(surffile_new, 'MONTHLY_LAI', monthly_lai)
+    else:
+        if (int(options.mypft) >= 0):
+          pct_pft      = nffun.getvar(surffile_new, 'PCT_NAT_PFT')
+          pct_pft[:,:,:] = 0.0
+          pct_pft[int(options.mypft),:,:] = 100.0
+          ierr = nffun.putvar(surffile_new, 'PCT_NAT_PFT', pct_pft)
+
     surffile_list = surffile_list+' '+surffile_new
 
 surffile_new = './temp/surfdata.nc'
@@ -513,9 +543,12 @@ if (options.nopftdyn == False):
     if (isglobal):
         os.system('cp '+pftdyn_orig+' '+pftdyn_new)
     else:
-        os.system('ncks --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+' -d lsmlat,'+str(ygrid_min[n])+ \
-                  ','+str(ygrid_max[n])+' '+pftdyn_orig+' '+pftdyn_new)
-
+        if ('ne' in options.res):
+          os.system('ncks --fix_rec_dmn time -d gridcell,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
+                  ' '+pftdyn_orig+' '+pftdyn_new)
+        else:
+          os.system('ncks --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
+                  ' -d lsmlat,'+str(ygrid_min[n])+','+str(ygrid_max[n])+' '+pftdyn_orig+' '+pftdyn_new)
     if (issite):
         landfrac     = nffun.getvar(pftdyn_new, 'LANDFRAC_PFT')
         pftdata_mask = nffun.getvar(pftdyn_new, 'PFTDATA_MASK')

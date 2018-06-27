@@ -56,12 +56,18 @@ parser.add_option("--notrans", action="store_true", dest="notrans", default=Fals
                   help='Do not perform transient simulation (spinup only)')
 parser.add_option("--nyears_final_spinup", dest="nyears_final_spinup", default='200', \
                   help="base no. of years for final spinup")
+parser.add_option("--pft", dest="mypft", default=-1, \
+                  help = 'Use this PFT (override site default)')
 parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
+parser.add_option("--run_startyear", dest="run_startyear", default="1850", \
+                  help="Starting year for simulation (SP model only)")
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
 parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
+parser.add_option("--SP", dest="sp", default=False, action="store_true", \
+                  help = 'Use satellite phenology mode')
 parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
                   help = 'Copy sourcemods from this location')
 parser.add_option("--parm_file", dest="parm_file", default="", \
@@ -298,6 +304,9 @@ if (int(options.mc_ensemble) != -1):
     options.ensemble_file = 'mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt'
 
 mysites = options.site.split(',')
+npernode = 32
+if (not 'all' in mysites):
+  npernode = len(mysites)
 for row in AFdatareader:
     if (row[0] in mysites) or ('all' in mysites and row[0] !='site_code' \
                                       and row[0] != ''):
@@ -378,6 +387,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --debugq'
         if (options.ninst > 1):
             basecmd = basecmd+' --ninst '+str(options.ninst)
+        if (int(options.mypft) >= 0):
+            basecmd = basecmd+' --pft '+str(options.mypft)
         if (options.nofire):
             basecmd = basecmd+' --nofire'
         if (options.harvmod):
@@ -440,7 +451,7 @@ for row in AFdatareader:
         if (options.eca):
 	    mycompset = nutrients+'ECA'+decomp_model
         elif (options.fates):
-            mycompset = 'CLM45EDBC'
+            mycompset = 'CLM45ED'
         else:
             mycompset = nutrients+'RD'+decomp_model+'BC'
 
@@ -478,6 +489,8 @@ for row in AFdatareader:
         if (options.cpl_bypass):
             cmd_adsp = cmd_adsp+' --compset ICB1850'+mycompset_adsp
             ad_case = site+'_ICB1850'+mycompset_adsp
+            if (options.sp):
+              ad_case = site+'_ICBCLM45BC'
         else:
             cmd_adsp = cmd_adsp+' --compset I1850'+mycompset_adsp
             ad_case = site+'_I1850'+mycompset_adsp
@@ -504,24 +517,34 @@ for row in AFdatareader:
                 basecase=site+'_ICB1850'+mycompset
             else:
                 basecase=site+'_I1850'+mycompset
+            if (options.sp):
+                basecase=site+'_ICBCLM45BC'
         if (options.noad):
             cmd_fnsp = basecmd+' --run_units nyears --run_n '+str(fsplen)+' --align_year '+ \
                        str(year_align+1)+' --coldstart'
             if (sitenum > 0):
                 cmd_fnsp = cmd_fnsp+' --exeroot '+ad_exeroot+' --no_build'
+            if (options.sp):
+                cmd_fnsp = cmd_fnsp+' --run_startyear '+str(options.run_startyear)
         else:
             cmd_fnsp = basecmd+' --finidat_case '+ad_case+ \
                        ' --finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
                        str(fsplen)+' --align_year '+str(year_align+1)+' --no_build' + \
                        ' --exeroot '+ad_exeroot+' --nopointdata'
         if (int(options.hist_mfilt_spinup) == -999):
-            cmd_fnsp = cmd_fnsp+' --hist_mfilt 1 --hist_nhtfrq -'+ \
-            str((endyear-startyear+1)*8760)
+            if (options.sp):
+              cmd_fnsp = cmd_fnsp+' --hist_mfilt 365 --hist_nhtfrq -24'
+            else:
+              cmd_fnsp = cmd_fnsp+' --hist_mfilt 1 --hist_nhtfrq -'+ \
+              str((endyear-startyear+1)*8760)
         else:
             cmd_fnsp = cmd_fnsp+' --hist_mfilt '+str(options.hist_mfilt_spinup) \
                    +' --hist_nhtfrq '+str(options.hist_nhtfrq_spinup)
         if (options.cpl_bypass):
-            cmd_fnsp = cmd_fnsp+' --compset ICB1850'+mycompset
+            if (options.sp):
+              cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
+            else:
+              cmd_fnsp = cmd_fnsp+' --compset ICB1850'+mycompset
         else:
             cmd_fnsp = cmd_fnsp+' --compset I1850'+mycompset
         if (options.spinup_vars):
@@ -585,17 +608,20 @@ for row in AFdatareader:
                         ' --ccsm_input '+ccsm_input+' --model '+mymodel
                 if (options.nopftdyn):
                     ptcmd = ptcmd+' --nopftdyn'
+                if (int(options.mypft) >= 0):
+                    ptcmd = ptcmd+' --pft '+str(options.mypft)
                 result = os.system(ptcmd)
                 if (result > 0):
                     print 'Site_fullrun:  Error creating point data for '+site
                     sys.exit(1)
 
         #Build Cases
-        print('\nSetting up ad_spinup case\n')
         if (options.noad == False):
+            print('\nSetting up ad_spinup case\n')
             if (sitenum == 0):
                 ad_case_firstsite = ad_case
                 result = os.system(cmd_adsp)
+                print(cmd_adsp+'\n')
             else:
                 ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                         ad_case_firstsite+' --site_orig '+firstsite +\
@@ -605,13 +631,15 @@ for row in AFdatareader:
             if (result > 0):
                 print 'Site_fullrun:  Error in runcase.py for ad_spinup '
                 sys.exit(1)
-
+        else:
+          ad_case_firstsite = ad_case
 
         print('\nSetting up final spinup case\n')
         if (sitenum == 0):
             fin_case_firstsite = ad_case_firstsite.replace('_ad_spinup','')
             if (nutrients == 'CNP' and not options.ad_Pinit):
                 fin_case_firstsite = fin_case_firstsite.replace('1850CN','1850CNP')
+            print(cmd_fnsp+'\n')
             result = os.system(cmd_fnsp)
         else:
             ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
@@ -692,7 +720,7 @@ for row in AFdatareader:
                             #if ('diags' in c or 'iniadjust' in c):
                             #    output.write("#PBS -l nodes=1:ppn=1\n")
                             #else:
-                            output.write("#PBS -l nodes=1:ppn=32\n")
+                            output.write("#PBS -l nodes=1:ppn="+str(npernode)+"\n")
                         else:
                             output.write("#PBS -l nodes=1\n")
                     elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
@@ -732,6 +760,8 @@ for row in AFdatareader:
             modelst = 'I1850'+mycompset
             if (options.cpl_bypass):
                 modelst = 'ICB1850'+mycompset
+                if (options.sp):
+                  modelst = 'ICBCLM45BC'
 
             basecase = site
             if (mycaseid != ''):

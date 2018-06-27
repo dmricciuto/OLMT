@@ -83,6 +83,8 @@ parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
                   help = 'P parameter file to use')               
 parser.add_option("--parm_vals", dest="parm_vals", default="", \
                   help = 'User specified parameter values')
+parser.add_option("--pft", dest="mypft", default=-1, \
+                  help = 'Use this PFT for all gridcells')
 parser.add_option("--nopftdyn", action="store_true", dest="nopftdyn", \
                       default=False, help='Do not use dynamic PFT file')
 parser.add_option("--res", dest="res", default="hcru_hcru", \
@@ -359,7 +361,7 @@ if (lon_bounds[0] > -180 or lon_bounds[1] < 180 or lat_bounds[0] > -90 or \
         lat_bounds[1] < 90):
     isregional=True
 
-basecmd = 'python runcase.py --ccsm_input '+ \
+basecmd = 'python runcase.py --surfdata_grid --ccsm_input '+ \
     os.path.abspath(ccsm_input)+' --rmold --no_submit --machine ' \
     +options.machine+' --res '+options.res+' --model_root '+csmdir
 if (options.point_list != ''):
@@ -396,6 +398,8 @@ if (options.nofire):
     basecmd = basecmd+' --nofire'
 if (options.harvmod):
     basecmd = basecmd+' --harvmod'
+if (int(options.mypft) >= 0):
+    basecmd = basecmd+' --pft '+str(options.mypft)
 if (options.nopftdyn):
     basecmd = basecmd+' --nopftdyn'
 if (options.no_dynroot):
@@ -672,7 +676,10 @@ for c in cases:
         
         output.write("cd "+caseroot+'/'+c+"/\n")
         output.write("./xmlchange -id STOP_N -val "+str(this_run_n)+'\n')
-        output.write("./xmlchange -id REST_N -val 20\n")   #Restart every 20 years in global mode
+        if (options.cplhist):
+          output.write("./xmlchange -id REST_N -val 25\n")
+        else:
+          output.write("./xmlchange -id REST_N -val 20\n")   #Restart every 20 years in global mode
         output.write("./xmlchange -id RUN_STARTDATE -val "+(str(10000+model_startdate))[1:]+ \
                          '-01-01\n')                           
         if (n > 0):

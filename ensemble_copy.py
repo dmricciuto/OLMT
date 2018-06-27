@@ -41,13 +41,17 @@ myinput = open(options.parm_list, 'r')
 casename = options.casename
 
 #get parameter names and PFT information
+pnum=0
 for s in myinput:
    pdata = s.split()
    parm_names.append(pdata[0])
+   if (pdata[0] == 'co2'):
+     pnum_co2 = pnum
    if (len(pdata) == 3):
      parm_indices.append(-1)
    else:
      parm_indices.append(int(pdata[1]))
+   pnum=pnum+1
 myinput.close()
 
 #get parameter values
@@ -102,6 +106,8 @@ for f in os.listdir(ens_dir):
                 os.system('mv '+ens_dir+'/'+paramfile_new+'_tmp '+ens_dir+'/'+paramfile_new)
                 myoutput.write(" paramfile = '"+paramfile_new+"'\n")
                 pftfile = ens_dir+'/clm_params_'+est[1:]+'.nc'
+            elif ('ppmv' in s and 'co2' in parm_names):
+                myoutput.write(" co2_ppmv = "+str(parm_values[pnum_co2])+'\n')
             elif ('fsoilordercon' in s):
                 CNPfile_orig = ((s.split()[2]).strip("'"))
                 if (CNPfile_orig[0:2] == './'):
@@ -112,6 +118,16 @@ for f in os.listdir(ens_dir):
                 os.system('mv '+ens_dir+'/'+CNPfile_new+'_tmp '+ens_dir+'/'+CNPfile_new)
                 myoutput.write(" fsoilordercon = '"+CNPfile_new+"'\n")
                 CNPfile = ens_dir+'/CNP_parameters_'+est[1:]+'.nc'
+            elif ('fsurdat' in s):
+                surffile_orig = ((s.split()[2]).strip("'"))
+                if (surffile_orig[0:2] == './'):
+                  surffile_orig = orig_dir+'/'+surffile_orig[2:]
+                surffile_new = './surfdata_'+est[1:]+'.nc'
+                os.system('cp '+surffile_orig+' '+ens_dir+'/'+surffile_new)
+                os.system('nccopy -3 '+ens_dir+'/'+surffile_new+' '+ens_dir+'/'+surffile_new+'_tmp')
+                os.system('mv '+ens_dir+'/'+surffile_new+'_tmp '+ens_dir+'/'+surffile_new)
+                myoutput.write(" fsurdat = '"+surffile_new+"'\n")
+                surffile = ens_dir+'/surfdata_'+est[1:]+'.nc'
             elif ('finidat = ' in s):
                 finidat_file_orig = ((s.split()[2]).strip("'"))
                 if (finidat_file_orig.strip() != ''):
@@ -164,7 +180,12 @@ for p in parm_names:
          myvar = nffun.getvar(finidat_file_new, v)
          myvar = parm_values[pnum] * myvar
          ierr = nffun.putvar(finidat_file_new, v, myvar)
-   else:
+   elif (p == 'lai'):
+     myfile = surffile
+     param = nffun.getvar(myfile, 'MONTHLY_LAI')
+     param[:,:,:,:] = parm_values[pnum]
+     ierr = nffun.putvar(myfile, 'MONTHLY_LAI', param)
+   elif (p != 'co2'):
       if (p in CNP_parms):
          myfile= CNPfile
       else:

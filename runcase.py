@@ -57,6 +57,8 @@ parser.add_option("--res", dest="res", default="CLM_USRDAT", \
                       help='Resoultion for global simulation')
 parser.add_option("--point_list", dest="point_list", default='', \
                   help = 'File containing list of points to run')
+parser.add_option("--pft", dest="mypft", default=-1, \
+                  help = 'Use this PFT for all gridcells')
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
 parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
@@ -483,6 +485,8 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --nopftdyn'
     if (options.mymask != ''):
         ptcmd = ptcmd + ' --mask '+options.mymask
+    if (int(options.mypft) >= 0):
+        ptcmd = ptcmd + ' --pft '+str(options.mypft)
     if (isglobal):
         ptcmd = ptcmd + ' --res '+options.res
         if (options.point_list != ''):
@@ -729,8 +733,9 @@ if (options.ad_spinup):
         os.system('./xmlchange CLM_ACCELERATED_SPINUP=on')
         os.system('./xmlchange CLM_FORCE_COLDSTART=on')
 
-if (options.run_startyear > -1):
+if (int(options.run_startyear) > -1):
     os.system('./xmlchange RUN_STARTDATE='+str(options.run_startyear)+'-01-01')
+    print("Setting run start dater to "+str(options.run_startyear)+'-01-01')
 os.system('./xmlchange ATM_DOMAIN_PATH="\${RUNDIR}"')
 os.system('./xmlchange LND_DOMAIN_PATH="\${RUNDIR}"')
 os.system('./xmlchange ATM_DOMAIN_FILE=domain.nc')
@@ -861,9 +866,13 @@ for i in range(1,int(options.ninst)+1):
     var_list_spinup = ['PPOOL', 'EFLX_LH_TOT', 'RETRANSN', 'PCO2', 'PBOT', 'NDEP_TO_SMINN', 'OCDEP', \
                        'BCDEP', 'COL_FIRE_CLOSS', 'HDM', 'LNFM', 'NEE', 'GPP', 'FPSN', 'AR', 'HR', \
                        'MR', 'GR', 'ER', 'NPP', 'TLAI', 'SOIL3C', 'TOTSOMC', 'TOTSOMC_1m', 'LEAFC', \
-                       'DEADSTEMC', 'DEADCROOTC', 'FROOTC', 'LIVESTEMC', 'LIVECROOTC', 'TOTVEGC', \
+                       'DEADSTEMC', 'DEADCROOTC', 'FROOTC', 'LIVESTEMC', 'LIVECROOTC', 'TOTVEGC', 'N_ALLOMETRY','P_ALLOMETRY',\
                        'TOTCOLC', 'TOTLITC', 'BTRAN', 'SCALARAVG_vr', 'CWDC', 'QVEGE', 'QVEGT', 'QSOIL', 'QDRAI', \
                        'QRUNOFF', 'FPI', 'FPI_vr', 'FPG', 'FPI_P','FPI_P_vr', 'FPG_P', 'CPOOL','NPOOL', 'PPOOL', 'SMINN', 'HR_vr']
+    if ('ICBCLM45CB' in compset):
+      var_list_spinup = ['FPSN','TLAI','QVEGT','QVEGE','QSOIL','EFLX_LH_TOT','FSH','RH2M','TSA','FSDS','FLDS','PBOT', \
+                         'WIND','BTRAN','DAYL','T10','QBOT']
+
     if (options.C14):
         var_list_spinup.append('C14_TOTSOMC')
         var_list_spinup.append('C14_TOTSOMC_1m')

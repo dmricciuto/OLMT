@@ -439,13 +439,14 @@ for c in range(0,ncases):
                                 mycompsets[c]+'/run/'
                     thiscompset = mycompsets[c]
                 for y in range(starti,nfiles+1):   #skip first file in spinup
-                    yst=str(10000+ystart+(1-starti)+y*nypf)[1:5]
+                    yst=str(10000+ystart+(y*nypf))[1:5]
                     if (mycases[c].strip() == ''):
                         myfile = os.path.abspath(mydir+'/'+mycases[c]+'_'+thiscompset+".clm2."+hst+ \
                                                  "."+yst+"-01-01-00000.nc")
                     else:
                         myfile = os.path.abspath(mydir+'/'+mycases[c]+"_"+mysites[c]+'_'+thiscompset+ \
                                                  ".clm2."+hst+"."+yst+"-01-01-00000.nc")
+                    print starti, myfile, npf
                     if (os.path.exists(myfile)):
                         if (n == 0):
                             ylast = y
@@ -467,6 +468,7 @@ for c in range(0,ncases):
                             else:
                                  myscalefactors.append(float(options.scale_factor))
                                  var_units.append(varout.units.replace('^',''))
+                            print 'TEST'
                             nffile.close()
                         if (y == starti and n == 0 and v == 0):      # get lat/lon info
                             nffile = netcdf.netcdf_file(myfile,"r")
@@ -483,11 +485,12 @@ for c in range(0,ncases):
 
                         if len(myvar_temp) == npf:
                             for i in range(0,npf):
-                                myind = ylast*n*npf+(y-1)*npf+i
-                                x[myind] = ystart+(ylast*n*nypf+y*nypf) + nypf*(i*1.0-0.5)/npf
-                                mydata[v,myind] = myvar_temp[i]
+                                myind = ylast*n*npf+y*npf+i
+                                x[nsteps] = ystart+(ylast*n*nypf+y*nypf) + nypf*(i*1.0-0.5)/npf
+                                mydata[v,nsteps] = myvar_temp[i]
+                                print nsteps, x[nsteps], mydata[v,nsteps]
                                 if (myvars[v] == 'RAIN'):    #add snow for total precip
-                                    mydata[v,myind] = mydata[v,myind]+myvar_temp2[i]
+                                    mydata[v,nsteps] = mydata[v,nsteps]+myvar_temp2[i]
                                 nsteps=nsteps+1
                         else:
                             for i in range(0,npf):
@@ -502,7 +505,7 @@ for c in range(0,ncases):
                              yend_all = y-1
                          for i in range(0,npf):
                              if (n == nc-1):
-                                 myind=ylast*n*npf+(y-1)*npf+i
+                                 myind=ylast*n*npf+y*npf+i
                                  x[myind] = ystart+(ylast*n*nypf+y*nypf) + nypf*(i*1.0-0.5)/npf
                                  mydata[v,myind] = numpy.NaN
                                  nsteps=nsteps+1
@@ -637,10 +640,9 @@ for v in range(0,len(myvars)):
                 myvar = outdata.createVariable(myvars[v],'f',('time','gridcell'))
                 #print var_units
                 #print v, myvars[v], var_units[v]
-                
                 myvar.units=var_units[v]
                 myvar.missing_value=1e36
-                myvar[:,:]=1e36   #changed for gridcell
+                myvar[:,:]=myvar.missing_value   #changed for gridcell
             else:
                 myvar=outdata.variables[myvars[v]]
             scalefac = 1.0
@@ -674,6 +676,7 @@ for v in range(0,len(myvars)):
             bias[v,c] = bias[v,c]/len(gind)
             corr[v,c] = numpy.corrcoef(data_toplot[c,v,gind],obs_toplot[c,v,gind])[1,0]
 
+            print x_toplot[c,0:snum[c]], snum[c]
             if (options.ylog):
                 ax.plot(x_toplot[c, 0:snum[c]], abs(data_toplot[c,v,0:snum[c]]), label=mytitles[c], color=colors[c], \
                   linestyle=styles[c], linewidth=3)

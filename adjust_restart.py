@@ -68,37 +68,46 @@ if (options.harvest):
                        'DEADCROOTN', 'DEADCROOTN_STORAGE', 'DEADCROOTP', 'DEADCROOTP_STORAGE', 'XSMRPOOL', \
                        'XSMRPOOL_RECOVER']
 
-for v in range(0,len(var_names)):
-  hist_vals = nffun.getvar(fname_hist, var_names[v])
-  rest_vals = nffun.getvar(fname_restart, var_names[v].lower())
-  #Loop through all valid values in the restart file.
-  n_rest = len(rest_vals)
-  for i in range(0,n_rest):
-    if (float(rest_vals[i]) > 0.0 and float(hist_vals[0][i]) < 1.0e10 and float(hist_vals[0][i]) > 0.001):
-      rest_vals[i] = hist_vals[0][i]
-  ierr = nffun.putvar(fname_restart, var_names[v].lower(), rest_vals)
-
 if (options.harvest):
   for v in range(0,len(var_names_harvest)):	
     rest_vals = nffun.getvar(fname_restart, var_names_harvest[v].lower())
     #Loop through all valid values in the restart file.
     n_rest = len(rest_vals)
     for i in range(0,n_rest):
-      rest_vals[i] = rest_vals[i]*0.01
+      rest_vals[i] = rest_vals[i]*0.05
+      if (var_names_harvest[v] == 'LEAFC'):
+        rest_vals[i] = 0.33/0.03
+        print rest_vals[i]
+      elif (var_names_harvest[v] == 'FROOTC'):
+        rest_vals[i] = 0.33/0.03*0.666
+      elif (var_names_harvest[v] == 'LEAFN'):
+        rest_vals[i] = 0.33/0.03/25.0
+      elif (var_names_harvest[v] == 'FROOTN'):
+        rest_vals[i] = 0.33/0.03/42.0
     ierr = nffun.putvar(fname_restart, var_names_harvest[v].lower(), rest_vals)
+else:
+  for v in range(0,len(var_names)):
+    hist_vals = nffun.getvar(fname_hist, var_names[v])
+    rest_vals = nffun.getvar(fname_restart, var_names[v].lower())
+    #Loop through all valid values in the restart file.
+    n_rest = len(rest_vals)
+    for i in range(0,n_rest):
+      if (float(rest_vals[i]) > 0.0 and float(hist_vals[0][i]) < 1.0e10 and float(hist_vals[0][i]) > 0.001):
+        rest_vals[i] = hist_vals[0][i]
+    ierr = nffun.putvar(fname_restart, var_names[v].lower(), rest_vals)
 
-#get a single, non-depth dependent variable to count # of columns
-rest_vals = nffun.getvar(fname_restart, 'fpg')
-n_rest = len(rest_vals) 
-for v in range(0,len(var_names2d)):
-  hist_vals = nffun.getvar(fname_hist, var_names2d[v])
-  rest_vals = nffun.getvar(fname_restart, var_names2d[v].lower())
-  #Loop through all valid values in the restart file.
-  for i in range(0,n_rest):
-    for j in range(0,10):
-      if (float(rest_vals[i][j]) > 0.0 and float(hist_vals[0][j][i]) < 1.0e10 and float(hist_vals[0][j][i]) > 1e-10):
-        rest_vals[i][j] = hist_vals[0][j][i]
-  ierr = nffun.putvar(fname_restart, var_names2d[v].lower(), rest_vals)
+  #get a single, non-depth dependent variable to count # of columns
+  rest_vals = nffun.getvar(fname_restart, 'fpg')
+  n_rest = len(rest_vals) 
+  for v in range(0,len(var_names2d)):
+    hist_vals = nffun.getvar(fname_hist, var_names2d[v])
+    rest_vals = nffun.getvar(fname_restart, var_names2d[v].lower())
+    #Loop through all valid values in the restart file.
+    for i in range(0,n_rest):
+      for j in range(0,10):
+        if (float(rest_vals[i][j]) > 0.0 and float(hist_vals[0][j][i]) < 1.0e10 and float(hist_vals[0][j][i]) > 1e-10):
+          rest_vals[i][j] = hist_vals[0][j][i]
+    ierr = nffun.putvar(fname_restart, var_names2d[v].lower(), rest_vals)
 
 #Remove negative Ppool values
 #os.system("ncap2 -O -s 'ppool=0.2*npool' "+fname_restart+" "+fname_restart)
