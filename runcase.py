@@ -1149,17 +1149,18 @@ else:
 #CPPDEF modifications
 infile  = open("./Macros.make")
 outfile = open("./Macros.make.tmp",'a')
+
+if (options.humhol):
+    print("Turning on HUM_HOL modification\n")
+    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+if (options.harvmod):
+    print('Turning on HARVMOD modification\n')
+    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+
 for s in infile:
-    if (s[0:7] == "CPPDEFS"):
-        stemp = s
-        if (options.harvmod):
-            print("Turning on HARVMOD modificaiton\n")
-            stemp = stemp[:-1]+' -DHARVMOD\n'
-        if (cpl_bypass):
-            stemp = stemp[:-1]+' -DCPL_BYPASS\n'
-        if (options.humhol):
-            stemp = stemp[:-1]+' -DHUM_HOL\n'
-        outfile.write(stemp) 
+    if ('CPPDEFS' in s and cpl_bypass):
+       stemp = s[:-1]+' -DCPL_BYPASS\n'
+       outfile.write(stemp)
     elif (s[0:13] == "NETCDF_PATH:=" and options.machine == 'userdefined'):
         try:
             os.environ['NETCDF_PATH']
@@ -1167,6 +1168,7 @@ for s in infile:
             print('ERROR:  Must set NETCDF_PATH environment variable for user defined machine')
             sys.exit(1)
         outfile.write('NETCDF_PATH:= '+os.getenv('NETCDF_PATH')+'\n')
+
     elif (s[0:7] == 'SLIBS+=' and options.machine == 'userdefined'):
         outfile.write('SLIBS+=-lnetcdff -L/usr/lib/lapack -llapack -L/usr/lib/libblas -lblas' \
                           +' $(shell $(NETCDF_PATH)/bin/nc-config --flibs)\n')
