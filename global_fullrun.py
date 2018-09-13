@@ -648,8 +648,8 @@ for c in cases:
    
         if (options.machine == 'cades'):
             output.write('source $MODULESHOME/init/bash\n')
-            output.write('module unload python')
-            output.write('module load python/2.7.12')
+            output.write('module unload python\n')
+            output.write('module load python/2.7.12\n\n')
         if (options.machine == 'eos'):
             output.write('source $MODULESHOME/init/csh\n')
             output.write('module load nco\n')
