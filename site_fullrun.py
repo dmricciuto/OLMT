@@ -701,7 +701,10 @@ for row in AFdatareader:
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
                     if ("perl" in s or "python" in s):
-                        output.write("#!/bin/csh -f\n")
+                        if ('cades' in options.machine):
+                          output.write("#!/bin/bash -f\n")
+                        else:
+                          output.write("#!/bin/csh -f\n")
                         timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
                                      int(float(options.walltime)))*60))+':00'
                         if (options.debug):
@@ -754,6 +757,10 @@ for row in AFdatareader:
                     output.write('module unload numpy\n')
                     output.write('module load python/2.7-anaconda\n')
                     output.write('module load nco\n')     
+                if ('cades' in options.machine):
+                    output.write('source $MODULESHOME/init/bash\n')
+                    output.write('module unload python\n')
+                    output.write('module load python/2.7.12\n')
             else:
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','a')   
                 

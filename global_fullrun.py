@@ -627,7 +627,10 @@ for c in cases:
                             int(float(options.walltime)))*60))+':00'
                 if (options.debug):
                     timestr='00:30:00'
-                output.write("#!/bin/csh -f\n")
+                if ('cades' in options.machine):
+                    output.write("#!/bin/bash -f\n")
+                else:
+                    output.write("#!/bin/csh -f\n")
                 if (mysubmit_type == 'qsub'):
                     output.write('#PBS -l walltime='+timestr+'\n')
                 else:
@@ -643,6 +646,10 @@ for c in cases:
         input.close()
         output.write("\n")
    
+        if (options.machine == 'cades'):
+            output.write('source $MODULESHOME/init/bash\n')
+            output.write('module unload python')
+            output.write('module load python/2.7.12')
         if (options.machine == 'eos'):
             output.write('source $MODULESHOME/init/csh\n')
             output.write('module load nco\n')
