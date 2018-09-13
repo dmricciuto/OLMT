@@ -71,7 +71,7 @@ parser.add_option("--compset", dest="compset", default='I1850CNPRDCTCBC', \
                          "Currently supports ONLY *CLM45(CN) compsets")
 parser.add_option("--cruncep", dest="cruncep", default=False, \
                   help = "use cru-ncep data", action="store_true")
-parser.add_option("--cruncepv7", dest="cruncepv7", default=False, \
+parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
                   help = "use cru-ncep data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
@@ -317,14 +317,14 @@ if (options.mymodel == 'ELM'):
     if ('ECA' in compset):
         parm_file = 'clm_params.c160709.nc'
     else:
-        parm_file = 'clm_params_c180312.nc'
+        parm_file = 'clm_params_c180524.nc'
 if (options.mymodel == 'CLM5'):
     parm_file = 'clm5_params.c171117.nc'
 
 #pftphys_stamp = '_c160711' #'c160711_root'
 #pftphys_stamp = '_c160711_test170303'
 #CNPstamp = 'c131108'
-CNPstamp = 'c180312'
+CNPstamp = 'c180529'
 
 #check consistency of options
 if ('20TR' in compset):
@@ -409,7 +409,7 @@ if (options.mycaseid != ""):
 
 #CRU-NCEP 2 transient phases
 if ('CRU' in compset or options.cruncep or options.gswp3 or \
-            options.cruncepv7 or options.princeton or options.cplhist):
+            options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
     use_reanalysis = False
@@ -918,8 +918,8 @@ for i in range(1,int(options.ninst)+1):
         else:
             if (options.dailyvars):
                 output.write(" hist_nhtfrq = "+ str(options.hist_nhtfrq)+",-24,-24\n")
-                h1varst = "fincl2 = "
-                h2varst = "fincl3 = "
+                h1varst = "hist_fincl2 = "
+                h2varst = "hist_fincl3 = "
                 for v in var_list_hourly:
                     h1varst = h1varst+"'"+v+"',"
                 for v in var_list_daily:
@@ -1071,10 +1071,10 @@ for i in range(1,int(options.ninst)+1):
             output.write(" spinup_mortality_factor = 10\n")
     if (cpl_bypass):
         if (use_reanalysis):
-            if (options.cruncepv7):
+            if (options.cruncepv8):
                     output.write(" metdata_type = 'cru-ncep'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.cruncep_qianFill.0.5d.V7.c160715" + \
+                         +"atm_forcing.datm7.cruncep_qianFill.0.5d.v8.c180815" + \
                          "/cpl_bypass_full'\n")
             elif (options.cruncep):
                 if (options.livneh):
@@ -1103,7 +1103,8 @@ for i in range(1,int(options.ninst)+1):
                 else:
                     output.write(" metdata_type = 'gswp3'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
+                          +"/atm_forcing.datm7.GSWP3.0.5d.v2.c180716/cpl_bypass_full'\n")
+#                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
             elif (options.princeton):
                 if (options.livneh):
                     output.write(" metdata_type = 'princeton_livneh'\n")
@@ -1247,7 +1248,7 @@ if (not cpl_bypass):
         elif ('streams' in s):
             continue  #do nothing
         elif ('taxmode' in s):
-            if (options.cruncep or options.cruncepv7):
+            if (options.cruncep or options.cruncepv8):
                 taxst = "taxmode = 'cycle', 'cycle', 'cycle', 'extend', 'extend'"
             else:
                 taxst = "taxmode = 'cycle', 'extend', 'extend'"

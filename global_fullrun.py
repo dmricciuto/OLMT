@@ -125,7 +125,7 @@ parser.add_option("--CH4", dest="CH4", default=False, \
                   help = 'To turn on CN with CLM4me', action="store_true")
 parser.add_option("--cruncep", dest="cruncep", default=False, \
                   action="store_true", help = 'Use CRU-NCEP meteorology')
-parser.add_option("--cruncepv7", dest="cruncepv7", default=False, \
+parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
                   help = "use cru-ncep data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
@@ -300,13 +300,12 @@ if (options.caseroot == '' or (os.path.exists(options.caseroot) == False)):
 else:
     caseroot = os.path.abspath(options.caseroot)
 
-
-if (options.cruncep or options.cruncepv7 or options.gswp3 or options.princeton):
+if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton):
     startyear = 1901
     endyear = 1920
     if (options.cruncep):
        site_endyear = 2013
-    elif (options.cruncepv7):
+    elif (options.cruncepv8):
        site_endyear = 2016   
     elif (options.gswp3):
        site_endyear = 2010
@@ -335,7 +334,7 @@ if (int(options.nyears_final_spinup) % ncycle !=0):
 
 if (translen == -1):
     translen = endyear-1850+1        #length of transient run
-    if (options.cpl_bypass and (options.cruncep or options.cruncepv7 or options.gswp3 or options.princeton)):
+    if (options.cpl_bypass and (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton)):
         translen = site_endyear-1850+1
 
 fsplen = int(ny_fin)
@@ -416,8 +415,8 @@ if (options.CH4):
     basecmd = basecmd+' --CH4'
 if (options.cruncep):
     basecmd = basecmd+' --cruncep'
-if (options.cruncepv7):
-    basecmd = basecmd+' --cruncepv7'
+if (options.cruncepv8):
+    basecmd = basecmd+' --cruncepv8'
 if (options.gswp3):
     basecmd = basecmd+' --gswp3'
 if (options.princeton):
@@ -548,7 +547,7 @@ if (options.dailyrunoff):
     cmd_trns = cmd_trns+' --dailyrunoff'
 
 #transient phase 2 (CRU-NCEP only, without coupler bypass)
-if ((options.cruncep or options.gswp3 or options.cruncepv7) and not options.cpl_bypass):
+if ((options.cruncep or options.gswp3 or options.cruncepv8) and not options.cpl_bypass):
     basecase=basecase.replace('1850','20TR')+'_phase1'
     thistranslen = site_endyear - 1921 + 1
     cmd_trns2 = basecmd+' --trans2 --finidat_case '+basecase+ \
@@ -573,7 +572,7 @@ if (options.nofn == False):
 if (options.notrans == False):
     print('\nSetting up transient case\n')
     os.system(cmd_trns)
-if ((options.cruncep or options.gswp3 or options.cruncepv7) and not options.cpl_bypass):
+if ((options.cruncep or options.gswp3 or options.cruncepv8) and not options.cpl_bypass):
     print('\nSetting up transient case phase 2\n')
     os.system(cmd_trns2)
         
