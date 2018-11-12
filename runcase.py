@@ -112,6 +112,8 @@ parser.add_option("--run_units", dest="run_units", default='nyears', \
                   help = "run length units (ndays, nyears)")
 parser.add_option("--run_n", dest="run_n", default=50, \
                   help = "run length (in run units)")
+parser.add_option("--rest_n", dest="rest_n", default=-1, \
+                  help = "restart interval (in run units)")
 parser.add_option("--run_startyear", dest="run_startyear",default=-1, \
                       help='Starting year for model output')
 parser.add_option("--rmold", dest="rmold", default=False, action="store_true", \
@@ -154,7 +156,7 @@ parser.add_option("--ng", dest="ng", default=64, \
                   help = 'number of groups to run in ensmble mode')
 parser.add_option("--tstep", dest="tstep", default=0.5, \
                   help = 'CLM timestep (hours)')
-parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_1765-2007_c100614.nc", \
+parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'CLM timestep (hours)')
 parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
                   help = 'number of years to run ad_spinup')
@@ -183,6 +185,12 @@ parser.add_option("--centbgc", dest="centbgc", default=False, \
                   help = 'To turn on CN with multiple soil layers, CENTURY C module (CLM4ME on as well)', action="store_true")
 parser.add_option("--CH4", dest="CH4", default=False, \
                   help = 'To turn on CN with CLM4me', action="store_true")
+parser.add_option("--1850_ndep", dest="ndep1850", default=False, \
+                  help = 'Use constant 1850 N deposition', action="store_true")
+parser.add_option("--1850_aero", dest="aero1850", default=False, \
+                  help = 'Use constant 1850 aerosol deposition', action="store_true")
+parser.add_option("--1850_co2", dest="co21850", default=False, \
+                  help = 'Use constant 1850 CO2 concentration', action="store_true")
 parser.add_option("--C13", dest="C13", default=False, \
                   help = 'Switch to turn on C13', action="store_true")
 parser.add_option("--C14", dest="C14", default=False, \
@@ -260,7 +268,7 @@ elif ('oic5' in options.machine or 'cori-haswell' in options.machine or 'eos' in
 elif ('cori-knl' in options.machine):
     ppn=64
 elif ('edison' in options.machine):
-    ppn=24
+    ppn=48
 
 PTCLMdir = os.getcwd()
 
@@ -784,6 +792,7 @@ if ('20TR' in compset):
 
 comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV']
 for c in comps:
+    print 'Setting NTASKS_'+c+' to '+str(options.np)
     os.system('./xmlchange NTASKS_'+c+'='+str(options.np))
     os.system('./xmlchange NTHRDS_'+c+'=1')
 
@@ -798,6 +807,9 @@ if (int(options.ninst) > 1):
 os.system('./xmlchange STOP_OPTION='+options.run_units)
 os.system('./xmlchange STOP_N='+str(options.run_n))
 
+if (options.rest_n > 0):
+  print 'Setting REST_N to '+str(options.rest_n)
+  os.system('./xmlchange REST_N='+str(options.rest_n))
 
 #--------------------------CESM setup ----------------------------------------
 
@@ -1040,8 +1052,12 @@ for i in range(1,int(options.ninst)+1):
         #output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
         #  "/lnd/clm2/ndepdata/fndep_clm_hist_simyr1849-2006_1.9x2.5_" + \
         #              "c100428.nc'\n")
-        output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
-          "/lnd/clm2/ndepdata/fndep_elm_cbgc_exp_simyr1849-2006_1.9x2.5_c171012.nc'\n")
+        if (options.ndep1850 == True):
+          output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
+            "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1850-1850_1.9x2.5_c100428.nc'\n")
+        else:
+          output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
+            "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1849-2106_1.9x2.5_c100428.nc'\n")
         if (options.vsoilc):
             output.write(" use_vertsoilc = .true.\n")
         if (options.centbgc):
@@ -1121,17 +1137,26 @@ for i in range(1,int(options.ninst)+1):
             elif (options.cplhist):
                 output.write(" metdata_type = 'cplhist'\n")
                 output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
+                          +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full'\n")
+#                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
         else:
             output.write("metdata_type = 'site'\n")
             output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                              +"CLM1PT_data/"+ptstr+"_"+options.site+"/'\n")
         if (options.monthly_metdata != ''):
             output.write(" metdata_biases = '"+options.monthly_metdata+"'\n")
-        output.write(" co2_file = '"+options.ccsm_input+"/atm/datm7/CO2/" \
+        if (options.co21850):
+          output.write(" co2_file = '"+options.ccsm_input+"/atm/datm7/CO2/" \
+                         +"fco2_datm_rcp4.5_1850-1850_c130312.nc'\n")
+        else:
+          output.write(" co2_file = '"+options.ccsm_input+"/atm/datm7/CO2/" \
                          +options.co2_file+"'\n")
-        output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
-                         +"trop_mozart_aero/aero/aerosoldep_monthly_1849-2006_1.9x2.5_c090803.nc'\n")
+        if (options.aero1850):
+          output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
+                         +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1850-1850_1.9x2.5_c100402.nc'\n")
+        else:
+          output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
+                         +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1849-2104_1.9x2.5_c100402.nc'\n")
 
 
     output.close()

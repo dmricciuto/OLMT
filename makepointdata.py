@@ -92,7 +92,8 @@ elif ('ne30' in options.res):
     #domainfile_orig = ccsm_input+'/share/domains/domain.lnd.ne30np4_oEC60to30.20151214.nc'
     #water cycle experiment
     domainfile_orig = ccsm_input+'/share/domains/domain.lnd.ne30np4_oEC60to30v3.161222.nc'  
-    surffile_orig   = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_ne30np4_simyr1850_2015_c171018.nc'
+    #surffile_orig   = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_ne30np4_simyr1850_2015_c171018.nc'
+    surffile_orig   = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_ne30np4_simyr1850_c180306.nc'
     pftdyn_orig     = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_ne30np4_hist_simyr1850_2015_c20171018.nc'
     nyears_landuse  = 166
 
