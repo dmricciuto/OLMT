@@ -163,14 +163,21 @@ def submit(fname, project='', submit_type='qsub', job_depend=''):
         submit_type = submit_type+' --account '+project
     if ('sbatch' in submit_type):
 	job_depend_flag = ' --dependency=afterok:'
-    if (job_depend != ''):
+    if (job_depend != '' and submit_type != ''):
         os.system(submit_type+job_depend_flag+job_depend+' '+fname+' > temp/jobinfo')
     else:
+      if (submit_type == ''):
+        os.system('chmod a+x '+fname)
+        os.system('./'+fname+' > temp/jobinfo')
+      else:
         os.system(submit_type+' '+fname+' > temp/jobinfo')
-    myinput = open('temp/jobinfo')
-    for s in myinput:
-        thisjob = re.search('[0-9]+', s).group(0)
-    myinput.close()
+      if (submit_type != ''):
+        myinput = open('temp/jobinfo')
+        for s in myinput:
+            thisjob = re.search('[0-9]+', s).group(0)
+        myinput.close()
+      else:
+        thisjob=0 
     os.system('rm temp/jobinfo')
     return thisjob
 
@@ -690,6 +697,8 @@ for row in AFdatareader:
             groupnum = sitenum/32
             if ('cori' in options.machine or options.machine == 'edison'):
                 mysubmit_type = 'sbatch'
+            if ('ubuntu' in options.machine):
+                mysubmit_type = ''
             if ((sitenum % 32) == 0):
                 if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
                     input = open(caseroot+'/'+ad_case_firstsite+'/case.run')
