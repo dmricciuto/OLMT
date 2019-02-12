@@ -1,0 +1,4 @@
+#Variable Startyear endyear Startday endday averaging period factor add offset pft
+GPP            2000    2009          1    365        3650            31536000    0
+NPP            2000    2009          1    365        3650            31536000    0
+NEE            2000    2009          1    365        3650            31536000    0

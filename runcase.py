@@ -268,7 +268,7 @@ elif ('oic5' in options.machine or 'cori-haswell' in options.machine or 'eos' in
 elif ('cori-knl' in options.machine):
     ppn=64
 elif ('edison' in options.machine):
-    ppn=48
+    ppn=24
 
 PTCLMdir = os.getcwd()
 
@@ -569,7 +569,7 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if ('US-SPR' in options.site):
+            if (options.humhol):
                 numxpts=2
             else:
                 numxpts=1
@@ -610,6 +610,19 @@ if (options.mod_parm_file != ''):
 else:
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
+    if (options.humhol):
+      print('Adding hummock-hollow parameters (default for SPRUCE site)')
+      print('humhol_ht = 0.15m')
+      print('hol_frac  = 0.64')
+      print('humhol_dist = 1.0m')
+      print('qflx_h2osfc_surfrate = 1.0e-7')
+      os.system('ncap -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      os.system('ncap -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      os.system('ncap -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      os.system('ncap -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+
+
+
 os.system('chmod u+w ' +tmpdir+'/clm_params.nc')
 if (options.parm_file != ''):
     pftfile = tmpdir+'/clm_params.nc'
@@ -743,7 +756,7 @@ if (options.ad_spinup):
 
 if (int(options.run_startyear) > -1):
     os.system('./xmlchange RUN_STARTDATE='+str(options.run_startyear)+'-01-01')
-    print("Setting run start dater to "+str(options.run_startyear)+'-01-01')
+    print("Setting run start date to "+str(options.run_startyear)+'-01-01')
 os.system('./xmlchange ATM_DOMAIN_PATH="\${RUNDIR}"')
 os.system('./xmlchange LND_DOMAIN_PATH="\${RUNDIR}"')
 os.system('./xmlchange ATM_DOMAIN_FILE=domain.nc')
