@@ -220,6 +220,12 @@ parser.add_option("--mc_ensemble", dest="mc_ensemble", default=-1, \
                   help = 'Monte Carlo ensemble (argument is # of simulations)')
 parser.add_option("--ensemble_nocopy", dest="ensemble_nocopy", default=False, \
                   help = 'Do not copy files to ensemble directories', action="store_true")
+parser.add_option("--surffile", dest="surffile", default="", \
+                  help = 'Surface file to use')
+parser.add_option("--domainfile", dest="domainfile", default="", \
+                  help = 'Domain file to use')
+parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
+                  help = 'Fates parameter file to use')
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
@@ -268,7 +274,7 @@ elif ('oic5' in options.machine or 'cori-haswell' in options.machine or 'eos' in
 elif ('cori-knl' in options.machine):
     ppn=64
 elif ('edison' in options.machine):
-    ppn=48
+    ppn=24
 
 PTCLMdir = os.getcwd()
 
@@ -744,10 +750,18 @@ if (options.ad_spinup):
 if (int(options.run_startyear) > -1):
     os.system('./xmlchange RUN_STARTDATE='+str(options.run_startyear)+'-01-01')
     print("Setting run start dater to "+str(options.run_startyear)+'-01-01')
-os.system('./xmlchange ATM_DOMAIN_PATH="\${RUNDIR}"')
-os.system('./xmlchange LND_DOMAIN_PATH="\${RUNDIR}"')
-os.system('./xmlchange ATM_DOMAIN_FILE=domain.nc')
-os.system('./xmlchange LND_DOMAIN_FILE=domain.nc')
+if (options.domainfile == ''):
+  os.system('./xmlchange ATM_DOMAIN_PATH="\${RUNDIR}"')
+  os.system('./xmlchange LND_DOMAIN_PATH="\${RUNDIR}"')
+  os.system('./xmlchange ATM_DOMAIN_FILE=domain.nc')
+  os.system('./xmlchange LND_DOMAIN_FILE=domain.nc')
+else:
+  domainpath = '/'.join(options.domainfile.split('/')[:-1])
+  domainfile = options.domainfile.split('/')[-1]
+  os.system('./xmlchange ATM_DOMAIN_PATH='+domainpath)
+  os.system('./xmlchange LND_DOMAIN_PATH='+domainpath)
+  os.system('./xmlchange ATM_DOMAIN_FILE='+domainfile)
+  os.system('./xmlchange LND_DOMAIN_FILE='+domainfile)
 
 #turn off archiving
 os.system('./xmlchange DOUT_S=FALSE') 
@@ -1031,8 +1045,12 @@ for i in range(1,int(options.ninst)+1):
 
 
     #surface data file
-    output.write(" fsurdat = '"+rundir+"/surfdata.nc'\n")
-        
+    if (options.surffile == ''):
+      output.write(" fsurdat = '"+rundir+"/surfdata.nc'\n")
+    else:
+      output.write(" fsurdat = '"+options.surffile+"'\n")      
+
+  
     #pft dynamics file for transient run
     if ('20TR' in compset):
         if (options.nopftdyn):
@@ -1044,6 +1062,8 @@ for i in range(1,int(options.ninst)+1):
             output.write(' check_finidat_year_consistency = .false.\n')
     #pft-physiology file
     output.write(" paramfile = '"+rundir+"/clm_params.nc'\n")
+    if ('ED' in compset and options.fates_paramfile != ''):
+      output.write(" fates_paramfile = '"+options.fates_paramfile+"'\n")
 
 
     if ('RD' in compset or 'ECA' in compset):
@@ -1407,6 +1427,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
     if ('cori' in options.machine or options.machine == 'edison'):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
+        os.system('mkdir -p '+PTCLMdir+'/scripts/'+myscriptsdir)
         output_run  = open(PTCLMdir+'/scripts/'+myscriptsdir+'/ensemble_run_'+casename+'.pbs','w')
         timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
                                      int(float(options.walltime)))*60))+':00'
@@ -1428,14 +1449,15 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
         else:
             output_run.write('#SBATCH --time='+timestr+'\n')
             output_run.write('#SBATCH -J ens_'+casename+'\n')
+            output_run.write('#SBATCH --nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+'\n')
             if ('edison' in options.machine or 'cori' in options.machine):
               if (options.debug):
-                output_run.write('#SBATCH --partition=debug\n')
+                output_run.write('#SBATCH --qos=debug\n')
               else:
-	        output_run.write('#SBATCH --partition=regular\n')
-            elif ("#PBS" in s or "#!" in s or '#SBATCH' in s):
-                #edit number of required nodes for ensemble runs
-                output_run.write('#SBATCH --nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+'\n')
+	        output_run.write('#SBATCH --qos=regular\n')
+            #elif ("#PBS" in s or "#!" in s or '#SBATCH' in s):
+            #    #edit number of required nodes for ensemble runs
+            #    output_run.write('#SBATCH --nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+'\n')
 
         output_run.write("\n")
         if (options.machine == 'eos'):
@@ -1463,6 +1485,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
             output_run.write('module unload python\n')
             output_run.write('module unload scipy\n')
             output_run.write('module unload numpy\n')
+            output_run.write('module load cray-netcdf\n')
             output_run.write('module load python/2.7-anaconda\n')
             output_run.write('module load nco\n')
 
@@ -1494,4 +1517,4 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
         output_run.write(cmd+'\n')
         output_run.close()
         if (options.no_submit == False):
-            os.system('qsub '+PTCLMdir+'/scripts/'+myscriptsdir+'/ensemble_run_'+casename+'.pbs')
+            os.system(mysubmit_type+' '+PTCLMdir+'/scripts/'+myscriptsdir+'/ensemble_run_'+casename+'.pbs')

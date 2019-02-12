@@ -83,7 +83,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
             ndays_total = ndays_total + n_days
             #get number of timesteps per output file
             
-            if ('20TR' in case or (not '1850' in case)):     #Transient assume daily ouput
+            if (0 == 1): #if (('20TR' in case or (not '1850' in case))):     #Transient assume daily ouput
                 for d in range(myday_start[index]-1,myday_end[index]):
                     if ('US-SPR' in case):
                       output.append(0.25*(mydata[d][myindex+hol_add]*myfactor[index] \
@@ -93,8 +93,8 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
                       output.append(mydata[d][myindex]*myfactor[index] \
                              +myoffset[index])
             else:                    #Assume annual output (ignore days)
-               for d in range(myday_start[index]-1,myday_end[index]):
-                  output.append(mydata[0,myindex]*myfactor[index]+myoffset[index])
+               for d in range(myday_start[index]-1,myday_end[index]):    #28-38 was myindex
+                  output.append(sum(mydata[0,28:38])/10.0*myfactor[index]+myoffset[index])
         for i in range(0,ndays_total/myavg[index]):
  	    data[thiscol] = sum(output[(i*myavg[index]):((i+1)*myavg[index])])/myavg[index]
             thiscol=thiscol+1
@@ -111,6 +111,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
         pnum=pnum+1
     else:
       pfname = rundir+'clm_params_'+str(100000+thisjob)[1:]+'.nc'
+      fpfname = rundir+'fates_params_'+str(100000+thisjob)[1:]+'.nc'
       sfname = rundir+'surfdata_'+str(100000+thisjob)[1:]+'.nc'
       pnum=0
       for p in pnames:
@@ -124,6 +125,12 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
                ppmv = float(s.split()[2])
            parms[pnum] = ppmv
            lnd_infile.close()
+         elif ('fates' in p):   #fates parameter file
+           mydata = nffun.getvar(fpfname,p) 
+           if (int(ppfts[pnum]) >= 0):
+             parms[pnum] = mydata[int(ppfts[pnum])]
+           else:
+             parms[pnum] = mydata[0]
          else:                #Regular parameter file
            mydata = nffun.getvar(pfname,p) 
            if (int(ppfts[pnum]) >= 0):
@@ -234,14 +241,20 @@ if (rank == 0):
     if (do_postproc):
         data_out = data.transpose()
         parm_out = parms.transpose()
+        good=[]
+        for i in range(0,options.n):
+          if not np.isnan(sum(data_out[i,:])):
+            good.append(i)
+        data_out = data_out[good,:]
+        parm_out = parm_out[good,:]
         np.savetxt(options.casename+'_postprocessed.txt', data_out)
         #UQ-ready outputs (80% of data for traning, 20% for validation)
         UQ_output = 'UQ_output/'+options.casename
         os.system('mkdir -p '+UQ_output)
-        np.savetxt(UQ_output+'/ytrain.dat', data_out[0:int(options.n*0.8),:])
-        np.savetxt(UQ_output+'/yval.dat',   data_out[int(options.n*0.8):,:])
-        np.savetxt(UQ_output+'/ptrain.dat', parm_out[0:int(options.n*0.8),:])
-        np.savetxt(UQ_output+'/pval.dat', parm_out[int(options.n*0.8):,:])
+        np.savetxt(UQ_output+'/ytrain.dat', data_out[0:int(len(good)*0.8),:])
+        np.savetxt(UQ_output+'/yval.dat',   data_out[int(len(good)*0.8):,:])
+        np.savetxt(UQ_output+'/ptrain.dat', parm_out[0:int(len(good)*0.8),:])
+        np.savetxt(UQ_output+'/pval.dat', parm_out[int(len(good)*0.8):,:])
         myoutput = open(UQ_output+'/pnames.txt', 'w')
         eden_header=''
         for p in pnames:

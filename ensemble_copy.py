@@ -96,7 +96,17 @@ for f in os.listdir(ens_dir):
         myinput=open(ens_dir+'/'+f)
         myoutput=open(ens_dir+'/'+f+'.tmp','w')
         for s in myinput:
-            if ('paramfile' in s):
+            if ('fates_paramfile' in s):
+                paramfile_orig = ((s.split()[2]).strip("'"))
+                if (paramfile_orig[0:2] == './'):
+                  paramfile_orig = orig_dir+'/'+paramfile_orig[2:]
+                paramfile_new  = './fates_params_'+est[1:]+'.nc'
+                os.system('cp '+paramfile_orig+' '+ens_dir+'/'+paramfile_new)
+                os.system('nccopy -3 '+ens_dir+'/'+paramfile_new+' '+ens_dir+'/'+paramfile_new+'_tmp')
+                os.system('mv '+ens_dir+'/'+paramfile_new+'_tmp '+ens_dir+'/'+paramfile_new)
+                myoutput.write(" fates_paramfile = '"+paramfile_new+"'\n")
+                fates_paramfile = ens_dir+'/fates_params_'+est[1:]+'.nc'
+            elif ('paramfile' in s):
                 paramfile_orig = ((s.split()[2]).strip("'"))
                 if (paramfile_orig[0:2] == './'):
                    paramfile_orig = orig_dir+'/'+paramfile_orig[2:]
@@ -188,6 +198,8 @@ for p in parm_names:
    elif (p != 'co2'):
       if (p in CNP_parms):
          myfile= CNPfile
+      elif ('fates' in p):
+         myfile = fates_paramfile
       else:
          myfile = pftfile
       param = nffun.getvar(myfile, p)

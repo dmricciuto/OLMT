@@ -260,7 +260,7 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
            myproject=s[:-1] 
         print('Project = '+myproject)
     elif ('edison' in options.machine):
-        runroot=os.environ.get('CSCRATCH')+'acme_scratch/edison/'
+        runroot=os.environ.get('CSCRATCH')+'/acme_scratch/edison/'
     else:
         runroot = csmdir+'/run'
 else:
