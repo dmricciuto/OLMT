@@ -111,6 +111,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
         pnum=pnum+1
     else:
       pfname = rundir+'clm_params_'+str(100000+thisjob)[1:]+'.nc'
+      fpfname = rundir+'fates_params_'+str(100000+thisjob)[1:]+'.nc'
       sfname = rundir+'surfdata_'+str(100000+thisjob)[1:]+'.nc'
       pnum=0
       for p in pnames:
@@ -124,6 +125,12 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
                ppmv = float(s.split()[2])
            parms[pnum] = ppmv
            lnd_infile.close()
+         elif ('fates' in p):   #fates parameter file
+           mydata = nffun.getvar(fpfname,p) 
+           if (int(ppfts[pnum]) >= 0):
+             parms[pnum] = mydata[int(ppfts[pnum])]
+           else:
+             parms[pnum] = mydata[0]
          else:                #Regular parameter file
            mydata = nffun.getvar(pfname,p) 
            if (int(ppfts[pnum]) >= 0):
@@ -234,14 +241,21 @@ if (rank == 0):
     if (do_postproc):
         data_out = data.transpose()
         parm_out = parms.transpose()
+        good=[]
+        for i in range(0,options.n):
+          #only save valid runs (no NaNs)
+          if not np.isnan(sum(data_out[i,:])):
+            good.append(i)
+        data_out = data_out[good,:]
+        parm_out = parm_out[good,:]
         np.savetxt(options.casename+'_postprocessed.txt', data_out)
         #UQ-ready outputs (80% of data for traning, 20% for validation)
         UQ_output = 'UQ_output/'+options.casename
         os.system('mkdir -p '+UQ_output)
-        np.savetxt(UQ_output+'/ytrain.dat', data_out[0:int(options.n*0.8),:])
-        np.savetxt(UQ_output+'/yval.dat',   data_out[int(options.n*0.8):,:])
-        np.savetxt(UQ_output+'/ptrain.dat', parm_out[0:int(options.n*0.8),:])
-        np.savetxt(UQ_output+'/pval.dat', parm_out[int(options.n*0.8):,:])
+        np.savetxt(UQ_output+'/ytrain.dat', data_out[0:int(len(good)*0.8),:])
+        np.savetxt(UQ_output+'/yval.dat',   data_out[int(len(good)*0.8):,:])
+        np.savetxt(UQ_output+'/ptrain.dat', parm_out[0:int(len(good)*0.8),:])
+        np.savetxt(UQ_output+'/pval.dat', parm_out[int(len(good)*0.8):,:])
         myoutput = open(UQ_output+'/pnames.txt', 'w')
         eden_header=''
         for p in pnames:
