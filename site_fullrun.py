@@ -84,7 +84,7 @@ parser.add_option("--np", dest="np", default=1, \
                   help = 'number of processors')
 parser.add_option("--tstep", dest="tstep", default=0.5, \
                   help = 'CLM timestep (hours)')
-parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_1765-2007_c100614.nc", \
+parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'CLM timestep (hours)')
 parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
                   help = 'number of years to run ad_spinup')
