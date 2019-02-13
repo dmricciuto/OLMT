@@ -171,13 +171,13 @@ def submit(fname, project='', submit_type='qsub', job_depend=''):
         os.system('./'+fname+' > temp/jobinfo')
       else:
         os.system(submit_type+' '+fname+' > temp/jobinfo')
-      if (submit_type != ''):
-        myinput = open('temp/jobinfo')
-        for s in myinput:
-            thisjob = re.search('[0-9]+', s).group(0)
-        myinput.close()
-      else:
-        thisjob=0 
+    if (submit_type != ''):
+      myinput = open('temp/jobinfo')
+      for s in myinput:
+          thisjob = re.search('[0-9]+', s).group(0)
+      myinput.close()
+    else:
+      thisjob=0 
     os.system('rm temp/jobinfo')
     return thisjob
 
