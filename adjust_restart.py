@@ -29,7 +29,7 @@ if (options.restart_year == ''):
         if (len(restart_file) > 1):
     	   restart_file_last = restart_file[-1]
         else:
-           restart_file_last = restart_file
+           restart_file_last = restart_file[0]
 	year = int(restart_file_last[-19:-15])
 else:
 	year = int(options.restart_year)
