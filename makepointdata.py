@@ -14,6 +14,8 @@ parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
                   help = 'latitude range for regional run')
 parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
                   help = 'longitude range for regional run')
+parser.add_option("--lai", dest="lai", default=-999, \
+                  help = 'Set constant LAI (SP mode only)')
 parser.add_option("--model", dest="mymodel", default='', \
                  help = 'Model to use (CLM5 or ELM)')
 parser.add_option("--mask", dest="mymask", default='', \
@@ -428,6 +430,7 @@ for n in range(0,n_grids):
             if (options.mymodel == 'CLM5'):
                 pct_crop[0][0] = 0.0
             if ('US-SPR' in options.site):
+                #SPRUCE P initial data
                 soil_order[0][0] = 3
                 labilep[0][0]    = 4.0
                 primp[0][0]      = 1.0
@@ -468,11 +471,13 @@ for n in range(0,n_grids):
                            print 'Setting PFT '+str(p)+' to '+str(mypft_frac[p])+'%'
                     pct_pft[p][0][0] = mypft_frac[p]
                 #maxlai = (monthly_lai).max(axis=0)
-                #for t in range(0,12):
-                #    monthly_lai[t][p][j][i] = monthly_lai[t][p][0][0] 
-                #    monthly_sai[t][p][j][i] = monthly_sai[t][p][0][0]
-                #    monthly_height_top[t][p][j][i] = monthly_height_top[t][p][0][0]
-                #    monthly_height_bot[t][p][j][i] = monthly_height_bot[t][p][0][0]
+                for t in range(0,12):
+                    if (float(options.lai) > 0):
+                      monthly_lai[t][p][0][0] = float(options.lai)
+                    #monthly_lai[t][p][j][i] = monthly_lai[t][p][0][0] 
+                    #monthly_sai[t][p][j][i] = monthly_sai[t][p][0][0]
+                    #monthly_height_top[t][p][j][i] = monthly_height_top[t][p][0][0]
+                    #monthly_height_bot[t][p][j][i] = monthly_height_bot[t][p][0][0]
 
         ierr = nffun.putvar(surffile_new, 'LANDFRAC_PFT', landfrac_pft)
         ierr = nffun.putvar(surffile_new, 'PFTDATA_MASK', pftdata_mask)

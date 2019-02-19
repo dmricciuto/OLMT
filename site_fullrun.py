@@ -141,6 +141,14 @@ parser.add_option("--ng", dest="ng", default=256, \
                   help = 'number of groups to run in ensemble mode')
 parser.add_option("--fates", dest="fates", default=False, \
                   help = 'Use fates model', action="store_true")
+parser.add_option("--add_temperature", dest="addt", default=0.0, \
+                  help = 'Temperature to add to atmospheric forcing')
+parser.add_option("--add_co2", dest="addco2", default=0.0, \
+                  help = 'CO2 (ppmv) to add to atmospheric forcing')
+parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin addding temperature')
+parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin addding CO2')
 
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
@@ -433,6 +441,12 @@ for row in AFdatareader:
             basecmd = basecmd+' --mod_parm_file '+options.mod_parm_file
         if (options.mod_parm_file_P !=''):
             basecmd = basecmd+' --mod_parm_file_P '+options.mod_parm_file_P
+        if (options.addt != 0):
+            basecmd = basecmd+' --add_temperature '+str(options.addt)
+            basecmd = basecmd+' --startdate_add_temperature '+str(options.sd_addt)
+        if (options.addco2 != 0):
+            basecmd = basecmd+' --add_co2 '+str(options.addco2)
+            basecmd = basecmd+' --startdate_add_co2 '+str(options.sd_addco2)
         basecmd = basecmd + ' --ng '+str(options.ng)
         basecmd = basecmd + ' --np '+str(options.np)
         basecmd = basecmd + ' --tstep '+str(options.tstep)
@@ -443,6 +457,7 @@ for row in AFdatareader:
         basecmd = basecmd+' --caseroot '+caseroot
         basecmd = basecmd+' --runroot '+runroot
         basecmd = basecmd+' --walltime '+str(options.walltime)
+
 
 #----------------------- build commands for runCLM.py -----------------------------
 

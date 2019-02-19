@@ -189,7 +189,7 @@ for c in range(0,ncases):
         mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'/run/'
     else:
         mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+mycompsets[c]+'/run/'
-    print 'Processing '+mydir
+    print('Processing '+mydir)
 
     #query lnd_in file for output file information
     if ((options.myhist_mfilt == -999 or options.myhist_nhtfrq == -999)):
@@ -226,7 +226,6 @@ for c in range(0,ncases):
         npf   = int(options.myhist_mfilt)
         tstep = int(options.myhist_nhtfrq)
    
-    #print npf, tstep 
     if (npf == -999 or tstep == -999):
         print('Unable to obtain output file information from lnd_in.  Exiting')
         sys.exit()
@@ -295,7 +294,6 @@ for c in range(0,ncases):
                         yend = min(int(s[0:4]), int(options.myyend))
                 thisrow=thisrow+1
             myobs_input.close
-        #print ystart, yend
         for v in range(0,nvar):
             if (os.path.exists(myobsfile)):
                 myobs_in = open(myobsfile)
@@ -446,7 +444,6 @@ for c in range(0,ncases):
                     else:
                         myfile = os.path.abspath(mydir+'/'+mycases[c]+"_"+mysites[c]+'_'+thiscompset+ \
                                                  ".clm2."+hst+"."+yst+"-01-01-00000.nc")
-                    print starti, myfile, npf
                     if (os.path.exists(myfile)):
                         if (n == 0):
                             ylast = y
@@ -468,7 +465,6 @@ for c in range(0,ncases):
                             else:
                                  myscalefactors.append(float(options.scale_factor))
                                  var_units.append(varout.units.replace('^',''))
-                            print 'TEST'
                             nffile.close()
                         if (y == starti and n == 0 and v == 0):      # get lat/lon info
                             nffile = netcdf.netcdf_file(myfile,"r")
@@ -476,7 +472,6 @@ for c in range(0,ncases):
                             mylon_vals.append(nffile.variables['lon'][0])
                             nffile.close()
 
-                        #print npf, nypf, y, myscalefactors, v
                         myvar_temp = getvar(myfile,myvars[v],npf,int(options.index), \
                                             myscalefactors[v])
                         if (myvars[v] == 'RAIN'):
@@ -488,7 +483,6 @@ for c in range(0,ncases):
                                 myind = ylast*n*npf+y*npf+i
                                 x[nsteps] = ystart+(ylast*n*nypf+y*nypf) + nypf*(i*1.0-0.5)/npf
                                 mydata[v,nsteps] = myvar_temp[i]
-                                print nsteps, x[nsteps], mydata[v,nsteps]
                                 if (myvars[v] == 'RAIN'):    #add snow for total precip
                                     mydata[v,nsteps] = mydata[v,nsteps]+myvar_temp2[i]
                                 nsteps=nsteps+1
@@ -500,7 +494,7 @@ for c in range(0,ncases):
                                 nsteps=nsteps+1 
   		    else:	
                          if (v == 0):
-                             print 'Warning: '+myfile+' does not exist'
+                             print('Warning: '+myfile+' does not exist')
                          if (y-1 < yend_all):
                              yend_all = y-1
                          for i in range(0,npf):
@@ -509,8 +503,6 @@ for c in range(0,ncases):
                                  x[myind] = ystart+(ylast*n*nypf+y*nypf) + nypf*(i*1.0-0.5)/npf
                                  mydata[v,myind] = numpy.NaN
                                  nsteps=nsteps+1
-                                 #print nsteps, myind, ylast, y, x[myind]
-                         #print v, nsteps
 
     #perform averaging and write output files 
     if (avtype == 'default'):
@@ -524,7 +516,6 @@ for c in range(0,ncases):
                     err_toplot[c,v,snum[c]] = 0
                 else:
                     err_toplot[c, v, snum[c]]  = sum(myerr[v,s*avpd:(s+1)*avpd])/avpd
-                #print c,v,data_toplot[c,v,snum[c]],err_toplot[c,v,snum[c]]
                 snum[c] = snum[c]+1
           
 
@@ -548,7 +539,6 @@ for c in range(0,ncases):
                             mysum_obs[s] = mysum_obs[s]+myobs[v,y*8760+(d-1)*24+h]
                             myct_obs[s] = myct_obs[s]+1
             for s in range(0,snum[c]):
-                #print myct_obs[s], s
                 if (myct_obs[s] > 0):
                     mysum_obs[s] = mysum_obs[s]/myct_obs[s]
                 else:
@@ -556,7 +546,6 @@ for c in range(0,ncases):
                 x_toplot[c,s] = s+1
                 obs_toplot[c, v, s] = mysum_obs[s]
                 data_toplot[c, v, s] = mysum[s]/myct[s]
-                #print s, myct_obs[s], myct[s]      
 
     #seasonal average (assumes default monthly output)
     if (avtype == 'seasonal'):
@@ -567,7 +556,6 @@ for c in range(0,ncases):
             mycount_obs = numpy.zeros(snum[c], numpy.int)
             for y in range(0,(yend_all-ystart+1)):
                 for s in range(0,snum[c]):
-                    #print y, s, mydata[v,y*12+s]
                     mysum[s]=mysum[s]+mydata[v,(y*12+s)]/float(yend_all-ystart+1)
                     if (myobs[v,(y*12+s)] > -900):
                         mysum_obs[s]=mysum_obs[s]+myobs[v,(y*12+s)]
@@ -638,8 +626,6 @@ for v in range(0,len(myvars)):
             if (c == 0):
                 #myvar = outdata.createVariable(myvars[v],'f',('time','lat','lon'))
                 myvar = outdata.createVariable(myvars[v],'f',('time','gridcell'))
-                #print var_units
-                #print v, myvars[v], var_units[v]
                 myvar.units=var_units[v]
                 myvar.missing_value=1e36
                 myvar[:,:]=myvar.missing_value   #changed for gridcell
@@ -676,7 +662,6 @@ for v in range(0,len(myvars)):
             bias[v,c] = bias[v,c]/len(gind)
             corr[v,c] = numpy.corrcoef(data_toplot[c,v,gind],obs_toplot[c,v,gind])[1,0]
 
-            print x_toplot[c,0:snum[c]], snum[c]
             if (options.ylog):
                 ax.plot(x_toplot[c, 0:snum[c]], abs(data_toplot[c,v,0:snum[c]]), label=mytitles[c], color=colors[c], \
                   linestyle=styles[c], linewidth=3)

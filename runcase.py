@@ -226,6 +226,14 @@ parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'Domain file to use')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
+parser.add_option("--add_temperature", dest="addt", default=0.0, \
+                  help = 'Temperature to add to atmospheric forcing')
+parser.add_option("--add_co2", dest="addco2", default=0.0, \
+                  help = 'CO2 (ppmv) to add to atmospheric forcing')
+parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin addding temperature')
+parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin addding CO2')
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
@@ -240,14 +248,16 @@ parser.add_option("--postproc_file", dest="postproc_file", default="", \
                   help = 'File for ensemble post processing')
 parser.add_option("--walltime", dest="walltime", default=6, \
                   help = "desired walltime for each job (hours)")
+parser.add_option("--lai", dest="lai", default=-999, \
+                  help = 'Set constant LAI (SP mode only)')
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
 
 #Set default model root
 if (options.csmdir == ''):
-   if (os.path.exists('../ACME')):
-       options.csmdir = os.path.abspath('../ACME')
+   if (os.path.exists('../E3SM')):
+       options.csmdir = os.path.abspath('../E3SM')
        print 'Model root not specified.  Defaulting to '+options.csmdir
    else:
        print 'Error:  Model root not specified.  Please set using --model_root'
@@ -499,6 +509,8 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --nopftdyn'
     if (options.mymask != ''):
         ptcmd = ptcmd + ' --mask '+options.mymask
+    if (float(options.lai) > 0):
+        ptcmd = ptcmd + ' --lai '+str(options.lai)
     if (int(options.mypft) >= 0):
         ptcmd = ptcmd + ' --pft '+str(options.mypft)
     if (isglobal):
@@ -619,7 +631,7 @@ else:
     if (options.humhol):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
       print('humhol_ht = 0.15m')
-      print('hol_frac  = 0.64')
+      print('hum_frac  = 0.64')
       print('humhol_dist = 1.0m')
       print('qflx_h2osfc_surfrate = 1.0e-7')
       print('setting rsub_top_globlmax = 1.2e-5')
@@ -1187,8 +1199,12 @@ for i in range(1,int(options.ninst)+1):
         else:
           output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
                          +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1849-2104_1.9x2.5_c100402.nc'\n")
-
-
+    if (options.addt != 0):
+      output.write(" add_temperature = "+str(options.addt)+"\n")
+      output.write(" startdate_add_temperature = '"+str(options.sd_addt)+"'\n")
+    if (options.addco2 != 0):
+      output.write(" add_co2 = "+str(options.addco2)+"\n")
+      output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
     output.close()
 
 #configure case
