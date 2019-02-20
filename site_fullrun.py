@@ -209,15 +209,24 @@ if (options.machine == ''):
    print 'Machine not specified.  Using hostname '+hostname+' to determine machine'
    if ('or-condo' in hostname):
        options.machine = 'cades'
+       npernode=32
    elif ('edison' in hostname):
-       options.machine = 'edision'
+       options.machine = 'edison'
+       npernode = 24
    elif ('cori' in hostname):
        print 'Cori machine not specified.  Setting to cori-haswell'
        options.machine = 'cori-haswell'
+       npernode=32
    elif ('titan' in hostname):
        options.machine = 'titan'
+       npernode=16
    elif ('eos' in hostname):
        options.machine = 'eos'
+       npernode=32
+   elif ('blues' in hostname):
+       print 'Hostname = '+hostname+' and machine not specified.  Assuming anvil'
+       options.machine = 'anvil' 
+       npernode=36
    else:
        print 'ERROR in site_fullrun.py:  Machine not specified.  Aborting'
        sys.exit(1)
@@ -230,6 +239,8 @@ elif (options.machine == 'cades'):
     ccsm_input = '/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
+elif ('anvil' in options.machine):
+    ccsm_input = '/home/ccsm-data/inputdata'
 
 #if (options.compiler != ''):
 #    if (options.machine == 'titan'):
@@ -276,6 +287,8 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
         print('Project = '+myproject)
     elif ('edison' in options.machine):
         runroot=os.environ.get('CSCRATCH')+'/acme_scratch/edison/'
+    elif ('anvil' in options.machine):
+        runroot="/lcrc/group/acme/"+myuser
     else:
         runroot = csmdir+'/run'
 else:
@@ -709,12 +722,12 @@ for row in AFdatareader:
         for c in case_list:
             
             mysubmit_type = 'qsub'
-            groupnum = sitenum/32
+            groupnum = sitenum/npernode
             if ('cori' in options.machine or options.machine == 'edison'):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
                 mysubmit_type = ''
-            if ((sitenum % 32) == 0):
+            if ((sitenum % npernode) == 0):
                 if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
                     input = open(caseroot+'/'+ad_case_firstsite+'/case.run')
                 elif (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/.case.run')):
@@ -735,6 +748,9 @@ for row in AFdatareader:
                             timestr = '00:30:00'
                         if (mysubmit_type == 'qsub'):
                             output.write('#PBS -l walltime='+timestr+'\n')
+                            if ('anvil' in options.machine):
+                              output.write('#PBS -q acme\n')
+                              output.write('#PBS -A ACME\n')
                         else:
                             output.write('#SBATCH --time='+timestr+'\n')
                             if ('edison' in options.machine or 'cori' in options.machine):

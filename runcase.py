@@ -285,6 +285,8 @@ elif ('cori-knl' in options.machine):
     ppn=64
 elif ('edison' in options.machine):
     ppn=24
+elif ('anvil' in options.machine):
+    ppn=36
 
 PTCLMdir = os.getcwd()
 
@@ -1472,6 +1474,9 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
             else:
                 output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
                                      '\n')
+                if ('anvil' in options.machine):
+                  output_run.write('#PBS -q acme\n')
+                  output_run.write('#PBS -A ACME\n')
         else:
             output_run.write('#SBATCH --time='+timestr+'\n')
             output_run.write('#SBATCH -J ens_'+casename+'\n')
@@ -1531,6 +1536,11 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                ' --site '+options.site
         elif ('cori' in options.machine or 'edison' in options.machine):
             cmd = 'srun -n '+str(np_total)+' python manage_ensemble.py ' \
+               +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
+               options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
+               ' --site '+options.site
+        elif ('anvil' in options.machine):
+            cmd = 'mpiexec -n '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
                ' --site '+options.site

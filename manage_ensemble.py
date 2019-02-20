@@ -22,6 +22,8 @@ parser.add_option("--case", dest="casename", default="", \
                   help="Name of case")
 parser.add_option("--ens_file", dest="ens_file", default="", \
                   help="Name of samples file")
+parser.add_option("--mc_ensemble", dest="mc_ensemble", default=0, \
+                  help = 'Create monte carlo ensemble')
 parser.add_option("--microbe", dest="microbe", default = False, action="store_true", \
                   help = 'CNP mode - initialize P pools')
 parser.add_option("--postproc_file", dest="postproc_file", default="", \
@@ -48,8 +50,14 @@ if (os.path.isfile(options.ens_file)):
         myinput.close()
 else:
     if (not options.postproc_only):
-      print('ensemble file does not exist.  Exiting')
-      sys.exit()
+      if (options.mc_ensemble > 0):
+        nsamples = int(options.mc_ensemble)
+        options.ens_file = 'mcsamples_'+options.casename+'.txt'
+        options.n = int(options.mc_ensemble)
+        print('Creating Monte Carlo ensemble with '+str(nsamples)+' members')
+      else:
+        print('ensemble file does not exist.  Exiting')
+        sys.exit()
     else:
       print('Ensemble file not provided')
       print('Getting parameter information from output files')
@@ -205,6 +213,28 @@ if (os.path.isfile(options.postproc_file)):
 
 if (rank == 0):
     n_done=0
+    if (options.mc_ensemble > 0):
+      #Create a parameter samples file
+      #get the parameter names
+      pnames=[]
+      ppfts=[]
+      pmin=[]
+      pmax=[]
+      pfile = open(options.parm_list,'r')
+      nparms = 0
+      for s in pfile:
+        pnames.append(s.split()[0])
+        ppfts.append(s.split()[1])
+        pmin.append(float(s.split()[2]))
+        pmax.append(float(s.split()[3]))
+        nparms = nparms+1
+      pfile.close()
+      nsamples = int(options.mc_ensemble)
+      samples=np.zeros((nparms,nsamples), dtype=np.float)
+      for i in range(0,nsamples):
+          for j in range(0,nparms):
+              samples[j][i] = pmin[j]+(pmax[j]-pmin[j])*np.random.rand(1)
+      np.savetxt('mcsamples_'+options.casename+'.txt', np.transpose(samples))
     #send first np-1 jobs where np is number of processes
     for n_job in range(1,size):
         comm.send(n_job, dest=n_job, tag=1)
