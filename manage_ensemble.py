@@ -91,7 +91,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
             ndays_total = ndays_total + n_days
             #get number of timesteps per output file
             
-            if ('20TR' in case or (not '1850' in case)):     #Transient assume daily ouput
+            if (('20TR' in case or (not '1850' in case)) and (not 'ED' in case)):     #Transient assume daily ouput
                 for d in range(myday_start[index]-1,myday_end[index]):
                     if ('US-SPR' in case):
                       output.append(0.25*(mydata[d][myindex+hol_add]*myfactor[index] \
@@ -101,8 +101,11 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
                       output.append(mydata[d][myindex]*myfactor[index] \
                              +myoffset[index])
             else:                    #Assume annual output (ignore days)
-               for d in range(myday_start[index]-1,myday_end[index]):
-                  output.append(mydata[0,myindex]*myfactor[index]+myoffset[index])
+               for d in range(myday_start[index]-1,myday_end[index]):    #28-38 was myindex
+                 if ('SCPF' in v):
+                   output.append(sum(mydata[0,28:38])/10.0*myfactor[index]+myoffset[index])
+                 else:
+                   output.append(mydata[0,myindex]*myfactor[index]+myoffset[index])
         for i in range(0,ndays_total/myavg[index]):
  	    data[thiscol] = sum(output[(i*myavg[index]):((i+1)*myavg[index])])/myavg[index]
             thiscol=thiscol+1
@@ -136,7 +139,10 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
          elif ('fates' in p):   #fates parameter file
            mydata = nffun.getvar(fpfname,p) 
            if (int(ppfts[pnum]) >= 0):
-             parms[pnum] = mydata[int(ppfts[pnum])]
+             if (p == 'fates_prt_nitr_stoich_p1'):
+               parms[pnum] = mydata[int(ppfts[pnum]) % 6,int(ppfts[pnum])/6]
+             else:
+               parms[pnum] = mydata[int(ppfts[pnum])]
            else:
              parms[pnum] = mydata[0]
          else:                #Regular parameter file

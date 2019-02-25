@@ -203,7 +203,11 @@ for p in parm_names:
       else:
          myfile = pftfile
       param = nffun.getvar(myfile, p)
-      if (parm_indices[pnum] > 0):
+      if ('fates_prt_nitr_stoich_p1' in p):
+        #this is a 2D parameter.
+         param[parm_indices[pnum] % 6:parm_indices[pnum] % 6+2,parm_indices[pnum]/6] = parm_values[pnum]
+         param[parm_indices[pnum] % 6:parm_indices[pnum] % 6+4,parm_indices[pnum]/6] = parm_values[pnum]
+      elif (parm_indices[pnum] > 0):
          param[parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] == 0):
          param = parm_values[pnum]
