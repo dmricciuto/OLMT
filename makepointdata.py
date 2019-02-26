@@ -429,7 +429,7 @@ for n in range(0,n_grids):
             pct_glacier[0][0] = 0.0
             if (options.mymodel == 'CLM5'):
                 pct_crop[0][0] = 0.0
-            if ('US-SPR' in options.site):
+            if ('US-SPR' in options.site and mysimyr !=2000):
                 #SPRUCE P initial data
                 soil_order[0][0] = 3
                 labilep[0][0]    = 4.0

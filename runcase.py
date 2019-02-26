@@ -1486,6 +1486,10 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                 output_run.write('#SBATCH --qos=debug\n')
               else:
 	        output_run.write('#SBATCH --qos=regular\n')
+              if ('haswell' in options.machine):
+                output_run.write('#SBATCH --constraint=haswell\n')
+              if ('knl' in options.machine):
+                output_run.write('#SBATCH --constraint=knl\n')
 
         output_run.write("\n")
         if (options.machine == 'eos'):
