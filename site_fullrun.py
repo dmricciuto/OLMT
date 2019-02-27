@@ -223,7 +223,7 @@ if (options.machine == ''):
    elif ('eos' in hostname):
        options.machine = 'eos'
        npernode=32
-   elif ('blues' in hostname):
+   elif ('blues' in hostname or 'blogin' in hostname):
        print 'Hostname = '+hostname+' and machine not specified.  Assuming anvil'
        options.machine = 'anvil' 
        npernode=36

@@ -241,6 +241,8 @@ elif (options.machine == 'cades' or options.machine == 'metis'):
     ccsm_input = '/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
+elif ('anvil' in options.machine):
+    ccsm_input = '/home/ccsm-data/inputdata'
 print options.machine
 #default compilers
 if (options.compiler == ''):
@@ -256,8 +258,10 @@ if (options.mpilib == ''):
         options.mpilib = 'mpt'  
     elif ('cades' in options.machine):
         options.mpilib = 'openmpi'
+    elif ('anvil' in options.machine):
+        options.mpilib = 'openmpi'
 
-
+print options.mpilib
 mycaseid   = options.mycaseid
 srcmods    = options.srcmods_loc
 
@@ -291,6 +295,8 @@ if (options.runroot == ''):
         runroot='/lustre/or-hydra/cades-ccsi/scratch/'+myuser
     elif (options.project == '' and 'cori' in options.machine or 'edison' in options.machine):
         runroot=os.environ.get('CSCRATCH')+'/acme_scratch/'+options.machine+'/'
+    elif ('anvil' in options.machine):
+        runroot="/lcrc/group/acme/"+myuser
     else:
         runroot = csmdir+'/run'
 else:
@@ -633,6 +639,9 @@ for c in cases:
                     output.write("#!/bin/csh -f\n")
                 if (mysubmit_type == 'qsub'):
                     output.write('#PBS -l walltime='+timestr+'\n')
+                    if ('anvil' in options.machine):
+                      output.write('#PBS -q acme\n')
+                      output.write('#PBS -A ACME\n')
                 else:
                     output.write('#SBATCH -A '+myproject+'\n')
                     output.write('#SBATCH --time='+timestr+'\n')
