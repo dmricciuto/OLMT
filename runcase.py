@@ -1220,10 +1220,7 @@ else:
     print("Warning:  No case configure performed")
     sys.exit(1)
 
-#CPPDEF modifications
-infile  = open("./Macros.make")
-outfile = open("./Macros.make.tmp",'a')
-
+#Land CPPDEF modifications
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
     os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
@@ -1231,26 +1228,33 @@ if (options.harvmod):
     print('Turning on HARVMOD modification\n')
     os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
 
+#Global CPPDEF modifications
+infile  = open("./Macros.make")
+outfile = open("./Macros.make.tmp",'a')
+
 for s in infile:
     if ('CPPDEFS' in s and cpl_bypass):
        stemp = s[:-1]+' -DCPL_BYPASS\n'
        outfile.write(stemp)
-    elif (s[0:13] == "NETCDF_PATH:=" and options.machine == 'userdefined'):
-        try:
-            os.environ['NETCDF_PATH']
-        except KeyError:
-            print('ERROR:  Must set NETCDF_PATH environment variable for user defined machine')
-            sys.exit(1)
-        outfile.write('NETCDF_PATH:= '+os.getenv('NETCDF_PATH')+'\n')
-
-    elif (s[0:7] == 'SLIBS+=' and options.machine == 'userdefined'):
-        outfile.write('SLIBS+=-lnetcdff -L/usr/lib/lapack -llapack -L/usr/lib/libblas -lblas' \
-                          +' $(shell $(NETCDF_PATH)/bin/nc-config --flibs)\n')
     else:
-        outfile.write(s)
+       outfile.write(s)
 infile.close()
 outfile.close()
 os.system('mv Macros.make.tmp Macros.make')
+
+infile  = open("./Macros.cmake")
+outfile = open("./Macros.cmake.tmp",'a')
+
+for s in infile:
+    if ('CPPDEFS' in s and cpl_bypass):
+       stemp = s[:-3]+' -DCPL_BYPASS")\n'
+       outfile.write(stemp)
+    else:
+       outfile.write(s)
+infile.close()
+outfile.close()
+os.system('mv Macros.cmake.tmp Macros.cmake')
+
 
 #copy sourcemods
 os.chdir('..')
