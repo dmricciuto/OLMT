@@ -411,9 +411,11 @@ for n in range(0,n_grids):
                     mypct_clay = row[5]
             if (mypct_sand == 0.0 and mypct_clay == 0.0):
                 print('*** Warning:  Soil data NOT found.  Using gridded data ***')
-
-        elif (point_pfts[n] > 0):
+        else:
+          try:
             mypft_frac[point_pfts[n]] = 100.0
+          except NameError:
+            print('using PFT information from surface data')
 
         #landfrac_pft[0][0] = 1.0
         #pftdata_mask[0][0] = 1
