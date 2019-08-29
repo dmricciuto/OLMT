@@ -129,6 +129,8 @@ parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
                   help = "use cru-ncep data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
+parser.add_option("--site_forcing", dest="site_forcing", default="", \
+                   help="Use forcing from site for all gridcells")
 parser.add_option("--gswp3", dest="gswp3", default=False, \
                   action="store_true", help = 'Use GSWP3 meteorology')
 parser.add_option("--princeton", dest="princeton", default=False, \
@@ -323,6 +325,11 @@ if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton):
     if (options.daymet):
         startyear = 1980
         endyear = 2010
+elif (options.site_forcing):
+   #UMB only - test case
+   startyear=2000
+   endyear=2014
+   site_endyear=2014
 else:
     #Qian input data
     startyear = 1948
@@ -419,6 +426,8 @@ if (options.cn_only):
     basecmd = basecmd+' --cn_only'
 if (options.CH4):
     basecmd = basecmd+' --CH4'
+if (options.site_forcing != ''):
+    basecmd = basecmd+' --site_forcing '+options.site_forcing
 if (options.cruncep):
     basecmd = basecmd+' --cruncep'
 if (options.cruncepv8):

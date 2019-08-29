@@ -23,6 +23,8 @@ parser.add_option("--ccsm_input", dest="ccsm_input", \
                   help = "input data directory for CESM (required)")
 parser.add_option("--clean_build", action="store_true", default=False, \
                   help="Perform a clean build")
+parser.add_option("--namelist_file", dest="namelist_file", default='', \
+                  help="File containing custom namelist options for user_nl_clm")
 parser.add_option("--model_root", dest="csmdir", default='', \
                   help = "base CESM directory")
 parser.add_option("--compiler", dest="compiler", default = '', \
@@ -116,6 +118,8 @@ parser.add_option("--makemetdata", action="store_true", dest="makemet", default=
                     help="generate site meteorology")
 parser.add_option("--cruncep", dest="cruncep", default=False, \
                   action="store_true", help = 'Use CRU-NCEP meteorology')
+parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
+                  action="store_true", help = 'Use CRU-NCEP meteorology')
 parser.add_option("--gswp3", dest="gswp3", default=False, \
                   action="store_true", help = 'Use GSWP3 meteorology')
 parser.add_option("--princeton", dest="princeton", default=False, \
@@ -129,6 +133,8 @@ parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, \
 parser.add_option("--spinup_vars", dest = "spinup_vars", default=False, \
                   help = "limit output variables for spinup", action="store_true")
 parser.add_option("--trans_varlist", dest = "trans_varlist", default='', help = "Transient outputs")
+parser.add_option("--c_only", dest="c_only", default=False, \
+                  help='Carbon only (saturated N&P)', action ="store_true")
 parser.add_option("--cn_only", dest="cn_only", default=False, \
                   help='Carbon/Nitrogen only (saturated P)', action ="store_true")
 parser.add_option("--ensemble_file", dest="ensemble_file", default='', \
@@ -204,6 +210,7 @@ elif (not os.path.exists(options.csmdir)):
      sys.exit(1)
 
 #get machine info if not specified
+npernode=32
 if (options.machine == ''):
    hostname = socket.gethostname()
    print 'Machine not specified.  Using hostname '+hostname+' to determine machine'
@@ -332,7 +339,6 @@ if (int(options.mc_ensemble) != -1):
     options.ensemble_file = 'mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt'
 
 mysites = options.site.split(',')
-npernode = 32
 if (not 'all' in mysites):
   npernode = len(mysites)
 for row in AFdatareader:
@@ -343,9 +349,17 @@ for row in AFdatareader:
             firstsite=site
         site_lat  = row[4]
         site_lon  = row[3]
-        if (options.cruncep or options.gswp3 or options.princeton):
-                startyear = 1901
-                endyear = 1920
+        if (options.cruncepv8 or options.cruncep or options.gswp3 or options.princeton):
+          startyear = 1901
+          endyear = 1920
+          if (options.cruncepv8):
+            endyear_trans=2016
+          elif (options.gswp3):
+            endyear_trans=2014
+          elif (options.princeton):
+            endyear_trans=2012
+          else:
+            endyear_trans=2010
         else:
             startyear = int(row[6])
             endyear   = int(row[7])
@@ -365,8 +379,9 @@ for row in AFdatareader:
         if (options.nyears_transient == -1):
           translen = endyear-1850+1        #length of transient run
 	  if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
-                   options.princeton)):
- 	    translen = min(site_endyear,2010)-1850+1
+                   options.princeton or options.cruncepv8)):
+            print(endyear_trans, site_endyear)
+ 	    translen = min(site_endyear,endyear_trans)-1850+1
 
         #use site parameter file if it exists
         if (options.siteparms):
@@ -405,6 +420,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --parm_vals '+options.parm_vals
         if (options.clean_build):
             basecmd = basecmd+' --clean_build '
+        if (options.namelist_file != ''):
+            basecmd = basecmd+' --namelist_file '+options.namelist_file
         if (options.metdir !='none'):
             basecmd = basecmd+' --metdir '+options.metdir
         if (options.C13):
@@ -433,12 +450,16 @@ for row in AFdatareader:
             basecmd = basecmd+' --vertsoilc'
         if (options.centbgc):
             basecmd = basecmd+' --centbgc'
+        if (options.c_only):
+            basecmd = basecmd+' --c_only'
         if (options.cn_only):
             basecmd = basecmd+' --cn_only'
         if (options.CH4):
             basecmd = basecmd+' --CH4'
         if (options.cruncep):
             basecmd = basecmd+' --cruncep'
+        if (options.cruncepv8):
+            basecmd = basecmd+' --cruncepv8'
         if (options.gswp3):
             basecmd = basecmd+' --gswp3'
         if (options.princeton):
@@ -475,7 +496,9 @@ for row in AFdatareader:
 #----------------------- build commands for runCLM.py -----------------------------
 
         #ECA or CTC
-        if (options.cn_only):
+        if (options.c_only):
+            nutrients = 'C'
+        elif (options.cn_only):
             nutrients = 'CN'
         else: 
             nutrients = 'CNP'
@@ -610,7 +633,7 @@ for row in AFdatareader:
             #Turn wildfire off in transient simulations (disturbances are known)
             cmd_trns = cmd_trns + ' --nofire'
         #transient phase 2 (CRU-NCEP only, without coupler bypass)
-        if ((options.cruncep or options.gswp3 or options.princeton) and not options.cpl_bypass):
+        if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
             basecase=basecase.replace('1850','20TR')+'_phase1'
             thistranslen = site_endyear - 1921 + 1
             cmd_trns2 = basecmd+' --trans2 --finidat_case '+basecase+ \
@@ -697,7 +720,7 @@ for row in AFdatareader:
                         ' --site_new '+site+' --finidat_year '+str(int(ny_fin)+1)+ \
                         ' --nyears '+str(translen)
                  result = os.system(ptcmd)
-            if ((options.cruncep or options.gswp3 or options.princeton) and not options.cpl_bypass):
+            if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
                  print('\nSetting up transient case phase 2\n')
                  result = os.system(cmd_trns2)
 

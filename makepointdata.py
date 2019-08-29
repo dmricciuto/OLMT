@@ -236,7 +236,7 @@ if (n_grids > 1 and options.site == ''):       #remove duplicate points
               and point_pfts[n] == point_pfts_uniq[m]):
                n_dups = n_dups+1
                is_unique = False
-               point_index.append(m+1)
+               #point_index.append(m+1)
       if (is_unique or options.keep_duplicates):
           xgrid_min_uniq.append(xgrid_min[n])
           ygrid_min_uniq.append(ygrid_min[n])

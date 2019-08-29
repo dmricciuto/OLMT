@@ -49,6 +49,8 @@ parser.add_option("--model", dest="mymodel", default='', \
                   help = 'Model to use (ELM,CLM5)')
 parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
                   help = "File containing met data (cpl_bypass only)")
+parser.add_option("--namelist_file",  dest="namelist_file", default='', \
+                  help="File containing custom namelist options for user_nl_clm")
 parser.add_option("--ilambvars", dest="ilambvars", default=False, \
                  action="store_true", help="Write special outputs for diagnostics")
 parser.add_option("--dailyvars", dest="dailyvars", default=False, \
@@ -59,6 +61,8 @@ parser.add_option("--point_list", dest="point_list", default='', \
                   help = 'File containing list of points to run')
 parser.add_option("--pft", dest="mypft", default=-1, \
                   help = 'Use this PFT for all gridcells')
+parser.add_option("--site_forcing", dest="site_forcing", default='', \
+                  help = '6-character FLUXNET code for forcing data')
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
 parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
@@ -497,7 +501,7 @@ if ('1850' not in compset and '20TR' not in compset):
 
 if (options.nopointdata == False):
     ptcmd = 'python makepointdata.py --ccsm_input '+options.ccsm_input+ \
-        ' --lat_bounds '+options.lat_bounds+' --lon_bounds '+ \
+        ' --keep_duplicates --lat_bounds '+options.lat_bounds+' --lon_bounds '+ \
         options.lon_bounds+' --mysimyr '+str(mysimyr)+' --model '+options.mymodel
     if (options.metdir != 'none'):
         ptcmd = ptcmd + ' --metdir '+options.metdir
@@ -612,6 +616,7 @@ else:
         else:
             endyear   = 1972
 
+ptstr=''
 if (isglobal == False):
     ptstr = str(numxpts)+'x'+str(numypts)+'pt'
 os.chdir(csmdir+'/cime/scripts')
@@ -877,6 +882,12 @@ for i in range(1,int(options.ninst)+1):
             output = open("user_nl_clm_0"+str(i),'w')
     output.write('&clm_inparm\n')
 
+    if (options.namelist_file != ''):
+      namelist_in = open(PTCLMdir+'/'+options.namelist_file,'r')
+      for s in namelist_in:
+        output.write(s)
+      namelist_in.close()
+
     #history file options
     #outputs for SPRUCE MiP and Jiafu's diagnostics code:
     var_list_hourly = ['GPP', 'NEE', 'NEP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
@@ -1126,6 +1137,9 @@ for i in range(1,int(options.ninst)+1):
         if ('ECA' in compset):
             output.write(" nyears_ad_carbon_only = 0\n")
             output.write(" spinup_mortality_factor = 1\n")
+        elif (options.c_only):
+            output.write(" nyears_ad_carbon_only = 0\n")
+            output.write(" spinup_mortality_factor = 10\n")
         else:
             output.write(" nyears_ad_carbon_only = 25\n")
             output.write(" spinup_mortality_factor = 10\n")
@@ -1184,9 +1198,13 @@ for i in range(1,int(options.ninst)+1):
                           +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full'\n")
 #                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
         else:
+            if (options.site_forcing == ''):
+              options.site_forcing=options.site
+            if (ptstr == ''):
+              ptstr='1x1pt'
             output.write("metdata_type = 'site'\n")
             output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                             +"CLM1PT_data/"+ptstr+"_"+options.site+"/'\n")
+                             +"CLM1PT_data/"+ptstr+"_"+options.site_forcing+"/'\n")
         if (options.monthly_metdata != ''):
             output.write(" metdata_biases = '"+options.monthly_metdata+"'\n")
         if (options.co21850):

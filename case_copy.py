@@ -128,11 +128,11 @@ for f in os.listdir(new_dir):
         myinput.close()
         os.system(' mv '+new_dir+'/'+f+'.tmp '+new_dir+'/'+f)
 #Assume makepointdata has been run to generate surface and domain data
-if (os.path.exists(orig_dir+'/surfdata.nc')):
+if (options.site_orig == options.site_new and os.path.exists(orig_dir+'/surfdata.nc')):
   os.system('cp '+orig_dir+'/surfdata.nc '+new_dir)
 else:
   os.system('cp temp/surfdata.nc '+new_dir)
-if (os.path.exists(orig_dir+'/domain.nc')):
+if (options.site_orig == options.site_new and os.path.exists(orig_dir+'/domain.nc')):
   os.system('cp '+orig_dir+'/domain.nc '+new_dir)
 else:
   os.system('cp temp/domain.nc '+new_dir)
