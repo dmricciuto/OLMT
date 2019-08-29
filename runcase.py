@@ -883,7 +883,14 @@ for i in range(1,int(options.ninst)+1):
     output.write('&clm_inparm\n')
 
     if (options.namelist_file != ''):
-      namelist_in = open(PTCLMdir+'/'+options.namelist_file,'r')
+      #First assume located in OLMT folder:
+      if (os.path.isfile(PTCLMdir+'/'+options.namelist_file)):
+        namelist_in = open(PTCLMdir+'/'+options.namelist_file,'r')
+      elif (os.path.isfile(options.namelist_file)):
+        namelist_in = open(options.namelist_file,'r')
+      else: 
+        print('Error:  namelist_file does not exist.  Aborting')
+        sys.exit(1)
       for s in namelist_in:
         output.write(s)
       namelist_in.close()

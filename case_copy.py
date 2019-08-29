@@ -63,6 +63,7 @@ if (new_dir == orig_dir):
 #copy files to new directory
 os.system('mkdir -p '+new_dir+'/timing/checkpoints')
 os.system('rm  '+new_dir+'/*.nc')
+os.system('rm -f '+new_dir+'/*.nc.orig')
 os.system('cp  '+orig_dir+'/*_in* '+new_dir)
 os.system('cp  '+orig_dir+'/*nml '+new_dir)
 if (not ('ICB' in casename)):
