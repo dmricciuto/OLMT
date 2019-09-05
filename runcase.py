@@ -291,6 +291,8 @@ elif ('edison' in options.machine):
     ppn=24
 elif ('anvil' in options.machine):
     ppn=36
+elif ('compy' in options.machine):
+    ppn=40
 
 PTCLMdir = os.getcwd()
 
@@ -1267,18 +1269,19 @@ infile.close()
 outfile.close()
 os.system('mv Macros.make.tmp Macros.make')
 
-infile  = open("./Macros.cmake")
-outfile = open("./Macros.cmake.tmp",'a')
+if (options.mymodel == 'ELM'):
+  infile  = open("./Macros.cmake")
+  outfile = open("./Macros.cmake.tmp",'a')
 
-for s in infile:
+  for s in infile:
     if ('CPPDEFS' in s and cpl_bypass):
        stemp = s[:-3]+' -DCPL_BYPASS")\n'
        outfile.write(stemp)
     else:
        outfile.write(s)
-infile.close()
-outfile.close()
-os.system('mv Macros.cmake.tmp Macros.cmake')
+  infile.close()
+  outfile.close()
+  os.system('mv Macros.cmake.tmp Macros.cmake')
 
 
 #copy sourcemods
@@ -1481,7 +1484,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
     num=0
     #Launch ensemble if requested 
     mysubmit_type = 'qsub'
-    if ('cori' in options.machine or options.machine == 'edison'):
+    if ('compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
         os.system('mkdir -p '+PTCLMdir+'/scripts/'+myscriptsdir)
@@ -1567,7 +1570,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
                ' --site '+options.site
-        elif ('cori' in options.machine or 'edison' in options.machine):
+        elif ('compy' in options.machine or 'cori' in options.machine or 'edison' in options.machine):
             cmd = 'srun -n '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \

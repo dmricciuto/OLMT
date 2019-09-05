@@ -234,6 +234,9 @@ if (options.machine == ''):
        print 'Hostname = '+hostname+' and machine not specified.  Assuming anvil'
        options.machine = 'anvil' 
        npernode=36
+   elif ('compy' in hostname):
+       options.machine = 'compy'
+       npernode=40
    else:
        print 'ERROR in site_fullrun.py:  Machine not specified.  Aborting'
        sys.exit(1)
@@ -248,6 +251,8 @@ elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
 elif ('anvil' in options.machine):
     ccsm_input = '/home/ccsm-data/inputdata'
+elif ('compy' in options.machine):
+    ccsm_input = '/compyfs/inputdata/'
 
 #if (options.compiler != ''):
 #    if (options.machine == 'titan'):
@@ -296,6 +301,9 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
         runroot=os.environ.get('CSCRATCH')+'/acme_scratch/edison/'
     elif ('anvil' in options.machine):
         runroot="/lcrc/group/acme/"+myuser
+    elif ('compy' in options.machine):
+        runroot='/compyfs/'+myuser+'/e3sm_scratch'
+        myproject='e3sm'
     else:
         runroot = csmdir+'/run'
 else:
@@ -493,7 +501,10 @@ for row in AFdatareader:
         basecmd = basecmd+' --walltime '+str(options.walltime)
 
 
-#----------------------- build commands for runCLM.py -----------------------------
+        if (myproject != ''):
+          basecmd = basecmd+' --project '+myproject
+
+#---------------- build commands for runCLM.py -----------------------------
 
         #ECA or CTC
         if (options.c_only):
@@ -746,7 +757,7 @@ for row in AFdatareader:
             
             mysubmit_type = 'qsub'
             groupnum = sitenum/npernode
-            if ('cori' in options.machine or options.machine == 'edison'):
+            if ('compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
                 mysubmit_type = ''

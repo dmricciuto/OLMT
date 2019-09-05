@@ -245,6 +245,9 @@ elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
 elif ('anvil' in options.machine):
     ccsm_input = '/home/ccsm-data/inputdata'
+elif ('compy' in options.machine):
+    ccsm_input = '/compyfs/inputdata'
+
 print options.machine
 #default compilers
 if (options.compiler == ''):
@@ -254,6 +257,9 @@ if (options.compiler == ''):
         options.compiler = 'intel'
     if (options.machine == 'cades'):
         options.compiler = 'gnu'
+    if (options.machine == 'compy'): 
+        options.compiler = 'intel'
+
 #default MPIlibs
 if (options.mpilib == ''):    
     if ('cori' in options.machine or 'edison' in options.machine):
@@ -262,6 +268,8 @@ if (options.mpilib == ''):
         options.mpilib = 'openmpi'
     elif ('anvil' in options.machine):
         options.mpilib = 'openmpi'
+    elif ('compy' in options.machine):
+        options.mpilib = 'impi'
 
 print options.mpilib
 mycaseid   = options.mycaseid
@@ -299,6 +307,8 @@ if (options.runroot == ''):
         runroot=os.environ.get('CSCRATCH')+'/acme_scratch/'+options.machine+'/'
     elif ('anvil' in options.machine):
         runroot="/lcrc/group/acme/"+myuser
+    elif ('compy' in options.machine):
+        runroot='/compyfs/'+myuser+'/e3sm_scratch'
     else:
         runroot = csmdir+'/run'
 else:
@@ -622,7 +632,7 @@ for c in cases:
 
 
     mysubmit_type = 'qsub'
-    if ('cori' in options.machine or options.machine == 'edison'):
+    if ('compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
         mysubmit_type = 'sbatch'
     #Create a .PBS site fullrun script to launch the full job 
 

@@ -128,7 +128,7 @@ for f in os.listdir(ens_dir):
                 os.system('mv '+ens_dir+'/'+CNPfile_new+'_tmp '+ens_dir+'/'+CNPfile_new)
                 myoutput.write(" fsoilordercon = '"+CNPfile_new+"'\n")
                 CNPfile = ens_dir+'/CNP_parameters_'+est[1:]+'.nc'
-            elif ('fsurdat' in s):
+            elif ('fsurdat =' in s):
                 surffile_orig = ((s.split()[2]).strip("'"))
                 if (surffile_orig[0:2] == './'):
                   surffile_orig = orig_dir+'/'+surffile_orig[2:]
