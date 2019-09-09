@@ -1237,6 +1237,8 @@ for i in range(1,int(options.ninst)+1):
     output.close()
 
 #configure case
+if (isglobal):
+  os.system("./xmlchange -id BATCH_SYSTEM --val none")
 if (options.no_config == False):
     print 'Running case.setup'
     result = os.system('./case.setup > case_setup.log')

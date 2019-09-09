@@ -77,6 +77,8 @@ parser.add_option("--run_startyear", dest="run_startyear",default=-1, \
                       help='Starting year for model output (SP only)')
 parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
                   help = 'Copy sourcemods from this location')
+parser.add_option("--surffile", dest="surffile", default='', \
+                  help = 'Use specified surface data file')
 parser.add_option("--parm_file", dest="parm_file", default="", \
                   help = 'parameter file to use')
 parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
@@ -464,6 +466,8 @@ if (options.mod_parm_file !=''):
     basecmd = basecmd+' --mod_parm_file '+options.mod_parm_file
 if (options.mod_parm_file_P !=''):
     basecmd = basecmd+' --mod_parm_file_P '+options.mod_parm_file_P
+if (options.surffile != ''):
+    basecmd = basecmd+' --surffile '+options.surffile
 basecmd = basecmd + ' --np '+str(options.np)
 basecmd = basecmd + ' --tstep '+str(options.tstep)
 basecmd = basecmd + ' --co2_file '+options.co2_file
