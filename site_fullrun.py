@@ -126,6 +126,8 @@ parser.add_option("--princeton", dest="princeton", default=False, \
                   action="store_true", help = 'Use Princeton meteorology')
 parser.add_option("--surfdata_grid", dest="surfdata_grid", default=False, \
                   help = 'Use gridded surface data instead of site data', action="store_true")
+parser.add_option("--surffile", dest="surffile", default='', \
+                  help = 'Use specified surface data file')
 parser.add_option("--siteparms",dest = "siteparms", default=False, \
                   action="store_true", help = 'Use default PFT parameters')
 parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, \
@@ -171,10 +173,8 @@ parser.add_option("--walltime", dest="walltime", default=6, \
 
 #------------ define function for pbs submission
 
-def submit(fname, project='', submit_type='qsub', job_depend=''):
+def submit(fname, submit_type='qsub', job_depend=''):
     job_depend_flag = ' -W depend=afterok:'
-    if (submit_type == 'sbatch' and project != ''):
-        submit_type = submit_type+' --account '+project
     if ('sbatch' in submit_type):
 	job_depend_flag = ' --dependency=afterok:'
     if (job_depend != '' and submit_type != ''):
@@ -301,6 +301,7 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
         runroot=os.environ.get('CSCRATCH')+'/acme_scratch/edison/'
     elif ('anvil' in options.machine):
         runroot="/lcrc/group/acme/"+myuser
+        myproject='e3sm'
     elif ('compy' in options.machine):
         runroot='/compyfs/'+myuser+'/e3sm_scratch'
         myproject='e3sm'
@@ -489,6 +490,8 @@ for row in AFdatareader:
         if (options.addco2 != 0):
             basecmd = basecmd+' --add_co2 '+str(options.addco2)
             basecmd = basecmd+' --startdate_add_co2 '+str(options.sd_addco2)
+        if (options.surffile != ''):
+            basecmd = basecmd+' --surffile '+options.surffile      
         basecmd = basecmd + ' --ng '+str(options.ng)
         basecmd = basecmd + ' --np '+str(options.np)
         basecmd = basecmd + ' --tstep '+str(options.tstep)
@@ -757,7 +760,7 @@ for row in AFdatareader:
             
             mysubmit_type = 'qsub'
             groupnum = sitenum/npernode
-            if ('compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
+            if ('anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
                 mysubmit_type = ''
@@ -782,11 +785,13 @@ for row in AFdatareader:
                             timestr = '00:30:00'
                         if (mysubmit_type == 'qsub'):
                             output.write('#PBS -l walltime='+timestr+'\n')
-                            if ('anvil' in options.machine):
-                              output.write('#PBS -q acme\n')
-                              output.write('#PBS -A ACME\n')
                         else:
                             output.write('#SBATCH --time='+timestr+'\n')
+                            if (myproject != ''):
+                                output.write('#SBATCH -A '+myproject+'\n')
+                            if ('anvil' in options.machine):
+                                output.write('#SBATCH --partition=acme-centos6\n')
+                                output.write('#SBATCH --account=condo\n')
                             if ('edison' in options.machine or 'cori' in options.machine):
                                 if (options.debug):
                                     output.write('#SBATCH --partition=debug\n')
@@ -949,7 +954,7 @@ for row in AFdatareader:
             job_depend_run=''    
             for thiscase in cases:
                 job_depend_run = submit('scripts/'+myscriptsdir+'/ensemble_run_'+thiscase+'.pbs',job_depend= \
-                                        job_depend_run, project=myproject, submit_type=mysubmit_type)
+                                        job_depend_run, submit_type=mysubmit_type)
         #else:  #submit single job
         #    job_fullrun = submit('temp/site_fullrun.pbs', submit_type=mysubmit_type)
         sitenum = sitenum+1
@@ -965,5 +970,5 @@ if (options.ensemble_file == ''):
                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             output.close()
             job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
-                                    job_depend_run, project=myproject, submit_type=mysubmit_type)
+                                    job_depend_run, submit_type=mysubmit_type)
 

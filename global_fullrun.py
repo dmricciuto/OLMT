@@ -269,7 +269,7 @@ if (options.mpilib == ''):
     elif ('cades' in options.machine):
         options.mpilib = 'openmpi'
     elif ('anvil' in options.machine):
-        options.mpilib = 'openmpi'
+        options.mpilib = 'mvapich'
     elif ('compy' in options.machine):
         options.mpilib = 'impi'
 
@@ -510,6 +510,7 @@ if (options.sp):
 
 #AD spinup
 res=options.res
+
 cmd_adsp = basecmd+' --ad_spinup --nyears_ad_spinup '+ \
     str(ny_ad)+' --align_year '+str(year_align+1)
 if (int(options.hist_mfilt_spinup) == -999):
@@ -519,13 +520,19 @@ else:
     cmd_adsp = cmd_adsp+' --hist_mfilt '+str(options.hist_mfilt_spinup) \
         +' --hist_nhtfrq '+str(options.hist_nhtfrq_spinup)+' --compset '+ \
         mymodel_adsp
+if (options.exeroot != ''):
+  ad_exeroot = os.path.abspath(options.exeroot)
+  cmd_adsp = cmd_adsp+' --no_build --exeroot '+ad_exeroot
+else:
+  ad_exeroot = os.path.abspath(runroot+'/'+ad_case+'/bld')
+
 ad_case = res+'_'+mymodel_adsp+'_ad_spinup'
 
 if (options.spinup_vars):
     cmd_adsp = cmd_adsp+' --spinup_vars'
 if (mycaseid != ''):
     ad_case = mycaseid+'_'+ad_case
-ad_exeroot = os.path.abspath(runroot+'/'+ad_case+'/bld')
+
 
 #final spinup
 if mycaseid !='':
@@ -636,7 +643,7 @@ for c in cases:
 
 
     mysubmit_type = 'qsub'
-    if ('compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
+    if ('anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
         mysubmit_type = 'sbatch'
     #Create a .PBS site fullrun script to launch the full job 
 
@@ -662,12 +669,13 @@ for c in cases:
                     output.write("#!/bin/csh -f\n")
                 if (mysubmit_type == 'qsub'):
                     output.write('#PBS -l walltime='+timestr+'\n')
-                    if ('anvil' in options.machine):
-                      output.write('#PBS -q acme\n')
-                      output.write('#PBS -A ACME\n')
                 else:
-                    output.write('#SBATCH -A '+myproject+'\n')
+                    if (myproject != ''):
+                      output.write('#SBATCH -A '+myproject+'\n')
                     output.write('#SBATCH --time='+timestr+'\n')
+                    if ('anvil' in options.machine):
+                      output.write('#SBATCH --partition=acme-centos6\n')
+                      output.write('#SBATCH --account=condo\n')
                     if ('cori' in options.machine or 'edison' in options.machine):
                          if (options.debug):
                              output.write('#SBATCH --partition=debug\n')

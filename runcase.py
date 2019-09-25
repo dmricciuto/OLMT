@@ -728,7 +728,7 @@ elif (options.exit_spinup):
 #create new case
 cmd = './create_newcase --case '+casename+' --mach '+options.machine+' --compset '+ \
 	   options.compset+' --res '+options.res+' --mpilib '+ \
-           options.mpilib+' > create_newcase.log'+' --walltime '+str(options.walltime)+ \
+           options.mpilib+' --walltime '+str(options.walltime)+ \
           ':00:00'
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
@@ -736,7 +736,8 @@ if (options.project != ''):
    cmd = cmd+' --project '+options.project
 if (options.compiler != ''):
    cmd = cmd+' --compiler '+options.compiler
-resut = os.system(cmd)
+cmd = cmd+' > create_newcase.log'
+result = os.system(cmd)
 
 if (os.path.isdir(casename)):
     print(casename+' created.  See create_newcase.log for details')
@@ -1237,8 +1238,8 @@ for i in range(1,int(options.ninst)+1):
     output.close()
 
 #configure case
-if (isglobal):
-  os.system("./xmlchange -id BATCH_SYSTEM --val none")
+#if (isglobal):
+os.system("./xmlchange -id BATCH_SYSTEM --val none")
 if (options.no_config == False):
     print 'Running case.setup'
     result = os.system('./case.setup > case_setup.log')
@@ -1572,13 +1573,8 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
                ' --site '+options.site
-        elif ('compy' in options.machine or 'cori' in options.machine or 'edison' in options.machine):
+        elif ('anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
             cmd = 'srun -n '+str(np_total)+' python manage_ensemble.py ' \
-               +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
-               options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
-               ' --site '+options.site
-        elif ('anvil' in options.machine):
-            cmd = 'mpiexec -n '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
                ' --site '+options.site
