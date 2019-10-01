@@ -549,6 +549,9 @@ if (options.noad):
     else:
         cmd_fnsp = basecmd+' --run_units nyears --run_n '+str(fsplen)+' --align_year '+ \
             str(year_align+1)+' --coldstart'
+    if (options.exeroot != ''):
+        cmd_fnsp = cmd_fnsp+' --no_build --exeroot '+os.path.abspath(options.exeroot)
+
 else:
     cmd_fnsp = basecmd+' --finidat_case '+ad_case+' '+ \
         '--finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
@@ -633,9 +636,15 @@ for c in cases:
         run_n_total = int(ny_ad)
     elif ('1850' in c):
         run_n_total = int(fsplen)
-    elif ('20TR' in c or 'ICBCLM45' in c):
+    elif ('20TR' in c):
         run_n_total = int(translen)
-        model_startdate = 1850
+    elif ('ICBCLM45' in c):
+        if (int(options.run_startyear) > 0):
+          model_startdate = int(options.run_startyear)
+          run_n_total = int(fsplen)
+        else:  
+          model_startdate = 1850
+          run_n_total = int(translen)
     else:
         run_n_total = int(fsplen)
     runblock =  min(int(options.runblock), run_n_total)
