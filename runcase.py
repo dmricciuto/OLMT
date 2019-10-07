@@ -348,6 +348,7 @@ elif ('anvil' in options.machine):
     ppn=36
 elif ('compy' in options.machine):
     ppn=40
+ppn=min(ppn, int(options.np))
 
 PTCLMdir = os.getcwd()
 

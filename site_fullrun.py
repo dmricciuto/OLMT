@@ -403,8 +403,14 @@ if (int(options.mc_ensemble) != -1):
     options.ensemble_file = 'mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt'
 
 mysites = options.site.split(',')
-if (not 'all' in mysites and (options.ensemble_file == '')):
-  npernode = len(mysites)
+
+nnode=1
+if(options.np>1): #in case of a single site in name but with multiple unstructured gridcells
+    npernode=min(int(npernode),int(options.np))
+    nnode=-(int(options.np)//-int(npernode))
+elif (not 'all' in mysites and (options.ensemble_file == '')):
+    npernode = len(mysites)
+
 for row in AFdatareader:
     if (row[0] in mysites) or ('all' in mysites and row[0] !='site_code' \
                                       and row[0] != ''):
@@ -1028,9 +1034,9 @@ for row in AFdatareader:
                             #if ('diags' in c or 'iniadjust' in c):
                             #    output.write("#PBS -l nodes=1:ppn=1\n")
                             #else:
-                            output.write("#PBS -l nodes=1:ppn="+str(npernode)+"\n")
+                            output.write("#PBS -l nodes="+str(int(nnode))+":ppn="+str(int(npernode))+"\n")
                         else:
-                            output.write("#PBS -l nodes=1\n")
+                            output.write("#PBS -l nodes="+str(int(nnode))+"\n")
                     elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
                         if ('exclusive' in s):
                           if (options.ensemble_file != ''):
