@@ -297,6 +297,8 @@ parser.add_option("--walltime", dest="walltime", default=6, \
                   help = "desired walltime for each job (hours)")
 parser.add_option("--lai", dest="lai", default=-999, \
                   help = 'Set constant LAI (SP mode only)')
+parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
+                  help = "user-defined max. patch PFT number, default is 17")
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
@@ -356,7 +358,7 @@ PTCLMdir = os.getcwd()
 if (options.mymodel == ''):
   if ('clm5' in options.csmdir): 
       options.mymodel = 'CLM5'
-  elif ('E3SM' in options.csmdir or 'ACME' in options.csmdir):
+  elif ('E3SM' in options.csmdir or 'e3sm' in options.csmdir or 'ACME' in options.csmdir):
       options.mymodel = 'ELM'
   else:
       print('Error:  Model not specified')
@@ -953,6 +955,14 @@ if (options.rest_n > 0):
   print('Setting REST_N to '+str(options.rest_n))
   os.system('./xmlchange REST_N='+str(options.rest_n))
 
+# user-defined PFT numbers (default is 17)
+if (options.maxpatch_pft != 17):
+  print('resetting maxpatch_pft to '+str(options.maxpatch_pft))
+  xval = subprocess.check_output('./xmlquery --value CLM_BLDNML_OPTS', cwd=casedir, shell=True)
+  xval = '-maxpft '+str(options.maxpatch_pft)+' '+xval
+  os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
+
+
 #--------------------------CESM setup ----------------------------------------
 
 if (options.clean_config):
@@ -1401,7 +1411,7 @@ infile.close()
 outfile.close()
 os.system('mv Macros.make.tmp Macros.make')
 
-if (options.mymodel == 'ELM'):
+if (options.mymodel == 'ELM' and os.path.isfile("./Macros.cmake")):
   infile  = open("./Macros.cmake")
   outfile = open("./Macros.cmake.tmp",'a')
 
