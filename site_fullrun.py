@@ -201,6 +201,10 @@ parser.add_option("--hist_mfilt_spinup", dest="hist_mfilt_spinup", default="-999
 parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-999", \
                   help = 'output file timestep (spinup only)')
 
+#datasets for user-defined PFTs (by F-M Yuan, NGEE-Arctic)
+parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
+                  help = "user-defined max. patch PFT number, default is 17")
+
 (options, args) = parser.parse_args()
 
 
@@ -571,6 +575,10 @@ for row in AFdatareader:
           basecmd = basecmd+' --constraints '+options.constraints
         if (options.hist_vars != ''):
           basecmd = basecmd+' --hist_vars '+options.hist_vars
+
+        if (options.maxpatch_pft!=17):
+            basecmd = basecmd + ' --maxpatch_pft '+options.maxpatch_pft
+
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
         if (options.domainfile != ''):
