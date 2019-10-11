@@ -569,7 +569,7 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if ('US-SPR' in options.site):
+            if ('US-GC3' in options.site or 'US-GC4' in options.site ):
                 numxpts=2
             else:
                 numxpts=1
@@ -736,7 +736,7 @@ if (isglobal == False):
     os.system('./xmlchange CLM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
 if (options.ad_spinup):
     if (options.mymodel == 'ELM'):
-        os.system("./xmlchange --append CLM_BLDNML_OPTS='-bgc_spinup on'")
+        os.system("./xmlchange --append CLM_BLDNML_OPTS='-bgc_spinup on'") #changed to 'off' by TAO 1/14/2019 to test PFLOTRAN-CLM cherry pick commits
     elif (options.mymodel == 'CLM5'):
         os.system('./xmlchange CLM_ACCELERATED_SPINUP=on')
         os.system('./xmlchange CLM_FORCE_COLDSTART=on')

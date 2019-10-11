@@ -85,7 +85,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
             
             if ('20TR' in case or (not '1850' in case)):     #Transient assume daily ouput
                 for d in range(myday_start[index]-1,myday_end[index]):
-                    if ('US-SPR' in case):
+                    if ('US-GC3' in case or 'US-GC4' in case):
                       output.append(0.25*(mydata[d][myindex+hol_add]*myfactor[index] \
                              +myoffset[index]) + 0.75*(mydata[d][myindex]*myfactor[index] \
                              +myoffset[index]))

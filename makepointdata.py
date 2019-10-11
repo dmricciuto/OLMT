@@ -147,7 +147,7 @@ elif (options.site != ''):
                 mylon=360.0+float(row[3])
             lon.append(mylon)
             lat.append(float(row[4]))
-            if ('US-SPR' in options.site):
+            if ('US-GC3' in options.site or 'US-GC4' in options.site):
                 lon.append(mylon)
                 lat.append(float(row[4]))
                 n_grids = 2
@@ -427,7 +427,7 @@ for n in range(0,n_grids):
             pct_glacier[0][0] = 0.0
             if (options.mymodel == 'CLM5'):
                 pct_crop[0][0] = 0.0
-            if ('US-SPR' in options.site):
+            if ('US-GC3' in options.site or 'US-GC4' in options.site):
                 soil_order[0][0] = 3
                 labilep[0][0]    = 4.0
                 primp[0][0]      = 1.0
@@ -444,7 +444,7 @@ for n in range(0,n_grids):
                        print 'Setting %clay to '+str(mypct_clay)
                     pct_sand[k][0][0]   = mypct_sand
                     pct_clay[k][0][0]   = mypct_clay
-                if ('US-SPR' in options.site):
+                if ('US-GC3' in options.site or 'US-GC4' in options.site):
                     if (k < 8):
                         organic[k][0][0] = 130.0
                     elif (k == 8):
