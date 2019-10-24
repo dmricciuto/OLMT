@@ -96,7 +96,17 @@ for f in os.listdir(ens_dir):
         myinput=open(ens_dir+'/'+f)
         myoutput=open(ens_dir+'/'+f+'.tmp','w')
         for s in myinput:
-            if ('paramfile' in s):
+            if ('fates_paramfile' in s):
+                paramfile_orig = ((s.split()[2]).strip("'"))
+                if (paramfile_orig[0:2] == './'):
+                  paramfile_orig = orig_dir+'/'+paramfile_orig[2:]
+                paramfile_new  = './fates_params_'+est[1:]+'.nc'
+                os.system('cp '+paramfile_orig+' '+ens_dir+'/'+paramfile_new)
+                os.system('nccopy -3 '+ens_dir+'/'+paramfile_new+' '+ens_dir+'/'+paramfile_new+'_tmp')
+                os.system('mv '+ens_dir+'/'+paramfile_new+'_tmp '+ens_dir+'/'+paramfile_new)
+                myoutput.write(" fates_paramfile = '"+paramfile_new+"'\n")
+                fates_paramfile = ens_dir+'/fates_params_'+est[1:]+'.nc'
+            elif ('paramfile' in s):
                 paramfile_orig = ((s.split()[2]).strip("'"))
                 if (paramfile_orig[0:2] == './'):
                    paramfile_orig = orig_dir+'/'+paramfile_orig[2:]
@@ -118,7 +128,7 @@ for f in os.listdir(ens_dir):
                 os.system('mv '+ens_dir+'/'+CNPfile_new+'_tmp '+ens_dir+'/'+CNPfile_new)
                 myoutput.write(" fsoilordercon = '"+CNPfile_new+"'\n")
                 CNPfile = ens_dir+'/CNP_parameters_'+est[1:]+'.nc'
-            elif ('fsurdat' in s):
+            elif ('fsurdat =' in s):
                 surffile_orig = ((s.split()[2]).strip("'"))
                 if (surffile_orig[0:2] == './'):
                   surffile_orig = orig_dir+'/'+surffile_orig[2:]
@@ -139,8 +149,8 @@ for f in os.listdir(ens_dir):
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('1850CNP','1850CN')+'_ad_spinup/g'+gst[1:]
                       if (os.path.exists(finidat_file_path)):
 	                  finidat_file_orig = finidat_file_path+'/*.clm2.r.*.nc'
-                          os.system('python adjust_restart.py --rundir '+ os.path.abspath(options.runroot)+ \
-                                       '/UQ/'+casename+'_ad_spinup/g'+gst[1:]+' --casename '+casename+'_ad_spinup')
+                          os.system('python adjust_restart.py --rundir '+finidat_file_path+' --casename '+ \
+                                      casename.replace('1850CNP','1850CN')+'_ad_spinup')
                    if ('20TR' in casename):
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('20TR','1850')+ \
                                        '/g'+gst[1:]
@@ -188,10 +198,16 @@ for p in parm_names:
    elif (p != 'co2'):
       if (p in CNP_parms):
          myfile= CNPfile
+      elif ('fates' in p):
+         myfile = fates_paramfile
       else:
          myfile = pftfile
       param = nffun.getvar(myfile, p)
-      if (parm_indices[pnum] > 0):
+      if ('fates_prt_nitr_stoich_p1' in p):
+        #this is a 2D parameter.
+         param[parm_indices[pnum] % 6:parm_indices[pnum] % 6+2,parm_indices[pnum]/6] = parm_values[pnum]
+         param[parm_indices[pnum] % 6:parm_indices[pnum] % 6+4,parm_indices[pnum]/6] = parm_values[pnum]
+      elif (parm_indices[pnum] > 0):
          param[parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] == 0):
          param = parm_values[pnum]
