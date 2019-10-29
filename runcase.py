@@ -835,9 +835,9 @@ if ('20TR' in compset):
     if (options.run_startyear == -1):
         os.system('./xmlchange RUN_STARTDATE=1850-01-01')
     
-#no PIO on oic
-#if ('oic' in options.machine or 'eos' in options.machine or 'edison' in options.machine):
-#os.system('./xmlchange PIO_TYPENAME=netcdf')
+#No pnetcdf for small cases on compy
+if ('compy' in options.machine and int(options.np) < 80):
+  os.system('./xmlchange PIO_TYPENAME=netcdf')
 
 comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV']
 for c in comps:
@@ -1496,6 +1496,8 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                                      int(float(options.walltime)))*60))+':00'
         if (options.debug):
            timestr='00:30:00'
+           if ('compy' in options.machine):
+             timestr='02:00:00'
         output_run.write("#!/bin/csh -f\n")
         if (mysubmit_type == 'qsub'):
             output_run.write('#PBS -l walltime='+timestr+'\n')
@@ -1525,7 +1527,8 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                 output_run.write('#SBATCH --constraint=haswell\n')
               if ('knl' in options.machine):
                 output_run.write('#SBATCH --constraint=knl\n')
-
+            if ('compy' in options.machine and options.debug):
+              output_run.write('#SBATCH --qos=short\n')
         output_run.write("\n")
         if (options.machine == 'eos'):
             output_run.write('source $MODULESHOME/init/csh\n')

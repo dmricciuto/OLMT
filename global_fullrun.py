@@ -511,6 +511,10 @@ if (options.sp):
 #AD spinup
 res=options.res
 
+ad_case = res+'_'+mymodel_adsp+'_ad_spinup'
+if (mycaseid != ''):
+    ad_case = mycaseid+'_'+ad_case
+
 cmd_adsp = basecmd+' --ad_spinup --nyears_ad_spinup '+ \
     str(ny_ad)+' --align_year '+str(year_align+1)
 if (int(options.hist_mfilt_spinup) == -999):
@@ -523,16 +527,11 @@ else:
 if (options.exeroot != ''):
   ad_exeroot = os.path.abspath(options.exeroot)
   cmd_adsp = cmd_adsp+' --no_build --exeroot '+ad_exeroot
-else:
+elif (not options.noad):
   ad_exeroot = os.path.abspath(runroot+'/'+ad_case+'/bld')
-
-ad_case = res+'_'+mymodel_adsp+'_ad_spinup'
 
 if (options.spinup_vars):
     cmd_adsp = cmd_adsp+' --spinup_vars'
-if (mycaseid != ''):
-    ad_case = mycaseid+'_'+ad_case
-
 
 #final spinup
 if mycaseid !='':
@@ -551,7 +550,9 @@ if (options.noad):
             str(year_align+1)+' --coldstart'
     if (options.exeroot != ''):
         cmd_fnsp = cmd_fnsp+' --no_build --exeroot '+os.path.abspath(options.exeroot)
-
+        ad_exeroot = os.path.abspath(options.exeroot)
+    else:
+      ad_exeroot = os.path.abspath(runroot+'/'+basecase)
 else:
     cmd_fnsp = basecmd+' --finidat_case '+ad_case+' '+ \
         '--finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
@@ -671,7 +672,10 @@ for c in cases:
                 timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
                             int(float(options.walltime)))*60))+':00'
                 if (options.debug):
-                    timestr='00:30:00'
+                    if ('cori' in options.machine):
+                      timestr='00:30:00'
+                    elif ('compy' in options.machine):
+                      timestr='02:00:00'
                 if ('cades' in options.machine):
                     output.write("#!/bin/bash -f\n")
                 else:
@@ -690,6 +694,8 @@ for c in cases:
                              output.write('#SBATCH --partition=debug\n')
                          else:
                              output.write('#SBATCH --partition=regular\n')
+                    if ('compy' in options.machine and options.debug):
+                      output.write('#SBATCH -p short\n')
             elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
                 output.write(s)
         input.close()
