@@ -146,6 +146,8 @@ parser.add_option("--crop", action="store_true", default=False, \
                   help="Perform a crop model simulation")
 parser.add_option("--humhol", dest="humhol", default=False, action="store_true", \
                   help = 'Use hummock/hollow microtopography')
+parser.add_option("--marsh", dest="marsh", default=False, \
+                  help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--nofire", dest="nofire", default=False, action="store_true", \
                   help='Turn off fire algorithms')
 parser.add_option("--C13", dest="C13", default=False, action="store_true", \
@@ -493,6 +495,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --harvmod'
         if (options.humhol):
             basecmd = basecmd+' --humhol'
+        if (options.marsh):
+            basecmd = basecmd+' --marsh'
         if (float(options.lai) >= 0):
             basecmd = basecmd+' --lai '+str(options.lai)
         if (options.nopftdyn):
