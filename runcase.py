@@ -85,7 +85,8 @@ parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
 
 parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
-
+parser.add_option("--marsh", dest="marsh", default=False, \
+                  help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 
@@ -669,7 +670,7 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if (options.humhol):
+            if (options.humhol or options.marsh):
                 numxpts=2
             else:
                 numxpts=1
@@ -717,7 +718,7 @@ else:
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-    if (options.humhol):
+    if (options.humhol or options.marsh):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
       print('humhol_ht = 0.15m')
       print('hum_frac  = 0.64')
@@ -725,7 +726,6 @@ else:
       print('qflx_h2osfc_surfrate = 1.0e-7')
       print('setting rsub_top_globalmax = 1.2e-5')
       print('Making br_mr a PFT-specific parameter')
-      #flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -736,7 +736,6 @@ else:
       ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    #flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
     ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
 
@@ -1394,6 +1393,10 @@ else:
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
     os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+
+if (options.marsh):
+    print("Turning on MARSH modification\n")
+    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
     os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
@@ -1545,7 +1548,6 @@ if (not cpl_bypass and not isglobal):
                 temp = s.replace('CLM1PT_data', 'TEMPSTRING')
                 s    = temp.replace(str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site, 'CLM1PT_data')
                 temp  =s.replace('TEMPSTRING', str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site)
-                #s    = temp.replace('atm//CLM1PT_data','atm/datm7/CLM1PT_data')
                 myoutput.write(temp)
             elif ('ED' in compset and 'FLDS' in s):
                 print('Not including FLDS in atm stream file')
