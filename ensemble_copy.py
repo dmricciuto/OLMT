@@ -202,18 +202,18 @@ for p in parm_names:
          myfile = fates_paramfile
       else:
          myfile = pftfile
+      param = nffun.getvar(myfile,p)
       if ('fates_prt_nitr_stoich_p1' in p):
-        param = nffun.getvar(myfile, 'fates_prt_nitr_stoich_p1')
-      else:
-        param = nffun.getvar(myfile, p)
-      if ('fates_prt_nitr_stoich_p1_leaf' in p):
         #this is a 2D parameter.
-         print parm_indices[pnum]
-         param[0:2,parm_indices[pnum]] = parm_values[pnum]
-      elif ('fates_prt_nitr_stoich_p1_fr' in p):
-         param[2:4,parm_indices[pnum]] = parm_values[pnum]
+         param[parm_indices[pnum] % 6 , parm_indices[pnum] / 6] = parm_values[pnum]
+         param[parm_indices[pnum] % 6 , parm_indices[pnum] / 6] = parm_values[pnum]
+      elif ('fates_hydr_p50_node' in p or 'fates_hydr_avuln_node' in p or 'fates_hydr_kmax_node' in p or \
+            'fates_hydr_pitlp_node' in p or 'fates_hydr_thetas_node' in p):
+         param[parm_indices[pnum] % 4 , parm_indices[pnum] / 4] = parm_values[pnum]
+         param[parm_indices[pnum] % 4 , parm_indices[pnum] / 4] = parm_values[pnum]
+      elif ('fates_leaf_long' in p or 'fates_leaf_vcmax25top' in p):
+         param[0,parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] > 0):
-         print p, parm_indices[pnum], parm_values[pnum]
          param[parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] == 0):
          param = parm_values[pnum]

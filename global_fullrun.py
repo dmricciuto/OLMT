@@ -638,6 +638,7 @@ for c in cases:
     elif ('1850' in c):
         run_n_total = int(fsplen)
     elif ('20TR' in c):
+        model_startdate=1850
         run_n_total = int(translen)
     elif ('ICBCLM45' in c):
         if (int(options.run_startyear) > 0):
