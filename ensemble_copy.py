@@ -179,6 +179,7 @@ pnum = 0
 CNP_parms = ['ks_sorption', 'r_desorp', 'r_weather', 'r_adsorp', 'k_s1_biochem', 'smax', 'k_s3_biochem', \
              'r_occlude', 'k_s4_biochem', 'k_s2_biochem']
 
+fates_seed_zeroed=[False,False]
 for p in parm_names:
    if ('INI' in p):
       if ('BGC' in casename):
@@ -213,6 +214,16 @@ for p in parm_names:
          param[parm_indices[pnum] % 4 , parm_indices[pnum] / 4] = parm_values[pnum]
       elif ('fates_leaf_long' in p or 'fates_leaf_vcmax25top' in p):
          param[0,parm_indices[pnum]] = parm_values[pnum]
+      elif (p == 'fates_seed_alloc'):
+          if (not fates_seed_zeroed[0]):
+             param[:]=0.
+             fates_seed_zeroed[0]=True
+          param[parm_indices[pnum]] = parm_values[pnum]
+      elif (p == 'fates_seed_alloc_mature'):
+          if (not fates_seed_zeroed[1]):
+             param[:]=0.
+             fates_seed_zeroed[1]=True
+          param[parm_indices[pnum]] = parm_values[pnum]             
       elif (parm_indices[pnum] > 0):
          param[parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] == 0):
@@ -225,3 +236,18 @@ for p in parm_names:
          param[...]=1.0-parm_values[pnum]-parm_values[pnum-1]
          ierr = nffun.putvar(myfile, 'fr_fcel', param)
    pnum = pnum+1
+
+#ensure FATES seed allocation paramters sum to one
+if (fates_seed_zeroed[0]):
+  param = nffun.getvar(myfile,'fates_seed_alloc')
+  param2 = nffun.getvar(myfile,'fates_seed_alloc_mature')
+  for i in range(0,12):
+    if (param[i] + param2[i] > 1.0):
+      sumparam= param[i]+param2[i]
+      param[i]  = param[i]/sumparam
+      param2[i] = param2[i]/sumparam
+  ierr = nffun.putvar(myfile, 'fates_seed_alloc', param)      
+  ierr = nffun.putvar(myfile, 'fates_seed_alloc_mature', param2)
+
+
+
