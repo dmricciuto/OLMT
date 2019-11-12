@@ -228,6 +228,8 @@ parser.add_option("--surffile", dest="surffile", default="", \
                   help = 'Surface file to use')
 parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'Domain file to use')
+parser.add_option("--fates_hydro", dest="fates_hydro", default=False, action="store_true", \
+                  help = 'Set fates hydro to true')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
@@ -1110,6 +1112,8 @@ for i in range(1,int(options.ninst)+1):
     output.write(" paramfile = '"+rundir+"/clm_params.nc'\n")
     if ('ED' in compset and options.fates_paramfile != ''):
       output.write(" fates_paramfile = '"+options.fates_paramfile+"'\n")
+    if ('ED' in compset and options.fates_hydro):
+      output.write(" use_fates_planthydro = .true.\n")
 
     if ('RD' in compset or 'ECA' in compset):
         #soil order parameter file
@@ -1556,7 +1560,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
             output_run.write('module unload scipy\n')
             output_run.write('module unload numpy\n')
             output_run.write('module load cray-netcdf\n')
-            output_run.write('module load python/2.7-anaconda\n')
+            output_run.write('module load python/2.7-anaconda-5.2\n')
             output_run.write('module load nco\n')
 
         output_run.write('cd '+PTCLMdir+'\n')

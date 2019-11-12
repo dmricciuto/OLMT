@@ -305,8 +305,8 @@ if (options.runroot == ''):
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
     elif (options.machine == 'cades' or options.machine == 'metis'):
         runroot='/lustre/or-hydra/cades-ccsi/scratch/'+myuser
-    elif (options.project == '' and 'cori' in options.machine or 'edison' in options.machine):
-        runroot=os.environ.get('CSCRATCH')+'/acme_scratch/'+options.machine+'/'
+    elif ('cori' in options.machine or 'edison' in options.machine):
+        runroot=os.environ.get('CSCRATCH')+'/e3sm_scratch/'+options.machine+'/'
     elif ('anvil' in options.machine):
         runroot="/lcrc/group/acme/"+myuser
     elif ('compy' in options.machine):

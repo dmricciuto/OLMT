@@ -206,12 +206,12 @@ for p in parm_names:
       param = nffun.getvar(myfile,p)
       if ('fates_prt_nitr_stoich_p1' in p):
         #this is a 2D parameter.
-         param[parm_indices[pnum] % 6 , parm_indices[pnum] / 6] = parm_values[pnum]
-         param[parm_indices[pnum] % 6 , parm_indices[pnum] / 6] = parm_values[pnum]
+         param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]
+         param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]
       elif ('fates_hydr_p50_node' in p or 'fates_hydr_avuln_node' in p or 'fates_hydr_kmax_node' in p or \
             'fates_hydr_pitlp_node' in p or 'fates_hydr_thetas_node' in p):
-         param[parm_indices[pnum] % 4 , parm_indices[pnum] / 4] = parm_values[pnum]
-         param[parm_indices[pnum] % 4 , parm_indices[pnum] / 4] = parm_values[pnum]
+         param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]
+         param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]
       elif ('fates_leaf_long' in p or 'fates_leaf_vcmax25top' in p):
          param[0,parm_indices[pnum]] = parm_values[pnum]
       elif (p == 'fates_seed_alloc'):
