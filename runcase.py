@@ -270,6 +270,8 @@ parser.add_option("--lai", dest="lai", default=-999, \
                   help = 'Set constant LAI (SP mode only)')
 parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
+parser.add_option("--landusefile", dest="pftdynfile", default='', \
+                  help='user-defined dynamic PFT file')
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
@@ -1162,6 +1164,8 @@ for i in range(1,int(options.ninst)+1):
     if ('20TR' in compset or options.istrans):
         if (options.nopftdyn):
             output.write(" flanduse_timeseries = ' '\n") 
+        elif(options.pftdynfile !=''):
+            output.write(" flanduse_timeseries = '"+options.pftdynfile+"'\n")
         else:
             output.write(" flanduse_timeseries = '"+rundir+"/surfdata.pftdyn.nc'\n")
         if (options.mymodel == 'ELM'):
@@ -1492,9 +1496,12 @@ if (not cpl_bypass and not isglobal):
         myoutput.close()
 
 #copy site data to run directory
-os.system('cp '+PTCLMdir+'/temp/domain.nc '+PTCLMdir+'/temp/surfdata.nc  '+ \
-              PTCLMdir+'/temp/*param*.nc '+runroot+'/'+casename+'/run/')
-if ((options.istrans or '20TR' in compset) and options.nopftdyn == False):
+os.system('cp '+PTCLMdir+'/temp/*param*.nc '+runroot+'/'+casename+'/run/')
+if (options.domainfile != ''):
+    os.system('cp '+PTCLMdir+'/temp/domain.nc '+runroot+'/'+casename+'/run/')
+if (options.surffile != ''):
+    os.system('cp '+PTCLMdir+'/temp/surface.nc '+runroot+'/'+casename+'/run/')
+if ('20TR' in compset and options.nopftdyn == False and options.pftdynfile !=''):
     os.system('cp '+PTCLMdir+'/temp/surfdata.pftdyn.nc '+runroot+'/'+casename+'/run/')
 
 #submit job if requested
