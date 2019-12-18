@@ -206,6 +206,8 @@ parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-9
 #datasets for user-defined PFTs (by F-M Yuan, NGEE-Arctic)
 parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
+parser.add_option("--landusefile", dest="pftdynfile", default='', \
+                  help='user-defined dynamic PFT file')
 
 (options, args) = parser.parse_args()
 
@@ -588,6 +590,8 @@ for row in AFdatareader:
 
         if (options.maxpatch_pft!=17):
             basecmd = basecmd + ' --maxpatch_pft '+options.maxpatch_pft
+        if (options.pftdynfile != ''):
+            basecmd = basecmd + ' --landusefile '+options.pftdynfile
 
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
@@ -991,6 +995,8 @@ for row in AFdatareader:
             if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
+                mysubmit_type = ''
+            if ('mac' in options.machine):
                 mysubmit_type = ''
             if ((sitenum % npernode) == 0):
                 if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
