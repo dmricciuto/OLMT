@@ -202,6 +202,8 @@ parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'full path of Domain file to use')
 parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
+parser.add_option("--landusefile", dest="pftdynfile", default='', \
+                  help='user-defined dynamic PFT file')
 
 (options, args) = parser.parse_args()
 
@@ -567,6 +569,8 @@ for row in AFdatareader:
             basecmd = basecmd + ' --domainfile '+options.domainfile
         if (options.maxpatch_pft!=17):
             basecmd = basecmd + ' --maxpatch_pft '+options.maxpatch_pft
+        if (options.pftdynfile != ''):
+            basecmd = basecmd + ' --landusefile '+options.pftdynfile
 
 
         if (myproject != ''):
@@ -876,6 +880,8 @@ for row in AFdatareader:
             if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
+                mysubmit_type = ''
+            if ('mac' in options.machine):
                 mysubmit_type = ''
             if ((sitenum % npernode) == 0):
                 if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
