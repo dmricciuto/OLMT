@@ -914,6 +914,10 @@ if (options.maxpatch_pft != 17):
   xval = '-maxpft '+str(options.maxpatch_pft)+' '+xval
   os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
 
+# for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
+if('mac' in options.machine or 'cades' in options.machine): 
+    os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
+
 
 #--------------------------CESM setup ----------------------------------------
 
