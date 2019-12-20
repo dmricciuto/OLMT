@@ -783,7 +783,7 @@ result = os.system(cmd)
 
 if (os.path.isdir(casedir)):
     print(casedir+' created.  See create_newcase.log for details')
-    os.system('mv create_newcase.log '+casename)
+    os.system('mv create_newcase.log '+casedir+'/')
 else:
     print('Error:  runcase.py Failed to create case.  See create_newcase.log for details')
     sys.exit(1)
