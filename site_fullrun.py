@@ -100,6 +100,8 @@ parser.add_option("--gswp3", dest="gswp3", default=False, action="store_true", \
                   help = 'Use GSWP3 meteorology')
 parser.add_option("--princeton", dest="princeton", default=False, action="store_true", \
                   help = 'Use Princeton meteorology')
+parser.add_option("--daymet", dest="daymet", default=False, action="store_true", \
+                  help = 'Use daymet/GSWP3 meteorology')
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'CLM timestep (hours)')
 parser.add_option("--add_co2", dest="addco2", default=0.0, \
@@ -204,6 +206,11 @@ parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
+parser.add_option("--var_soilthickness", dest="var_soilthickness", default=False, \
+                  help = 'Use variable soil thickness from surface data', action="store_true")
+parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
+parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
+                    help='Do not submit jobs')
 
 (options, args) = parser.parse_args()
 
@@ -525,6 +532,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --gswp3'
         if (options.princeton):
             basecmd = basecmd+' --princeton'
+        if (options.daymet):
+            basecmd = basecmd+' --daymet'
         if (options.fates_paramfile != ''):
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
         if (options.fates_nutrient != ''):
@@ -572,6 +581,10 @@ for row in AFdatareader:
         if (options.pftdynfile != ''):
             basecmd = basecmd + ' --landusefile '+options.pftdynfile
 
+        if (options.var_soilthickness):
+            basecmd = basecmd + ' --var_soilthickness'
+        if (options.var_list_pft != ''):
+            basecmd = basecmd + ' --var_list_pft '+options.var_list_pft
 
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
@@ -1121,7 +1134,7 @@ if (options.ensemble_file == ''):
             if ('trans_diags' in thiscase and options.machine == 'cades'):
                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             output.close()
-            if (mysubmit_type == ''):
+            if (mysubmit_type == '' or options.no_submit):
                 os.system('chmod u+x ./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
                 os.system('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
             else:
