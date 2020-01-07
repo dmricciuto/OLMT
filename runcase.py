@@ -282,6 +282,9 @@ parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
                   help = 'Which version of fates_nutrient to use (RD or ECA)')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
+parser.add_option("--var_soilthickness", dest="var_soilthickness", default=False, \
+                  help = 'Use variable soil thickness from surface data', action="store_true")
+
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
@@ -302,6 +305,7 @@ parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
+parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
@@ -1046,6 +1050,8 @@ for i in range(1,int(options.ninst)+1):
                     'CPOOL_TO_DEADCROOTC_STORAGE', 'CPOOL_TO_LIVECROOTC_STORAGE', \
                     'FROOTC_STORAGE', 'LEAFC_STORAGE', 'LEAFC_XFER', 'FROOTC_XFER', 'LIVESTEMC_XFER', \
                     'DEADSTEMC_XFER', 'LIVECROOTC_XFER', 'DEADCROOTC_XFER', 'TLAI', 'CPOOL_TO_LIVESTEMC']
+    if options.var_list_pft != '':
+        var_list_pft = options.var_list_pft.split(',')
     var_list_spinup = ['PPOOL', 'EFLX_LH_TOT', 'RETRANSN', 'PCO2', 'PBOT', 'NDEP_TO_SMINN', 'OCDEP', \
                        'BCDEP', 'COL_FIRE_CLOSS', 'HDM', 'LNFM', 'NEE', 'GPP', 'FPSN', 'AR', 'HR', \
                        'MR', 'GR', 'ER', 'NPP', 'TLAI', 'SOIL3C', 'TOTSOMC', 'TOTSOMC_1m', 'LEAFC', \
@@ -1213,7 +1219,10 @@ for i in range(1,int(options.ninst)+1):
       output.write(" fsurdat = '"+rundir+"/surfdata.nc'\n")
     else:
       output.write(" fsurdat = '"+options.surffile+"'\n")      
-        
+    
+    if (options.var_soilthickness):
+        output.write(" use_var_soil_thick = .TRUE.\n") 
+
     #pft dynamics file for transient run
     if ('20TR' in compset or options.istrans):
         if (options.nopftdyn):
@@ -1346,6 +1355,11 @@ for i in range(1,int(options.ninst)+1):
                 output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                           +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full'\n")
 #                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
+
+        elif options.metdir != '':
+            output.write(" metdata_type = 'gswp3v1_daymet'\n") # This needs to be updated for other types
+            output.write(" metdata_bypass = '%s'\n"%options.metdir)
+            
         # not reanalysis
         else:
             if (options.site_forcing == ''):
