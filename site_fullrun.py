@@ -178,6 +178,12 @@ parser.add_option("--cn_only", dest="cn_only", default=False, action ="store_tru
                   help='Carbon/Nitrogen only (saturated P)') 
 parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
                   help = 'Copy sourcemods from this location')
+parser.add_option("--daymet", dest="daymet", default=False, \
+                  action="store_true", help = 'Use Daymet corrected meteorology')
+parser.add_option("--dailyvars", dest="dailyvars", default=False, \
+                 action="store_true", help="Write daily ouptut variables")
+parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False, \
+                  help = 'Use variable soil depth from surface data file',action='store_true')
 
 # model output options
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
@@ -204,6 +210,10 @@ parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
+
+parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
+                    help='Do not submit jobs')
+parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
 
 (options, args) = parser.parse_args()
 
@@ -525,6 +535,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --gswp3'
         if (options.princeton):
             basecmd = basecmd+' --princeton'
+        if (options.daymet):
+            basecmd = basecmd+' --daymet'
         if (options.fates_paramfile != ''):
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
         if (options.fates_nutrient != ''):
@@ -572,6 +584,10 @@ for row in AFdatareader:
         if (options.pftdynfile != ''):
             basecmd = basecmd + ' --landusefile '+options.pftdynfile
 
+        if (options.var_soilthickness):
+            basecmd = basecmd + ' --var_soilthickness'
+        if (options.var_list_pft != ''):
+            basecmd = basecmd + ' --var_list_pft '+options.var_list_pft
 
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
@@ -752,6 +768,8 @@ for row in AFdatareader:
             cmd_trns = cmd_trns + ' --spinup_vars'
         if (options.trans_varlist != ''):
             cmd_trns = cmd_trns + ' --trans_varlist '+options.trans_varlist
+        if (options.dailyvars):
+            cmd_trns = cmd_trns + ' --dailyvars'
         if (options.ensemble_file != ''):  #Transient post-processing
             cmd_trns = cmd_trns + ' --postproc_file '+options.postproc_file
         if (options.diags):
@@ -1121,11 +1139,12 @@ if (options.ensemble_file == ''):
             if ('trans_diags' in thiscase and options.machine == 'cades'):
                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             output.close()
-            if (mysubmit_type == ''):
-                os.system('chmod u+x ./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
-                os.system('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
-            else:
-                job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
+            if not options.no_submit:
+                if (mysubmit_type == ''):
+                    os.system('chmod u+x ./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
+                    os.system('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
+                else:
+                    job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
                                     job_depend_run, submit_type=mysubmit_type)
 
 

@@ -166,6 +166,8 @@ parser.add_option("--mod_parm_file_P", dest="mod_parm_file_P", default='', \
                   help = "adding the path to the modified parameter file")
 parser.add_option("--walltime", dest="walltime", default=24, \
                   help = "desired walltime for each job (hours)")
+parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
+                    help='Do not submit jobs')
 
 (options, args) = parser.parse_args()
 
@@ -823,6 +825,7 @@ if (options.mc_ensemble <= 0):
                                  str(int(ny_ad)+1)+'\n')
         output.close()
 
-        job_depend_run = submit('temp/global_'+c+'_'+str(n)+'.pbs',job_depend=job_depend_run, \
+        if not options.no_submit:
+            job_depend_run = submit('temp/global_'+c+'_'+str(n)+'.pbs',job_depend=job_depend_run, \
                                     submit_type=mysubmit_type)
         
