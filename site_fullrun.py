@@ -23,6 +23,8 @@ parser.add_option("--exeroot", dest="exeroot", default="", \
                   help="Location of executable")
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
+parser.add_option("--batch_build", action="store_true", default=False, \
+                  help="Do build as part of submitted batch script")
 parser.add_option("--constraints", dest="constraints", default="", \
                   help="Directory containing model constraints")
 parser.add_option("--compare_cases", dest="compare", default='', \
@@ -688,6 +690,8 @@ for row in AFdatareader:
                 else:
                     ad_exeroot = options.exeroot
                     cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
+            elif options.batch_build:
+                cmd_adsp = cmd_adsp+' --no_build'
         else:
             cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
 
@@ -758,6 +762,8 @@ for row in AFdatareader:
               else:
                 ad_exeroot=options.exeroot
                 cmd_fnsp = cmd_fnsp+' --no_build --exeroot '+ad_exeroot
+            elif options.batch_build:
+                cmd_fnsp = cmd_fnsp+' --no_build'
         else:
             cmd_fnsp = basecmd+' --finidat_case '+ad_case+ \
                        ' --finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
@@ -1137,6 +1143,11 @@ for row in AFdatareader:
                 #if (caseroot == runroot):
                 #    simsubmitdir=simsubmitdir+'/case'
                 output.write("cd "+caseroot+'/'+simsubmitdir+'\n')
+
+                if options.batch_build and options.exeroot == '':
+                    output.write('./xmlchange BUILD_COMPLETE=FALSE\n')
+                    output.write("./case.build\n")
+
                 output.write("./case.submit --no-batch &\n")
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
