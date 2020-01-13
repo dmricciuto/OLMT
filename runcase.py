@@ -1512,11 +1512,11 @@ if (not cpl_bypass and not isglobal):
 
 #copy site data to run directory
 os.system('cp '+PTCLMdir+'/temp/*param*.nc '+runroot+'/'+casename+'/run/')
-if (options.domainfile != ''):
+if (options.domainfile == ''):
     os.system('cp '+PTCLMdir+'/temp/domain.nc '+runroot+'/'+casename+'/run/')
-if (options.surffile != ''):
-    os.system('cp '+PTCLMdir+'/temp/surface.nc '+runroot+'/'+casename+'/run/')
-if ('20TR' in compset and options.nopftdyn == False and options.pftdynfile !=''):
+if (options.surffile == ''):
+    os.system('cp '+PTCLMdir+'/temp/surfdata.nc '+runroot+'/'+casename+'/run/')
+if ('20TR' in compset and options.nopftdyn == False and options.pftdynfile ==''):
     os.system('cp '+PTCLMdir+'/temp/surfdata.pftdyn.nc '+runroot+'/'+casename+'/run/')
 
 #submit job if requested
