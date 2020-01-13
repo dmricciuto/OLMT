@@ -55,6 +55,8 @@ parser.add_option("--debugq", dest="debug", default=False, action="store_true", 
                   help='Use debug queue and options')
 parser.add_option("--clean_build", action="store_true", default=False, \
                   help="Perform a clean build")
+parser.add_option("--batch_build", action="store_true", default=False, \
+                  help="Do build as part of submitted batch script")
 parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, action="store_true", \
                   help = "Bypass coupler")
 parser.add_option("--machine", dest="machine", default = '', \
@@ -645,6 +647,8 @@ for row in AFdatareader:
                 else:
                     ad_exeroot = options.exeroot
                     cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
+            elif options.batch_build:
+                cmd_adsp = cmd_adsp+' --no_build'
         else:
             cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
 
@@ -713,6 +717,8 @@ for row in AFdatareader:
               else:
                 ad_exeroot=options.exeroot
                 cmd_fnsp = cmd_fnsp+' --no_build --exeroot '+ad_exeroot
+            elif options.batch_build:
+                cmd_fnsp = cmd_fnsp+' --no_build'
         else:
             cmd_fnsp = basecmd+' --finidat_case '+ad_case+ \
                        ' --finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
@@ -1004,6 +1010,9 @@ for row in AFdatareader:
                     output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_ad_spinup/\n")
                 else:
                     output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/\n")
+                if options.batch_build and options.exeroot == '':
+                    output.write('./xmlchange BUILD_COMPLETE=FALSE\n')
+                    output.write("./case.build\n")
                 output.write("./case.submit --no-batch &\n")
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
