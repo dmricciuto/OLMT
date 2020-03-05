@@ -819,6 +819,10 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --nopftdyn'
                 if (int(options.mypft) >= 0):
                     ptcmd = ptcmd+' --pft '+str(options.mypft)
+                if (options.humhol):
+                    ptcmd = ptcmd+' --humhol'
+                if (options.marsh):
+                    ptcmd = ptcmd+' --marsh'
                 result = os.system(ptcmd)
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)
