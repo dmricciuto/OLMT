@@ -46,6 +46,10 @@ parser.add_option("--nopftdyn", dest="nopftdyn", default=False, \
                      action='store_true', help='Do not make transient PFT file')
 parser.add_option("--mysimyr", dest="mysimyr", default=1850, \
                      help = 'Simulation year (1850 or 2000)')
+parser.add_option("--humhol", dest="humhol", default=False, \
+                  help = 'Use hummock/hollow microtopography', action="store_true")
+parser.add_option("--marsh", dest="marsh", default=False, \
+                  help = 'Use marsh hydrology/elevation', action="store_true")
 (options, args) = parser.parse_args()
 
 
@@ -153,7 +157,8 @@ elif (options.site != ''):
                 mylon=360.0+float(row[3])
             lon.append(mylon)
             lat.append(float(row[4]))
-            if ('US-SPR' in options.site):
+            if ('US-SPR' in options.site or 
+                (options.marsh or options.humhol)):
                 lon.append(mylon)
                 lat.append(float(row[4]))
                 n_grids = 2

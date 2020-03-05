@@ -895,6 +895,10 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --nopftdyn'
                 if (int(options.mypft) >= 0):
                     ptcmd = ptcmd+' --pft '+str(options.mypft)
+                if (options.humhol):
+                    ptcmd = ptcmd+' --humhol'
+                if (options.marsh):
+                    ptcmd = ptcmd+' --marsh'
                 print(ptcmd)
                 result = os.system(ptcmd)
                 if (result > 0):
