@@ -639,6 +639,9 @@ if (options.mod_parm_file != ''):
 else:
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
+    myncap = 'ncap'
+    if ('compy' in options.machine):
+      myncap='ncap2'
     if (options.humhol):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
       print('humhol_ht = 0.15m')
@@ -646,14 +649,14 @@ else:
       print('humhol_dist = 1.0m')
       print('qflx_h2osfc_surfrate = 1.0e-7')
       print('setting rsub_top_globlmax = 1.2e-5')
-      myncap = 'ncap'
-      if ('compy' in options.machine):
-        myncap='ncap2'
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    os.system(myncap+' -O -s "Nfix_NPP_c1 = br_mr*+1.8" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    os.system(myncap+' -O -s "Nfix_NPP_c2 = br_mr*0.003" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "nfix_timeconst = br_mr*10.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
 
 os.system('chmod u+w ' +tmpdir+'/clm_params.nc')
 if (options.parm_file != ''):
@@ -1494,7 +1497,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
     num=0
     #Launch ensemble if requested 
     mysubmit_type = 'qsub'
-    if ('compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
+    if ('cades' in options.machine or 'compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
         os.system('mkdir -p '+PTCLMdir+'/scripts/'+myscriptsdir)
@@ -1536,6 +1539,10 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                 output_run.write('#SBATCH --constraint=knl\n')
             if ('compy' in options.machine and options.debug):
               output_run.write('#SBATCH --qos=short\n')
+            if ('cades' in options.machine):
+              output_run.write('#SBATCH -A ccsi\n')
+              output_run.write('#SBATCH -p burst\n')
+              output_run.write('#SBATCH --mem=8G\n')
         output_run.write("\n")
         if (options.machine == 'eos'):
             output_run.write('source $MODULESHOME/init/csh\n')

@@ -654,7 +654,7 @@ for c in cases:
 
 
     mysubmit_type = 'qsub'
-    if ('anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
+    if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
         mysubmit_type = 'sbatch'
     #Create a .PBS site fullrun script to launch the full job 
 
@@ -697,6 +697,10 @@ for c in cases:
                              output.write('#SBATCH --partition=regular\n')
                     if ('compy' in options.machine and options.debug):
                       output.write('#SBATCH -p short\n')
+                    if ('cades' in options.machine):
+                      output.write('#SBATCH -A ccsi\n')
+                      output.write('#SBATCH -p burst\n')
+                      output.write('#SBATCH --mem=8G\n')
             elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
                 output.write(s)
         input.close()

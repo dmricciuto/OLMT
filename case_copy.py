@@ -166,7 +166,7 @@ if (os.path.exists('temp/global_'+options.casename+'_0.pbs') and options.suffix 
   file_in.close()
   file_out.close()
   print "Submitting the job:"
-  if ('cori' in options.machine or 'edison' in options.machine):
+  if ('cades' in options.machine or 'cori' in options.machine or 'edison' in options.machine):
     os.system('sbatch temp/global_'+options.casename+'_'+options.suffix+'.pbs')
   else:
     os.system('qsub temp/global_'+options.casename+'_'+options.suffix+'.pbs')
