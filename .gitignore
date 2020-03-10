@@ -7,3 +7,4 @@ srcmods*
 # files created by OLMT executions
 run.*
 *.pyc
+*.run.o*

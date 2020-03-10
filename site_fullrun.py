@@ -1155,8 +1155,7 @@ for row in AFdatareader:
 
                 if options.batch_build and options.exeroot == '':
                     output.write('./xmlchange BUILD_COMPLETE=FALSE\n')
-                    output.write("./case.build\n")
-
+                    output.write("./case.build || exit 1\n")
                 output.write("./case.submit --no-batch &\n")
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
