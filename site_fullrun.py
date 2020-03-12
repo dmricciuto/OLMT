@@ -57,6 +57,21 @@ parser.add_option("--clean_build", action="store_true", default=False, \
                   help="Perform a clean build")
 parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, action="store_true", \
                   help = "Bypass coupler")
+parser.add_option("--diags", dest="diags", default=False, \
+                 action="store_true", help="Write special outputs for diagnostics")
+parser.add_option("--hist_mfilt_trans", dest="hist_mfilt", default="365", \
+                  help = 'number of output timesteps per file (transient only)')
+parser.add_option("--hist_mfilt_spinup", dest="hist_mfilt_spinup", default="-999", \
+                  help = 'number of output timesteps per file (transient only)')
+parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-999", \
+                  help = 'output file timestep (transient only)')
+parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="-24", \
+                  help = 'output file timestep (transient only)')
+parser.add_option("--humhol", dest="humhol", default=False, \
+                  help = 'Use hummock/hollow microtopography', action="store_true")
+parser.add_option("--marsh", dest="marsh", default=False, \
+                  help = 'Use marsh hydrology/elevation', action="store_true")
+>>>>>>> adding marsh options
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
 parser.add_option("--np", dest="np", default=1, \
@@ -483,8 +498,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --harvmod'
         if (options.humhol):
             basecmd = basecmd+' --humhol'
-        if (float(options.lai) >= 0):
-            basecmd = basecmd+' --lai '+str(options.lai)
+        if (options.marsh):
+            basecmd = basecmd+' --marsh'
         if (options.nopftdyn):
             basecmd = basecmd+' --nopftdyn'
         if (options.no_dynroot):
@@ -665,6 +680,7 @@ for row in AFdatareader:
                 cmd_fnsp = cmd_fnsp+' --exeroot '+ad_exeroot+' --no_build'
             if (options.sp):
                 cmd_fnsp = cmd_fnsp+' --run_startyear '+str(options.run_startyear)
+<<<<<<< HEAD
             if (options.exeroot != ''):
               if (os.path.isfile(options.exeroot+'/'+myexe) == False):
                   print('Error:  '+options.exeroot+' does not exist or does '+ \
@@ -673,6 +689,8 @@ for row in AFdatareader:
               else:
                 ad_exeroot=options.exeroot
                 cmd_fnsp = cmd_fnsp+' --no_build --exeroot '+ad_exeroot
+=======
+>>>>>>> adding marsh options
         else:
             cmd_fnsp = basecmd+' --finidat_case '+ad_case+ \
                        ' --finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
