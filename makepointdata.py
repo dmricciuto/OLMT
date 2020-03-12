@@ -69,7 +69,7 @@ if ('hcru' in options.res):
         surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_16pfts_Irrig_CMIP6_simyr1850_c170824.nc'
     else:
         if (mysimyr == 2000):
-            surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr2000_c180216.nc'
+            surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr2000_c160307.nc'
         else:
             #CMIP6 stype (Hurtt v2)
             surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr1850_c180216.nc'
@@ -149,7 +149,7 @@ elif (options.site != ''):
                 mylon=360.0+float(row[3])
             lon.append(mylon)
             lat.append(float(row[4]))
-            if ('US-SPR' in options.site):
+            if ('US-GC3' or 'US-GC4' or 'US-SPR' in options.site): #TAO replace SPR with GC3 and GC4
                 lon.append(mylon)
                 lat.append(float(row[4]))
                 n_grids = 2
@@ -401,6 +401,12 @@ for n in range(0,n_grids):
                 if row[0] == options.site:
                     for thispft in range(0,5):
                         mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
+                        if (n==0):
+                            for thispft in range(0,5):
+                                mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
+                        else:
+                            mypft_frac=[100.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
             if (sum(mypft_frac[0:npft]) == 0.0):
                 print('*** Warning:  PFT data NOT found.  Using gridded data ***')
         #read file for site-specific soil information
@@ -431,7 +437,7 @@ for n in range(0,n_grids):
             pct_glacier[0][0] = 0.0
             if (options.mymodel == 'CLM5'):
                 pct_crop[0][0] = 0.0
-            if ('US-SPR' in options.site and mysimyr !=2000):
+            if ('US-GC4' or 'US-GC3' or 'US-SPR' in options.site and mysimyr !=2000): #TAO replace SPR with GC4/GC3
                 #SPRUCE P initial data
                 soil_order[0][0] = 3
                 labilep[0][0]    = 4.0
@@ -449,7 +455,7 @@ for n in range(0,n_grids):
                        print 'Setting %clay to '+str(mypct_clay)
                     pct_sand[k][0][0]   = mypct_sand
                     pct_clay[k][0][0]   = mypct_clay
-                if ('US-SPR' in options.site):
+                if ('US-GC4' or 'US-GC3' or 'US-SPR' in options.site):
                     if (k < 8):
                         organic[k][0][0] = 130.0
                     elif (k == 8):
@@ -659,7 +665,7 @@ if (options.nopftdyn == False):
                 #use time-varying files from gridded file
                 print 'using '+surffile_new+' for 1850 information'
                 nonpft = float(pct_lake_1850[n]+pct_glacier_1850[n]+ \
-                               pct_wetland_1850[n]+sum(pct_urban_1850[0:3,n]))
+                               pct_wetland_1850[n]+pct_urban_1850[n])
                 if (options.mymodel == 'CLM5'):
                     nonpft = nonpft+float(pct_crop_1850[n])
                 sumpft = 0.0

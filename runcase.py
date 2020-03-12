@@ -43,6 +43,8 @@ parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
                   help = 'longitude range for regional run')
 parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
+parser.add_option("--marsh", dest="marsh", default=False, \
+                  help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 parser.add_option("--model", dest="mymodel", default='', \
@@ -189,6 +191,8 @@ parser.add_option("--centbgc", dest="centbgc", default=False, \
                   help = 'To turn on CN with multiple soil layers, CENTURY C module (CLM4ME on as well)', action="store_true")
 parser.add_option("--CH4", dest="CH4", default=False, \
                   help = 'To turn on CN with CLM4me', action="store_true")
+parser.add_option("--1850_clim", dest="const_clim", default=False, \
+                  help = 'Use constant 1850 N deposition', action="store_true")
 parser.add_option("--1850_ndep", dest="ndep1850", default=False, \
                   help = 'Use constant 1850 N deposition', action="store_true")
 parser.add_option("--1850_aero", dest="aero1850", default=False, \
@@ -228,8 +232,6 @@ parser.add_option("--surffile", dest="surffile", default="", \
                   help = 'Surface file to use')
 parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'Domain file to use')
-parser.add_option("--fates_hydro", dest="fates_hydro", default=False, action="store_true", \
-                  help = 'Set fates hydro to true')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
@@ -597,7 +599,7 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if (options.humhol):
+            if (options.humhol or options.marsh):
                 numxpts=2
             else:
                 numxpts=1
@@ -737,7 +739,7 @@ elif (options.exit_spinup):
 cmd = './create_newcase --case '+casedir+' --mach '+options.machine+' --compset '+ \
 	   options.compset+' --res '+options.res+' --mpilib '+ \
            options.mpilib+' --walltime '+str(options.walltime)+ \
-          ':00:00 '+'--handle-preexisting-dirs u'
+          ':00:00'
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
 if (options.project != ''):
@@ -843,9 +845,9 @@ if ('20TR' in compset):
     if (options.run_startyear == -1):
         os.system('./xmlchange RUN_STARTDATE=1850-01-01')
     
-#No pnetcdf for small cases on compy
-if ('compy' in options.machine and int(options.np) < 80):
-  os.system('./xmlchange PIO_TYPENAME=netcdf')
+#no PIO on oic
+#if ('oic' in options.machine or 'eos' in options.machine or 'edison' in options.machine):
+#os.system('./xmlchange PIO_TYPENAME=netcdf')
 
 comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV']
 for c in comps:
@@ -1118,8 +1120,6 @@ for i in range(1,int(options.ninst)+1):
     output.write(" paramfile = '"+rundir+"/clm_params.nc'\n")
     if ('ED' in compset and options.fates_paramfile != ''):
       output.write(" fates_paramfile = '"+options.fates_paramfile+"'\n")
-    if ('ED' in compset and options.fates_hydro):
-      output.write(" use_fates_planthydro = .true.\n")
 
     if ('RD' in compset or 'ECA' in compset):
         #soil order parameter file
@@ -1239,6 +1239,8 @@ for i in range(1,int(options.ninst)+1):
         else:
           output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
                          +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1849-2104_1.9x2.5_c100402.nc'\n")
+        if (options.const_clim):
+          output.write(" const_climate_hist = .true.\n")
     if (options.addt != 0):
       output.write(" add_temperature = "+str(options.addt)+"\n")
       output.write(" startdate_add_temperature = '"+str(options.sd_addt)+"'\n")
@@ -1264,6 +1266,10 @@ else:
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
     os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+if (options.marsh):
+    print("Turning on MARSH modification\n")
+    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
     os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
@@ -1506,8 +1512,6 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                                      int(float(options.walltime)))*60))+':00'
         if (options.debug):
            timestr='00:30:00'
-           if ('compy' in options.machine):
-             timestr='02:00:00'
         output_run.write("#!/bin/csh -f\n")
         if (mysubmit_type == 'qsub'):
             output_run.write('#PBS -l walltime='+timestr+'\n')
@@ -1517,7 +1521,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
             if (options.machine == 'cades'):
                 output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
                                     ':ppn='+str(ppn)+'\n')
-                output_run.write('#PBS -W group_list=cades-ccsi\n')
+                output_run.write('#PBS -W group_list=ccsi\n')
             else:
                 output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
                                      '\n')
@@ -1570,7 +1574,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
             output_run.write('module unload scipy\n')
             output_run.write('module unload numpy\n')
             output_run.write('module load cray-netcdf\n')
-            output_run.write('module load python/2.7-anaconda-5.2\n')
+            output_run.write('module load python/2.7-anaconda\n')
             output_run.write('module load nco\n')
 
         output_run.write('cd '+PTCLMdir+'\n')

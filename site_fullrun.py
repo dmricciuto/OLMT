@@ -43,8 +43,8 @@ parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="-24", \
                   help = 'output file timestep (transient only)')
 parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
-parser.add_option("--lai", dest="lai", default=-999, \
-                  help = 'Set constant LAI (SP mode only)')
+parser.add_option("--marsh", dest="marsh", default=False, \
+                  help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
 parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
@@ -451,8 +451,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --harvmod'
         if (options.humhol):
             basecmd = basecmd+' --humhol'
-        if (float(options.lai) >= 0):
-            basecmd = basecmd+' --lai '+str(options.lai)
+        if (options.marsh):
+            basecmd = basecmd+' --marsh'
         if (options.nopftdyn):
             basecmd = basecmd+' --nopftdyn'
         if (options.no_dynroot):
@@ -602,14 +602,6 @@ for row in AFdatareader:
                 cmd_fnsp = cmd_fnsp+' --exeroot '+ad_exeroot+' --no_build'
             if (options.sp):
                 cmd_fnsp = cmd_fnsp+' --run_startyear '+str(options.run_startyear)
-            if (options.exeroot != ''):
-              if (os.path.isfile(options.exeroot+'/'+myexe) == False):
-                  print 'Error:  '+options.exeroot+' does not exist or does '+ \
-                        'not contain an executable. Exiting'
-                  sys.exit(1)
-              else:
-                ad_exeroot=options.exeroot
-                cmd_fnsp = cmd_fnsp+' --no_build --exeroot '+ad_exeroot
         else:
             cmd_fnsp = basecmd+' --finidat_case '+ad_case+ \
                        ' --finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
