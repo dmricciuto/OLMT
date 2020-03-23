@@ -289,6 +289,7 @@ csmdir = options.csmdir
 
 #get project information
 myuser = getpass.getuser()
+myproject=''
 if (options.project != ''):
   myproject = options.project
 else: 
@@ -700,7 +701,8 @@ for c in cases:
                     if ('cades' in options.machine):
                       output.write('#SBATCH -A ccsi\n')
                       output.write('#SBATCH -p burst\n')
-                      output.write('#SBATCH --mem=8G\n')
+                      output.write('#SBATCH --mem=128G\n')
+                      output.write('#SBATCH --ntasks-per-node 32\n')
             elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
                 output.write(s)
         input.close()

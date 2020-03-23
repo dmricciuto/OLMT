@@ -812,7 +812,8 @@ for row in AFdatareader:
                             if ('cades' in options.machine):
                                 output.write('#SBATCH -A ccsi\n')
                                 output.write('#SBATCH -p burst\n')
-                                output.write('#SBATCH --mem=8G\n')
+                                output.write('#SBATCH --mem=128G\n')
+                                output.write('#SBATCH --ntasks-per-node 32\n')
                     elif ("#" in s and "ppn" in s):
                         if ('cades' in options.machine):
                             #if ('diags' in c or 'iniadjust' in c):
