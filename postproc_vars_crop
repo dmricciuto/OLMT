@@ -1,0 +1,13 @@
+#Variable Startyear endyear Startday endday averaging period     factor add offset 
+GPP            1998    2007          1    365        3650            31536000    0
+NPP            1998    2007          1    365        3650            31536000    0
+NEE            1998    2007          1    365        3650            31536000    0
+TLAI           1998    2007          1    365        3650                   1    0
+CRPYLD         1998    2007          1    365        3650                   1    0
+LEAFC          1998    2007          1    365        3650                   1    0
+FROOTC         1998    2007          1    365        3650                   1    0
+LIVESTEMC      1998    2007          1    365        3650                   1    0
+TOTVEGC        1998    2007          1    365        3650                   1    0
+BTRAN          1998    2007          1    365        3650                   1    0 
+GRAINC         1998    2007          1    365        3650                   1    0
+TOTSOMC        1998    2007          1    365        3650                   1    0 
