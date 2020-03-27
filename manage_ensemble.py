@@ -20,6 +20,8 @@ parser.add_option("--n_ensemble", dest="n", default=0, \
                   help="Number of ensemble members")
 parser.add_option("--case", dest="casename", default="", \
                   help="Name of case")
+parser.add_option("--constraints", dest="constraints", default="", \
+                  help="Directory containing model constraints")
 parser.add_option("--ens_file", dest="ens_file", default="", \
                   help="Name of samples file")
 parser.add_option("--mc_ensemble", dest="mc_ensemble", default=0, \
@@ -36,10 +38,17 @@ parser.add_option("--cnp", dest="cnp", default = False, action="store_true", \
                   help = 'CNP mode - initialize P pools')
 parser.add_option("--site", dest="site", default='parm_list', \
                   help = 'Site name')
-#parser.add_option("--calc_costfuction")
 (options, args) = parser.parse_args()
 
 options.n = int(options.n)
+
+options.do_QPSO = False
+if (options.constraints != ''):
+  options.do_QPSO = True
+  if (options.n == 0):
+    print('QPSO population not set.  Setting to 32')
+    options.mc_ensemble = 32
+
 #Get number of samples from ensemble file
 if (os.path.isfile(options.ens_file)):
     if (options.n == 0):
@@ -51,10 +60,11 @@ if (os.path.isfile(options.ens_file)):
 else:
     if (not options.postproc_only):
       if (options.mc_ensemble > 0):
-        nsamples = int(options.mc_ensemble)
-        options.ens_file = 'mcsamples_'+options.casename+'.txt'
         options.n = int(options.mc_ensemble)
-        print('Creating Monte Carlo ensemble with '+str(nsamples)+' members')
+        caseid = options.casename.split('_')[0]
+        if (options.ens_file == ''):
+          options.ens_file = 'mcsamples_'+caseid+'_'+str(options.n)+'.txt'
+        print('Creating Monte Carlo ensemble with '+str(options.n)+' members')
       else:
         print('ensemble file does not exist.  Exiting')
         sys.exit()
@@ -139,12 +149,31 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
          elif ('fates' in p):   #fates parameter file
            mydata = nffun.getvar(fpfname,p) 
            if (int(ppfts[pnum]) >= 0):
-             if (p == 'fates_prt_nitr_stoich_p1'):
-               parms[pnum] = mydata[int(ppfts[pnum]) % 6,int(ppfts[pnum])/6]
-             else:
+             if ('fates_prt_nitr_stoich_p1' in p):
+               #this is a 2D parameter.
+               parms[pnum] = mydata[int(ppfts[pnum])/ 12 , int(ppfts[pnum]) % 12] 
+             elif ('fates_hydr_p50_node' in p or 'fates_hydr_avuln_node' in p or \
+                   'fates_hydr_kmax_node' in p or 'fates_hydr_pitlp_node' in p or \
+                   'fates_hydr_thetas_node' in p):
+               parms[pnum] = mydata[int(ppfts[pnum]) / 12 , int(ppfts[pnum]) % 12]
+             elif ('fates_leaf_long' in p or 'fates_leaf_vcmax25top' in p):
+               parms[pnum] = mydata[0,int(ppfts[pnum])] 
+             elif (p == 'fates_seed_alloc'):
+             #  if (not fates_seed_zeroed[0]):
+             #    param[:]=0.
+             #    fates_seed_zeroed[0]=True
+               parms[pnum] = mydata[int(ppfts[pnum])] 
+             elif (p == 'fates_seed_alloc_mature'):
+             #  if (not fates_seed_zeroed[1]):
+             #    param[:]=0.
+             #    fates_seed_zeroed[1]=True
+               parms[pnum] = mydata[int(ppfts[pnum])] 
+             elif (int(ppfts[pnum]) > 0):
                parms[pnum] = mydata[int(ppfts[pnum])]
+             elif (int(ppfts[pnum]) == 0):
+               parms[pnum] = mydata[int(ppfts[pnum])] 
            else:
-             parms[pnum] = mydata[0]
+             parms[pnum] = mydata[...]
          else:                #Regular parameter file
            mydata = nffun.getvar(pfname,p) 
            if (int(ppfts[pnum]) >= 0):
@@ -155,6 +184,121 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
 
     return ierr
             
+
+def calc_costfucntion(constraints, thisjob, runroot, case):
+  #Calculate cost function value (SSE) given the data constraints in the provided directory
+  rundir = runroot+'/UQ/'+case+'/g'+str(100000+thisjob)[1:]+'/'
+  sse = 0
+  os.system('rm '+rundir+case+'.clm2*_constraint.nc')
+  myoutput = open(rundir+'myoutput_sse.txt','w')
+  for filename in os.listdir(constraints):
+
+   if (not os.path.isdir(filename)):
+    myinput = open(constraints+'/'+filename,'r')
+    myvarname = filename.split('.')[0]  #model variable is filename
+    #code to deal with special variables and/or aggregation
+    #-------------
+    lnum = 0   #line number
+    year = 0
+    for s in myinput:
+        if (lnum == 0):
+            header = s.split()
+        elif (len(header) == len(s.split())):
+            hnum = 0
+            PFT=-1      #default:  don't use PFT-specific info 
+                        #  if specified, use h1 file (PFT-specific)
+            doy=-1      #default:  annual average
+            month=-1    #default:  don't use monthly data
+            depth=-1
+            unc = -999
+            for h in header:
+                if (h.lower() == 'year'):
+                    year_last = year
+                    year = int(s.split()[hnum])
+                if (h.lower() == 'doy'):
+                    doy = int(s.split()[hnum])
+                if (h.lower() == 'month'):
+                    month = int(s.split()[hnum])
+                if (h.lower() == 'pft'):
+                    PFT = int(s.split()[hnum])
+                if (h.lower() == 'value'):
+                    value = float(s.split()[hnum])
+                if (h.lower() == 'depth'):
+                    depth = float(s.split()[hnum])
+                if ('unc' in h.lower()):
+                    unc   = float(s.split()[hnum])
+                hnum = hnum+1
+            #get the relevant variable/dataset
+            #Assumes annual file with daily output
+            if (PFT == -1):
+                myfile  = rundir+case+'.clm2.h0.'+str(year)+'-01-01-00000_constraint.nc'
+                myfileo = rundir+case+'.clm2.h0.'+str(year)+'-01-01-00000.nc'
+            else:
+                myfile  = rundir+case+'.clm2.h1.'+str(year)+'-01-01-00000_constraint.nc'
+                myfileo = rundir+case+'.clm2.h1.'+str(year)+'-01-01-00000.nc'
+            #post processing of model output with nco to match constraining variables
+            if (not os.path.isfile(myfile)):
+                os.system('cp '+myfileo+' '+myfile)
+                if ('h1' in myfile and ('STEMC' in myvarname or 'AGBIOMASS' in myvarname)):
+                    os.system('ncap2 -3 -s "STEMC=DEADSTEMC+LIVESTEMC" '+myfile+' '+myfile+'.tmp')
+                    os.system('mv '+myfile+'.tmp '+myfile)
+                    os.system('ncap2 -3 -s "AGBIOMASS=DEADSTEMC+LIVESTEMC+LEAFC" '+myfile+' '+myfile+'.tmp')
+                    os.system('mv '+myfile+'.tmp '+myfile)
+                if ('h0' in myfile and 'WTHT' in myvarname):
+                    #Water table height relative to hollow bottoms (7.5cm below hollow gridcell mean)
+                    os.system('ncap2 -3 -s "WTHT=(ZWT*-1+0.225)*1000 " '+myfile+' '+myfile+'.tmp')
+                    os.system('mv '+myfile+'.tmp '+myfile)
+            myvals = nffun.getvar(myfile, myvarname)
+            if (doy > 0 and value > -900):
+                #Daily constraint
+                if (myvarname == 'WTHT'):
+                    unc = 50.0   #no uncertainty given for water table height.
+                if (PFT > 0):
+                    #PFT-specific constraints (daily)
+                    if (myvarname == 'AGBIOMASS' and PFT == 3):
+                        #Both tree types - Larch and spruce, hummock+hollow
+                        model_val = (myvals[doy,PFT-1]*0.25+myvals[doy,PFT]*0.25)*0.75 \
+                                   +(myvals[doy,PFT+16]*0.25+myvals[doy,PFT+17]*0.25)*0.25
+                    else:
+                        #use hummock+hollow
+                        model_val = myvals[doy,PFT-1]*0.25*0.75 + myvals[doy,PFT+16]*0.25*0.25
+                    if (unc < 0):
+                        unc = value*0.25 #default uncertainty set to 25%
+                    sse = sse + ((model_val-value) /unc)**2
+                elif (depth > 0):
+                    #depth-specific constraint in cm (relative to hollow)
+                    layers = [0,1.8,4.5,9.1,16.6,28.9,49.3,82.9,138.3,229.6,343.3]
+                    for l in range(0,10):
+                        if (depth >= layers[l] and depth < layers[l+1]):
+                            thislayer = l
+                            model_val = myvals[doy,thislayer,1]   #Hollow 
+                            sse = sse + ((model_val-value) / unc )**2
+                else:
+                    #Column-level constraint (daily)
+                    #Water table, column-level (no PFT info), use hummock only
+                    model_val = myvals[doy,0]
+                    sse = sse + ((model_val-value) / unc )**2
+            elif (value > -900):
+                #Monthly or annual constraint
+                daysm=[0,31,59,90,120,151,181,212,243,273,304,334,365]
+                if (month > 0):
+                  lbound = daysm[month-1]
+                  ubound = daysm[month]
+                else: 
+                  lbound = 0
+                  ubound = 365
+                #model_val = sum(myvals[0:365,PFT-1]*0.25*0.75)*24*3600 + \
+                #            sum(myvals[0:365,PFT+16]*0.25*0.25)*24*3600
+                if (PFT <= 0):
+                  model_val = sum(myvals[lbound:ubound,0]) / (ubound - lbound)
+                else:
+                  model_val = sum(myvals[lbound:ubound,PFT-1]) / (ubound - lbound)
+                sse = sse + ((model_val-value) / unc )**2
+                myoutput.write(str(myvarname)+' '+str(year)+' '+str(month)+' '+str(PFT)+' '+ \
+                  str(model_val)+' '+str(value)+' '+str(unc)+' '+str(sse)+'\n')
+        lnum = lnum+1
+  myoutput.close()
+  return sse
 
 comm=MPI.COMM_WORLD
 rank=comm.Get_rank()
@@ -198,28 +342,41 @@ if (os.path.isfile(options.postproc_file)):
         data = np.zeros([data_cols,options.n], np.float)-999
     data_row = np.zeros([data_cols], np.float)-999
     postproc_input.close()
-    #get the parameter names
-    pnames=[]
-    ppfts=[]
-    pmin=[]
-    pmax=[]
-    pfile = open(options.parm_list,'r')
-    nparms = 0
-    for s in pfile:
-      pnames.append(s.split()[0])
-      ppfts.append(s.split()[1])
-      pmin.append(s.split()[2])
-      pmax.append(s.split()[3])
-      nparms = nparms+1
-    pfile.close()
-    parm_row = np.zeros([nparms], np.float)-999
-    if (rank == 0):
-      parms = np.zeros([nparms, options.n], np.float)-999
-      
+
+#get the parameter names
+pnames=[]
+ppfts=[]
+pmin=[]
+pmax=[]
+pfile = open(options.parm_list,'r')
+nparms = 0
+for s in pfile:
+  pnames.append(s.split()[0])
+  ppfts.append(s.split()[1])
+  pmin.append(s.split()[2])
+  pmax.append(s.split()[3])
+  nparms = nparms+1
+pfile.close()
+parm_row = np.zeros([nparms], np.float)-999
+if (rank == 0):
+  parms = np.zeros([nparms, options.n], np.float)-999
+  sse_ensemble = np.zeros([options.n], np.float)-999      
+
+niter = 1
+if (options.do_QPSO):
+  niter = 100
 
 if (rank == 0):
-    n_done=0
-    if (options.mc_ensemble > 0):
+    if (options.do_QPSO):
+      beta_l = 0.4
+      beta_u = 0.7
+      nevals = 0
+      x = np.zeros([options.n,nparms],np.float)    #parameters for each pop
+      fx = np.zeros(options.n,np.float)                #costfunc for each pop
+      mbest = np.zeros(nparms)
+
+    #-------- Create ensemble file if one wasn't provided ------------------------
+    if (options.mc_ensemble > 0 or options.do_QPSO):
       #Create a parameter samples file
       #get the parameter names
       pnames=[]
@@ -235,45 +392,93 @@ if (rank == 0):
         pmax.append(float(s.split()[3]))
         nparms = nparms+1
       pfile.close()
-      nsamples = int(options.mc_ensemble)
-      samples=np.zeros((nparms,nsamples), dtype=np.float)
-      for i in range(0,nsamples):
+      samples=np.zeros((nparms,options.n), dtype=np.float)
+      for i in range(0,options.n):
           for j in range(0,nparms):
-              samples[j][i] = pmin[j]+(pmax[j]-pmin[j])*np.random.rand(1)
-      np.savetxt('mcsamples_'+options.casename+'.txt', np.transpose(samples))
-    #send first np-1 jobs where np is number of processes
-    for n_job in range(1,size):
-        comm.send(n_job, dest=n_job, tag=1)
-        comm.send(0,     dest=n_job, tag=2)
-        if (options.postproc_only == False):
-            time.sleep(0.2)
-    #Assign rest of jobs on demand
-    for n_job in range(size,options.n+1):
-        process = comm.recv(source=MPI.ANY_SOURCE, tag=3)
-        thisjob = comm.recv(source=process, tag=4)
-        if (do_postproc):
-            data_row = comm.recv(source=process, tag=5)
-            data[:,thisjob-1] = data_row
-            parm_row = comm.recv(source=process, tag=6)
-            parms[:,thisjob-1] = parm_row
-        print('Received', thisjob)
-        n_done = n_done+1
-        comm.send(n_job, dest=process, tag=1)
-        comm.send(0,     dest=process, tag=2)
-    #receive remaining messages and finalize
-    while (n_done < options.n):
-        process = comm.recv(source=MPI.ANY_SOURCE, tag=3)
-        thisjob = comm.recv(source=process, tag=4)
-        if (do_postproc):
-            data_row = comm.recv(source=process, tag=5)
-            data[:,thisjob-1] = data_row
-            parm_row = comm.recv(source=process, tag=6)
-            parms[:,thisjob-1] = parm_row
-        print('Received', thisjob)
-        n_done = n_done+1
-        comm.send(-1, dest=process, tag=1)
-        comm.send(-1, dest=process, tag=2)
-    
+              samples[j,i] = pmin[j]+(pmax[j]-pmin[j])*np.random.rand(1)
+              if (options.do_QPSO):
+                x[i,j]=samples[j,i]
+      np.savetxt(options.ens_file, np.transpose(samples))
+
+    #--------------------------Perform the model simulations---------------------
+    for thisiter in range(0,niter):
+      n_done = 0
+      #generate samples for QPSO
+      if (thisiter > 0): 
+        beta = beta_u - (beta_u-beta_l)*i*1.0/niter
+        xlast = np.copy(x)
+        for p in range(0, nparms):
+            mbest[p] = np.sum(xbest[:,p])/options.n
+        for n in range(0,options.n):
+            isvalid = False
+            while (not isvalid):
+                u = np.random.uniform(0,1,1)
+                v = np.random.uniform(0,1,1)
+                w = np.random.uniform(0,1,1)
+                pupdate = u * xbest[n,:] + (1.0-u)*xbestall[:]
+                betapro = beta * np.absolute(mbest[:] - xlast[n,:])
+                x[n,:] = pupdate + (-1.0 ** np.ceil(0.5+v))*betapro*(-np.log(w))
+                isvalid = True
+                for p in range(0,nparms):
+                    if (x[n,p] < pmin[p] or x[n,p] > pmax[p]):
+                        isvalid=False
+        np.savetxt(options.ens_file, x)
+
+  
+      #send first np-1 jobs where np is number of processes
+      for n_job in range(1,size):
+          comm.send(n_job, dest=n_job, tag=1)
+          comm.send(0,     dest=n_job, tag=2)
+          if (options.postproc_only == False):
+              time.sleep(0.2)
+      #Assign rest of jobs on demand
+      for n_job in range(size,options.n+1):
+          process = comm.recv(source=MPI.ANY_SOURCE, tag=3)
+          thisjob = comm.recv(source=process, tag=4)
+          if (options.constraints != ''):
+            sse_ensemble[thisjob-1] = comm.recv(source=process, tag=7)
+          if (do_postproc):
+              data_row = comm.recv(source=process, tag=5)
+              data[:,thisjob-1] = data_row
+              parm_row = comm.recv(source=process, tag=6)
+              parms[:,thisjob-1] = parm_row
+          n_done = n_done+1
+          comm.send(n_job, dest=process, tag=1)
+          comm.send(0,     dest=process, tag=2)
+      #receive remaining messages and finalize
+      while (n_done < options.n):
+          process = comm.recv(source=MPI.ANY_SOURCE, tag=3)
+          thisjob = comm.recv(source=process, tag=4)
+          if (options.constraints != ''):
+            sse_ensemble[thisjob-1] = comm.recv(source=process, tag=7)
+          if (do_postproc):
+              data_row = comm.recv(source=process, tag=5)
+              data[:,thisjob-1] = data_row
+              parm_row = comm.recv(source=process, tag=6)
+              parms[:,thisjob-1] = parm_row
+          n_done = n_done+1
+          comm.send(-1, dest=process, tag=1)
+          comm.send(-1, dest=process, tag=2)
+
+      if (options.do_QPSO):
+        fx = sse_ensemble
+        if (thisiter == 0):
+          xbest = np.copy(x)            #Best parms for each pop so far
+          fxbest = np.copy(fx)          #Best costfunc for each pop so far
+          xbestall  = (np.copy(x[0,:])).squeeze()    #Overall best parms so far
+          fxbestall = np.copy(fx[0])    #OVerall best costfunc so far
+
+        for n in range(0,options.n):
+          if (fx[n] < fxbest[n]):
+            xbest[n,:] = np.copy(x[n,:])
+            fxbest[n] = np.copy(fx[n])
+          if (fxbest[n] < fxbestall):
+            #get overall best parameters and function values
+            xbestall[:] = np.copy(x[n,:])
+            fxbestall = np.copy(fx[n]) 
+        print('ITER', thisiter, fxbest, fxbestall)
+
+    #---------------------------Output post-processing---------------------------
     if (do_postproc):
         data_out = data.transpose()
         parm_out = parms.transpose()
@@ -312,8 +517,9 @@ if (rank == 0):
 
     MPI.Finalize()
 
-#Slave
+#--------------------- Slave process (individual ensemble members) --------------
 else:
+  for thisiter in range(0,niter):
     status=0
     while status == 0:
         myjob = comm.recv(source=0, tag=1)
@@ -321,25 +527,31 @@ else:
 
         if (status == 0):
             if (options.postproc_only == False):
-                os.chdir(workdir)
                 cnp = 'False'
                 if (options.cnp):
                     cnp='True'
-                #Python script to set up the ensemble run directory and manipulate parameters
-                os.system('python ensemble_copy.py --case '+options.casename+' --runroot '+ \
-                      options.runroot +' --ens_num '+str(myjob)+' --ens_file '+options.ens_file+ \
-                      ' --parm_list '+options.parm_list+' --cnp '+cnp+' --site '+options.site)
-                jobst = str(100000+int(myjob))
-                rundir = options.runroot+'/UQ/'+options.casename+'/g'+jobst[1:]+'/'
-                os.chdir(rundir)
-                #Run the executable
-                exedir = options.exeroot
-                if os.path.isfile(exedir+'/acme.exe'):
-                   os.system(exedir+'/acme.exe > acme_log.txt')
-                elif os.path.isfile(exedir+'/e3sm.exe'):
-                   os.system(exedir+'/e3sm.exe > e3sm_log.txt')
-                elif os.path.isfile(exedir+'/cesm.exe'):
-                   os.system(exedir+'/cesm.exe > cesm_log.txt')
+                mycases=[]
+                if (options.constraints != '' and '20TR' in options.casename):
+                  mycases.append(options.casename.replace('20TRCNPRDCTCBC','1850CNRDCTCBC_ad_spinup'))
+                  mycases.append(options.casename.replace('20TRCNPRDCTCBC','1850CNPRDCTCBC'))
+                mycases.append(options.casename)
+                for c in mycases:
+                  os.chdir(workdir)
+                  #Python script to set up the ensemble run directory and manipulate parameters
+                  os.system('python ensemble_copy.py --case '+c+' --runroot '+ \
+                        options.runroot +' --ens_num '+str(myjob)+' --ens_file '+options.ens_file+ \
+                        ' --parm_list '+options.parm_list+' --cnp '+cnp+' --site '+options.site)
+                  jobst = str(100000+int(myjob))
+                  rundir = options.runroot+'/UQ/'+c+'/g'+jobst[1:]+'/'
+                  os.chdir(rundir)
+                  #Run the executable
+                  exedir = options.exeroot
+                  if os.path.isfile(exedir+'/acme.exe'):
+                     os.system(exedir+'/acme.exe > acme_log.txt')
+                  elif os.path.isfile(exedir+'/e3sm.exe'):
+                     os.system(exedir+'/e3sm.exe > e3sm_log.txt')
+                  elif os.path.isfile(exedir+'/cesm.exe'):
+                     os.system(exedir+'/cesm.exe > cesm_log.txt')
             if (do_postproc):
                 ierr = postproc(myvars, myyear_start, myyear_end, myday_start, \
                          myday_end, myavg_pd, myfactor, myoffset, mypft, myjob, \
@@ -351,6 +563,7 @@ else:
             else:
                 comm.send(rank,  dest=0, tag=3)
                 comm.send(myjob, dest=0, tag=4)
-
-    print(rank, ' complete')
-    MPI.Finalize()
+                if (options.constraints != ''):
+                  sse = calc_costfucntion(options.constraints, myjob, options.runroot, options.casename)
+                  comm.send(sse, dest=0, tag=7)
+  MPI.Finalize()

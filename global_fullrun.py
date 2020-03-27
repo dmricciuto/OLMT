@@ -49,6 +49,8 @@ parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
+parser.add_option("--mc_ensemble", dest="mc_ensemble", default=-1, \
+                  help = 'Monte Carlo ensemble (argument is # of simulations)')
 parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
                   help = "File containing met data")
 parser.add_option("--mpilib", dest="mpilib", default="", \
@@ -65,6 +67,8 @@ parser.add_option("--nopointdata", action="store_true", dest="nopointdata", \
                   default=False, help="do not generate point data")
 parser.add_option("--nyears_final_spinup", dest="nyears_final_spinup", default='200', \
                   help="base no. of years for final spinup")
+parser.add_option("--parm_list", dest="parm_list", default='parm_list', \
+                  help = 'File containing list of parameters to vary')
 parser.add_option('--project', dest='project',default='', \
                  help='Set project')
 parser.add_option('--region', dest="region", default='', \
@@ -79,6 +83,8 @@ parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
                   help = 'Copy sourcemods from this location')
 parser.add_option("--surffile", dest="surffile", default='', \
                   help = 'Use specified surface data file')
+parser.add_option("--domainfile", dest="domainfile", default="", \
+                  help = 'Domain file to use')
 parser.add_option("--parm_file", dest="parm_file", default="", \
                   help = 'parameter file to use')
 parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
@@ -95,7 +101,7 @@ parser.add_option("--np", dest="np", default=256, \
                   help = 'number of processors')
 parser.add_option("--tstep", dest="tstep", default=0.5, \
                   help = 'CLM timestep (hours)')
-parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_1765-2007_c100614.nc", \
+parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'CLM timestep (hours)')
 parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
                   help = 'number of years to run ad_spinup')
@@ -273,7 +279,37 @@ if (options.mpilib == ''):
     elif ('compy' in options.machine):
         options.mpilib = 'impi'
 
-print(options.mpilib)
+#create ensemble file if requested (so that all cases use the same)
+if (int(options.mc_ensemble) != -1):
+    if (not(os.path.isfile(options.parm_list))):
+        print('parm_list file does not exist')
+        sys.exit()
+    else:
+        param_names=[]
+        param_min=[]
+        param_max=[]
+        input = open(options.parm_list,'r')
+        for s in input:
+            if (s):
+                param_names.append(s.split()[0])
+                if (int(options.mc_ensemble) > 0):
+                    if (len(s.split()) == 3):
+                        param_min.append(float(s.split()[1]))
+                        param_max.append(float(s.split()[2]))
+                    else:
+                        param_min.append(float(s.split()[2]))
+                        param_max.append(float(s.split()[3]))
+        input.close()
+        n_parameters = len(param_names)
+    nsamples = int(options.mc_ensemble)
+    samples=numpy.zeros((n_parameters,nsamples), dtype=numpy.float)
+    for i in range(0,nsamples):
+        for j in range(0,n_parameters):
+            samples[j][i] = param_min[j]+(param_max[j]-param_min[j])*numpy.random.rand(1)
+    numpy.savetxt('mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt', \
+                  numpy.transpose(samples))
+    options.ensemble_file = 'mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt'
+
 mycaseid   = options.mycaseid
 srcmods    = options.srcmods_loc
 
@@ -469,6 +505,8 @@ if (options.mod_parm_file_P !=''):
     basecmd = basecmd+' --mod_parm_file_P '+options.mod_parm_file_P
 if (options.surffile != ''):
     basecmd = basecmd+' --surffile '+options.surffile
+if (options.domainfile != ''):
+    basecmd = basecmd+' --domainfile '+options.domainfile
 basecmd = basecmd + ' --np '+str(options.np)
 basecmd = basecmd + ' --tstep '+str(options.tstep)
 basecmd = basecmd + ' --co2_file '+options.co2_file
@@ -632,7 +670,8 @@ if (options.nofn == False):
 if (options.notrans == False):
     cases.append(basecase+'_'+mymodel_trns)
 
-for c in cases:
+if (options.mc_ensemble <= 0):
+  for c in cases:
     model_startdate = 1
     if ('ad_spinup' in c):
         run_n_total = int(ny_ad)
