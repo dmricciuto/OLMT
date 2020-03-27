@@ -21,8 +21,12 @@ parser.add_option("--exeroot", dest="exeroot", default="", \
 parser.add_option("--ccsm_input", dest="ccsm_input", \
                   default='', \
                   help = "input data directory for CESM (required)")
+parser.add_option("--crop", action="store_true", default=False, \
+                  help="Perform a crop model simulation")
 parser.add_option("--clean_build", action="store_true", default=False, \
                   help="Perform a clean build")
+parser.add_option("--constraints", dest="constraints", default="", \
+                  help="Directory containing model constraints")
 parser.add_option("--namelist_file", dest="namelist_file", default='', \
                   help="File containing custom namelist options for user_nl_clm")
 parser.add_option("--model_root", dest="csmdir", default='', \
@@ -41,6 +45,8 @@ parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-9
                   help = 'output file timestep (transient only)')
 parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="-24", \
                   help = 'output file timestep (transient only)')
+parser.add_option("--hist_vars", dest="hist_vars", default='', \
+                  help = 'Output only selected variables in h0 file (comma delimited)')
 parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--lai", dest="lai", default=-999, \
@@ -384,7 +390,7 @@ for row in AFdatareader:
         if (int(options.ny_ad) % ncycle != 0):
           #AD spinup and final spinup lengths must be multiples of met data cyle.
           ny_ad = str(int(ny_ad) + ncycle - (int(ny_ad) % ncycle))
-        if (int(options.nyears_final_spinup) % ncycle !=0):
+        if (int(options.nyears_final_spinup) % ncycle !=0 and options.noad == False):
           ny_fin = str(int(ny_fin) + ncycle - (int(ny_fin) % ncycle))
 
         if (options.nyears_transient == -1):
@@ -506,11 +512,13 @@ for row in AFdatareader:
         basecmd = basecmd+' --caseroot '+caseroot
         basecmd = basecmd+' --runroot '+runroot
         basecmd = basecmd+' --walltime '+str(options.walltime)
-
-
+        if (options.constraints != ''):
+          basecmd = basecmd+' --constraints '+options.constraints
+        if (options.hist_vars != ''):
+          basecmd = basecmd+' --hist_vars '+options.hist_vars
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
-
+ 
 #---------------- build commands for runCLM.py -----------------------------
 
         #ECA or CTC
@@ -535,6 +543,9 @@ for row in AFdatareader:
             mycompset_adsp = mycompset.replace('CNP','CN')
         else:
             mycompset_adsp = mycompset
+        if (options.crop):
+            mycompset = 'CLM45CNCROP'
+            mycompset_adsp = mycompset        
         myexe = 'e3sm.exe'
         if ('clm5' in options.csmdir):
             mycompset = 'Clm50BgcGs'
@@ -563,8 +574,12 @@ for row in AFdatareader:
             cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
 
         if (options.cpl_bypass):
-            cmd_adsp = cmd_adsp+' --compset ICB1850'+mycompset_adsp
-            ad_case = site+'_ICB1850'+mycompset_adsp
+            if (options.crop):
+              cmd_adsp = cmd_adsp+' --compset ICB'+mycompset_adsp
+              ad_case = site+'_ICB'+mycompset_adsp
+            else:
+              cmd_adsp = cmd_adsp+' --compset ICB1850'+mycompset_adsp
+              ad_case = site+'_ICB1850'+mycompset_adsp
             if (options.sp):
               ad_case = site+'_ICBCLM45BC'
         else:
@@ -585,12 +600,18 @@ for row in AFdatareader:
         if mycaseid !='':
             basecase=mycaseid+'_'+site
             if (options.cpl_bypass):
-                basecase = basecase+'_ICB1850'+mycompset
+                if (options.crop):
+                  basecase = basecase+'_ICB'+mycompset
+                else:
+                  basecase = basecase+'_ICB1850'+mycompset
             else: 
                 basecase = basecase+'_I1850'+mycompset
         else:
             if (options.cpl_bypass):
-                basecase=site+'_ICB1850'+mycompset
+                if (options.crop):
+                  basecase = site+'_ICB'+mycompset
+                else:
+                  basecase=site+'_ICB1850'+mycompset
             else:
                 basecase=site+'_I1850'+mycompset
             if (options.sp):
@@ -628,12 +649,15 @@ for row in AFdatareader:
             if (options.sp):
               cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
             else:
-              cmd_fnsp = cmd_fnsp+' --compset ICB1850'+mycompset
+              if (options.crop):
+                cmd_fnsp = cmd_fnsp+' --compset ICB'+mycompset
+              else:
+                cmd_fnsp = cmd_fnsp+' --compset ICB1850'+mycompset
         else:
             cmd_fnsp = cmd_fnsp+' --compset I1850'+mycompset
         if (options.spinup_vars):
 		cmd_fnsp = cmd_fnsp+' --spinup_vars'
-        if (options.ensemble_file != '' and options.notrans):	
+        if (options.ensemble_file != '' and options.notrans and options.constraints == ''):	
                 cmd_fnsp = cmd_fnsp + ' --postproc_file '+options.postproc_file
 
         #transient
@@ -644,7 +668,10 @@ for row in AFdatareader:
             options.hist_nhtfrq+' --hist_mfilt '+options.hist_mfilt+' --no_build' + \
             ' --exeroot '+ad_exeroot+' --nopointdata'
         if (options.cpl_bypass):
-            cmd_trns = cmd_trns+' --compset ICB20TR'+mycompset
+            if (options.crop):
+              cmd_trns = cmd_trns+' --istrans --compset ICB'+mycompset
+            else:
+              cmd_trns = cmd_trns+' --compset ICB20TR'+mycompset
         else:
             cmd_trns = cmd_trns+' --compset I20TR'+mycompset
         if (options.spinup_vars):
@@ -738,7 +765,10 @@ for row in AFdatareader:
         if (options.notrans == False):
             print('\nSetting up transient case\n')
             if (sitenum == 0):
-                tr_case_firstsite = fin_case_firstsite.replace('1850','20TR')
+                if (options.crop):
+                  tr_case_firstsite = fin_case_firstsite+'_trans'
+                else:
+                  tr_case_firstsite = fin_case_firstsite.replace('1850','20TR')
                 result = os.system(cmd_trns)
             else:
                  ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
@@ -860,6 +890,8 @@ for row in AFdatareader:
                 modelst = 'ICB1850'+mycompset
                 if (options.sp):
                   modelst = 'ICBCLM45BC'
+                if (options.crop):
+                  modelst = 'ICBCLM45CNCROP'
 
             basecase = site
             if (mycaseid != ''):
@@ -911,14 +943,23 @@ for row in AFdatareader:
                 output.write("cd "+runroot+'/'+basecase+"_"+modelst+"/run\n")
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
             if (sitenum == 0 and 'transient' in c):
-                output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"\n")
+                if (options.crop):
+                  output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_trans\n")
+                else:
+                  output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"\n")
                 output.write('./case.submit --no-batch &\n')
             elif ('transient' in c):
-                output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"/run\n")
+                if (options.crop):
+                  output.write("cd "+runroot+'/'+basecase+"_"+modelst+"_trans/run\n")
+                else:
+                  output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"/run\n")
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
             if ('trans_diags' in c):
                  if (options.cpl_bypass):
-                     mycompsetcb = 'ICB20TR'+mycompset
+                     if (options.crop):
+                       mycompsetcb = 'ICB'+mycompset+'_trans'
+                     else:
+                       mycompsetcb = 'ICB20TR'+mycompset
                  else:
                      mycompsetcb = 'I20TR'+mycompset
                  output2 = open('./scripts/'+myscriptsdir+'/transdiag_'+site+'.csh','w')
@@ -962,8 +1003,17 @@ for row in AFdatareader:
                     cases.append(basecase+'_'+modelst.replace('CNP','CN')+'_ad_spinup')
             cases.append(basecase+'_'+modelst)
             if (options.notrans == False):
-                cases.append(basecase+'_'+modelst.replace('1850','20TR'))
+                if (options.crop):
+                  cases.append(basecase+'_'+modelst+'_trans')
+                else:
+                  cases.append(basecase+'_'+modelst.replace('1850','20TR'))
             job_depend_run=''    
+            if (len(cases) > 1 and options.constraints != ''):
+              cases=[]    #QPSO will run all cases
+              if (options.crop):
+                cases.append(basecase+'_'+modelst+'_trans')
+              else:
+                cases.append(basecase+'_'+modelst.replace('1850','20TR'))
             for thiscase in cases:
                 job_depend_run = submit('scripts/'+myscriptsdir+'/ensemble_run_'+thiscase+'.pbs',job_depend= \
                                         job_depend_run, submit_type=mysubmit_type)

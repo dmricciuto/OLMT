@@ -25,6 +25,8 @@ parser.add_option("--caseidprefix", dest="mycaseid", default="", \
                   help="Unique identifier to include as a prefix to the case name")
 parser.add_option("--caseroot", dest="caseroot", default='', \
                   help = "case root directory (default = ./, i.e., under scripts/)")
+parser.add_option("--constraints", dest="constraints", default="", \
+                  help="Directory containing model constraints")
 parser.add_option("--dailyrunoff", dest="dailyrunoff", default=False, \
                  action="store_true", help="Write daily output for hydrology")
 parser.add_option("--diags", dest="diags", default=False, \
@@ -37,6 +39,8 @@ parser.add_option('--project', dest='project',default='', \
                  help='Set project')
 parser.add_option("--exeroot", dest="exeroot", default="", \
 	         help="Location of executable")
+parser.add_option("--istrans", dest="istrans", default=False, action="store_true",\
+                 help="Force compset to act like transient")
 parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
                   help = 'latitude range for regional run')
 parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
@@ -136,7 +140,7 @@ parser.add_option("--hist_mfilt", dest="hist_mfilt", default=-1, \
 parser.add_option("--hist_nhtfrq", dest="hist_nhtfrq", default=-999, \
                   help = 'output file timestep')
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
-                  help = 'use hist_vars file')
+                  help = 'Output only selected variables in h0 file (comma delimited)')
 #parser.add_option("--queue", dest="queue", default='essg08q', \
 #                  help = 'PBS submission queue')
 parser.add_option("--clean_config", dest="clean_config", default=False, \
@@ -298,8 +302,8 @@ elif ('compy' in options.machine):
 
 PTCLMdir = os.getcwd()
 
-if (options.hist_vars != ''):
-    hist_vars = os.path.abspath(options.hist_vars)
+#if (options.hist_vars != ''):
+#    hist_vars = os.path.abspath(options.hist_vars)
 
 #set model if not specified
 if (options.mymodel == ''):
@@ -350,8 +354,10 @@ surfdir = 'surfdata_map'
 if (options.mymodel == 'ELM'):
     if ('ECA' in compset):
         parm_file = 'clm_params.c160709.nc'
-    else:
+    elif('RD' in compset):
         parm_file = 'clm_params_c180524.nc'
+    else:
+        parm_file = 'clm_params_c180301.nc'   #FATES/CROP
 if (options.mymodel == 'CLM5'):
     parm_file = 'clm5_params.c171117.nc'
 
@@ -361,7 +367,7 @@ if (options.mymodel == 'CLM5'):
 CNPstamp = 'c180529'
 
 #check consistency of options
-if ('20TR' in compset):
+if (options.istrans or '20TR' in compset):
     #ignore spinup option if transient compset
     if (options.ad_spinup or options.exit_spinup):
       print('Spinup options not available for transient compset.')
@@ -424,7 +430,6 @@ if (options.finidat == ''  and options.finidat_case == ''):  #not user-defined
                           runroot+'/'+options.finidat_case+' existed as refcase')
                 sys.exit(1)
 
-
 if (options.finidat_case != ''):
     finidat_yst = str(10000+finidat_year)
     finidat = runroot+'/'+options.finidat_case+'/run/'+ \
@@ -456,6 +461,8 @@ if (options.ad_spinup):
     casename = casename+'_ad_spinup'
 if (options.exit_spinup):
     casename = casename+'_exit_spinup'
+if (options.istrans and not "20TR" in compset):
+    casename = casename+'_trans'
 
 PTCLMfiledir = options.ccsm_input+'/lnd/clm2/PTCLM'
 
@@ -487,6 +494,7 @@ if (options.exeroot == '' or (os.path.exists(options.exeroot) == False)):
     #    exeroot = os.path.abspath(os.environ['HOME']+ \
    # 	    '/acme_scratch/pointclm/'+casename+'/bld')
 else:
+    options.no_build=True
     exeroot=options.exeroot
 print("CASE exeroot is: "+exeroot)
 rundir=runroot+'/'+casename+'/run'
@@ -523,6 +531,8 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --lai '+str(options.lai)
     if (int(options.mypft) >= 0):
         ptcmd = ptcmd + ' --pft '+str(options.mypft)
+    if ('CROP' in compset):
+        ptcmd = ptcmd + ' --crop'
     if (isglobal):
         ptcmd = ptcmd + ' --res '+options.res
         if (options.point_list != ''):
@@ -605,7 +615,7 @@ if (isglobal == False):
 else:
     if (use_reanalysis):
         startyear=1901
-        if ('20TR' in compset):
+        if ('20TR' in compset or options.istrans):
             endyear = 2010
             if (options.trans2):
                 startyear = 1921
@@ -613,7 +623,7 @@ else:
             endyear   = 1920
     else:    #Global default to Qian
         startyear=1948
-        if ('20TR' in compset):
+        if ('20TR' in compset or options.istrans):
             endyear = 2004
             if (options.trans2):
                 startyear = 1973
@@ -639,6 +649,9 @@ if (options.mod_parm_file != ''):
 else:
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
+    myncap = 'ncap'
+    if ('compy' in options.machine):
+      myncap='ncap2'
     if (options.humhol):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
       print('humhol_ht = 0.15m')
@@ -646,14 +659,16 @@ else:
       print('humhol_dist = 1.0m')
       print('qflx_h2osfc_surfrate = 1.0e-7')
       print('setting rsub_top_globlmax = 1.2e-5')
-      myncap = 'ncap'
-      if ('compy' in options.machine):
-        myncap='ncap2'
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
+    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
+    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
 
 os.system('chmod u+w ' +tmpdir+'/clm_params.nc')
 if (options.parm_file != ''):
@@ -834,7 +849,7 @@ else:
         os.system('./xmlchange RUN_REFDATE='+finidat_yst[1:]+'-01-01')
 
     #adds capability to run with transient CO2
-if ('20TR' in compset):
+if ('20TR' in compset or options.istrans):
     os.system('./xmlchange CCSM_BGC=CO2A')
     os.system('./xmlchange CLM_CO2_TYPE=diagnostic')
     if (options.run_startyear == -1):
@@ -972,7 +987,7 @@ for i in range(1,int(options.ninst)+1):
         var_list_spinup.append('SOIL4C')
         ilamb_outputs.append('SOIL4C')
 
-    if ('20TR' not in compset and int(options.hist_mfilt) == -1):
+    if ('20TR' not in compset and not options.istrans and int(options.hist_mfilt) == -1):
 	#default to annual for spinup runs if not specified
 	options.hist_mfilt = 1
 	options.hist_nhtfrq = -8760
@@ -1017,20 +1032,25 @@ for i in range(1,int(options.ninst)+1):
 
     if (options.hist_vars != ''):
         output.write(" hist_empty_htapes = .true.\n")
+        myhistvars = options.hist_vars.split(',')
+        output.write(" hist_fincl1 = '"+options.hist_vars+"'\n")
         #read hist_vars file
-        hvars_file = open(hist_vars)
+        #hvars_file = open(hist_vars)
         myline = " hist_fincl1 = "
-        line2 = 0
-        for s2 in hvars_file:
-            if line2 ==0:
-                myline = myline+"'"+s2.strip()+"'"
-            else:
-                myline = myline+",'"+s2.strip()+"'"
-            line2=line2+1
+        #line2 = 0
+        #for s2 in hvars_file:
+        #    if line2 ==0:
+        #        myline = myline+"'"+s2.strip()+"'"
+        #    else:
+        #        myline = myline+",'"+s2.strip()+"'"
+        #    line2=line2+1
+        #hvars_file.close()
+        for v in myhistvars:
+          myline = myline+"'"+v.strip()+"'"
+        myline=myline+"\n"
         output.write(myline+"\n")
-        hvars_file.close()
    
-    if (options.spinup_vars and (not '20TR' in compset)):
+    if (options.spinup_vars and (not '20TR' in compset) and (not options.istrans)):
         output.write(" hist_empty_htapes = .true.\n")
         h0varst = " hist_fincl1 = "
         for v in var_list_spinup:
@@ -1038,7 +1058,7 @@ for i in range(1,int(options.ninst)+1):
         h0varst = h0varst[:-1]+"\n"
         output.write(h0varst)
 
-    if ('20TR' in compset and options.diags):
+    if (('20TR' in compset or options.istrans) and options.diags):
         output.write(" hist_dov2xy = .true., .true., .true., .false., .true.\n")
         output.write(" hist_mfilt = 1, 8760, 365, 365, 1\n")
         output.write(" hist_nhtfrq = 0, -1, -24, -24, -8760\n")
@@ -1063,7 +1083,7 @@ for i in range(1,int(options.ninst)+1):
         output.write(h2varst)
         output.write(h3varst)
         output.write(h4varst)
-    elif ('20TR' in compset and (options.trans_varlist != '' or options.ilambvars)):
+    elif (('20TR' in compset or options.istrans) and (options.trans_varlist != '' or options.ilambvars)):
 	trans_varlist = options.trans_varlist.split(',')
         if (options.ilambvars):
             trans_varlist = ilamb_outputs
@@ -1103,7 +1123,7 @@ for i in range(1,int(options.ninst)+1):
       output.write(" fsurdat = '"+options.surffile+"'\n")      
         
     #pft dynamics file for transient run
-    if ('20TR' in compset):
+    if ('20TR' in compset or options.istrans):
         if (options.nopftdyn):
             output.write(" flanduse_timeseries = ' '\n") 
         else:
@@ -1118,7 +1138,7 @@ for i in range(1,int(options.ninst)+1):
     if ('ED' in compset and options.fates_hydro):
       output.write(" use_fates_planthydro = .true.\n")
 
-    if ('RD' in compset or 'ECA' in compset):
+    if ('CROP' in compset or 'RD' in compset or 'ECA' in compset):
         #soil order parameter file
         output.write(" fsoilordercon = '"+rundir+"/CNP_parameters.nc'\n")
         #output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
@@ -1140,6 +1160,8 @@ for i in range(1,int(options.ninst)+1):
             output.write(" use_nitrif_denitrif = .false.\n")
         else:
             output.write(" use_nitrif_denitrif = .true.\n")
+        if ('CROP' in compset):
+            output.write(" suplphos = 'ALL'\n")
         if (options.CH4 or (not options.bulk_denitrif)):
             output.write(" use_lch4 = .true.\n")
         if (options.nofire):
@@ -1344,11 +1366,14 @@ if (not cpl_bypass):
             myalign_year = 1 #startyear
             if (options.align_year != -999):
                 myalign_year = options.align_year
-            if ('20TR' in compset):
+            if (options.istrans or '20TR' in compset):
                 mypresaero = '"datm.streams.txt.presaero.trans_1850-2000 1850 1850 2000"'
                 myco2      = ', "datm.streams.txt.co2tseries.20tr 1766 1766 2010"'
-            else:
+            elif ('1850' in compset):
                 mypresaero = '"datm.streams.txt.presaero.clim_1850 1 1850 1850"'
+                myco2=''
+            else:
+                mypresaero = '"datm.streams.txt.presaero.clim_2000 1 2000 2000"'
                 myco2=''
             if (options.cruncep):
                 myoutput.write(' streams = "datm.streams.txt.CLMCRUNCEP.Solar '+str(myalign_year)+ \
@@ -1369,7 +1394,7 @@ if (not cpl_bypass):
                 taxst = "taxmode = 'cycle', 'cycle', 'cycle', 'extend', 'extend'"
             else:
                 taxst = "taxmode = 'cycle', 'extend', 'extend'"
-            if ('20TR' in compset):
+            if (options.istrans or '20TR' in compset):
                 taxst = taxst+", 'extend'"
             myoutput.write(taxst+'\n')
         else:
@@ -1407,7 +1432,7 @@ if (not cpl_bypass and not isglobal):
 #copy site data to run directory
 os.system('cp '+PTCLMdir+'/temp/domain.nc '+PTCLMdir+'/temp/surfdata.nc  '+ \
               PTCLMdir+'/temp/*param*.nc '+runroot+'/'+casename+'/run/')
-if ('20TR' in compset and options.nopftdyn == False):
+if ((options.istrans or '20TR' in compset) and options.nopftdyn == False):
     os.system('cp '+PTCLMdir+'/temp/surfdata.pftdyn.nc '+runroot+'/'+casename+'/run/')
 
 #submit job if requested
@@ -1435,7 +1460,8 @@ if (options.no_submit == False and int(options.mc_ensemble) < 0 and options.ense
 
 os.chdir(PTCLMdir)
 
-if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
+if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options.constraints == '' or (
+        options.constraints != '' and not '1850' in casename))):
     if (not(os.path.isfile(options.parm_list))):
 	print('parm_list file does not exist')
         sys.exit(1)
@@ -1565,7 +1591,8 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
             output_run.write('module load cray-netcdf\n')
             output_run.write('module load python/2.7-anaconda-5.2\n')
             output_run.write('module load nco\n')
-
+        if ('compy' in options.machine):
+            output_run.write('setenv LD_LIBRARY_PATH /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64_lin/gcc4.7:/share/apps/netcdf/4.6.3/intel/19.0.5/lib:/share/apps/hdf5/1.10.5/serial/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin:/share/apps/intel/2019u5/comepilers_and_libraries_2019.5.281/linux/mpi/intel64/libfabric/lib:/share/apps/pnetcdf/1.9.0/intel/19.0.5/intelmpi/2019u4/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib/release:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/ipp/lib/intel64:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mkl/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64/gcc4.7:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64/gcc4.7:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/daal/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/daal/../tbb/lib/intel64_lin/gcc4:/usr/lib64/\n\n')
         output_run.write('cd '+PTCLMdir+'\n')
         cnp = 'True'
         if (options.cn_only or options.c_only):
@@ -1588,7 +1615,8 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
                ' --site '+options.site
-
+        if (options.constraints != ''):
+            cmd = cmd + ' --constraints '+options.constraints
         if (options.postproc_file != ''): 
             cmd = cmd + ' --postproc_file '+options.postproc_file
         output_run.write(cmd+'\n')

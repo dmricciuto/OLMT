@@ -100,20 +100,20 @@ for f in os.listdir(ens_dir):
                 paramfile_orig = ((s.split()[2]).strip("'"))
                 if (paramfile_orig[0:2] == './'):
                   paramfile_orig = orig_dir+'/'+paramfile_orig[2:]
-                paramfile_new  = './fates_params_'+est[1:]+'.nc'
-                os.system('cp '+paramfile_orig+' '+ens_dir+'/'+paramfile_new)
-                os.system('nccopy -3 '+ens_dir+'/'+paramfile_new+' '+ens_dir+'/'+paramfile_new+'_tmp')
-                os.system('mv '+ens_dir+'/'+paramfile_new+'_tmp '+ens_dir+'/'+paramfile_new)
+                paramfile_new  = ens_dir+'/fates_params_'+est[1:]+'.nc'
+                os.system('cp '+paramfile_orig+' '+paramfile_new)
+                os.system('nccopy -3 '+paramfile_new+' '+paramfile_new+'_tmp')
+                os.system('mv '+paramfile_new+'_tmp '+paramfile_new)
                 myoutput.write(" fates_paramfile = '"+paramfile_new+"'\n")
                 fates_paramfile = ens_dir+'/fates_params_'+est[1:]+'.nc'
             elif ('paramfile' in s):
                 paramfile_orig = ((s.split()[2]).strip("'"))
                 if (paramfile_orig[0:2] == './'):
                    paramfile_orig = orig_dir+'/'+paramfile_orig[2:]
-                paramfile_new  = './clm_params_'+est[1:]+'.nc'
-                os.system('cp '+paramfile_orig+' '+ens_dir+'/'+paramfile_new)
-                os.system('nccopy -3 '+ens_dir+'/'+paramfile_new+' '+ens_dir+'/'+paramfile_new+'_tmp')
-                os.system('mv '+ens_dir+'/'+paramfile_new+'_tmp '+ens_dir+'/'+paramfile_new)
+                paramfile_new  = ens_dir+'/clm_params_'+est[1:]+'.nc'
+                os.system('cp '+paramfile_orig+' '+paramfile_new)
+                os.system('nccopy -3 '+paramfile_new+' '+paramfile_new+'_tmp')
+                os.system('mv '+paramfile_new+'_tmp '+paramfile_new)
                 myoutput.write(" paramfile = '"+paramfile_new+"'\n")
                 pftfile = ens_dir+'/clm_params_'+est[1:]+'.nc'
             elif ('ppmv' in s and 'co2' in parm_names):
@@ -122,20 +122,20 @@ for f in os.listdir(ens_dir):
                 CNPfile_orig = ((s.split()[2]).strip("'"))
                 if (CNPfile_orig[0:2] == './'):
                    CNPfile_orig  = orig_dir+'/'+CNPfile_orig[2:]
-                CNPfile_new  = './CNP_parameters_'+est[1:]+'.nc'
-                os.system('cp '+CNPfile_orig+' '+ens_dir+'/'+CNPfile_new)
-                os.system('nccopy -3 '+ens_dir+'/'+CNPfile_new+' '+ens_dir+'/'+CNPfile_new+'_tmp')
-                os.system('mv '+ens_dir+'/'+CNPfile_new+'_tmp '+ens_dir+'/'+CNPfile_new)
+                CNPfile_new  = ens_dir+'/CNP_parameters_'+est[1:]+'.nc'
+                os.system('cp '+CNPfile_orig+' '+CNPfile_new)
+                os.system('nccopy -3 '+CNPfile_new+' '+CNPfile_new+'_tmp')
+                os.system('mv '+CNPfile_new+'_tmp '+CNPfile_new)
                 myoutput.write(" fsoilordercon = '"+CNPfile_new+"'\n")
                 CNPfile = ens_dir+'/CNP_parameters_'+est[1:]+'.nc'
             elif ('fsurdat =' in s):
                 surffile_orig = ((s.split()[2]).strip("'"))
                 if (surffile_orig[0:2] == './'):
                   surffile_orig = orig_dir+'/'+surffile_orig[2:]
-                surffile_new = './surfdata_'+est[1:]+'.nc'
-                os.system('cp '+surffile_orig+' '+ens_dir+'/'+surffile_new)
-                os.system('nccopy -3 '+ens_dir+'/'+surffile_new+' '+ens_dir+'/'+surffile_new+'_tmp')
-                os.system('mv '+ens_dir+'/'+surffile_new+'_tmp '+ens_dir+'/'+surffile_new)
+                surffile_new = ens_dir+'/surfdata_'+est[1:]+'.nc'
+                os.system('cp '+surffile_orig+' '+surffile_new)
+                os.system('nccopy -3 '+surffile_new+' '+surffile_new+'_tmp')
+                os.system('mv '+surffile_new+'_tmp '+surffile_new)
                 myoutput.write(" fsurdat = '"+surffile_new+"'\n")
                 surffile = ens_dir+'/surfdata_'+est[1:]+'.nc'
             elif ('finidat = ' in s):
@@ -224,6 +224,11 @@ for p in parm_names:
              param[:]=0.
              fates_seed_zeroed[1]=True
           param[parm_indices[pnum]] = parm_values[pnum]             
+      elif (p == 'dayl_scaling' or p == 'vcmaxse'):
+        os.system('ncap2 -O -s "'+p+' = flnr" '+myfile+' '+myfile)
+        print('Creting netcdf variable for '+p)
+        param = nffun.getvar(myfile,'flnr')
+        param[:] = parm_values[pnum]
       elif (parm_indices[pnum] > 0):
          param[parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] == 0):

@@ -3,6 +3,7 @@ import os, sys, csv, time, math
 from optparse import OptionParser
 import numpy
 import netcdf4_functions as nffun
+from netCDF4 import Dataset
 
 parser = OptionParser()
 
@@ -14,6 +15,8 @@ parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
                   help = 'latitude range for regional run')
 parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
                   help = 'longitude range for regional run')
+parser.add_option("--crop", dest="crop", default=False, \
+                  help = 'Crop compset specified', action="store_true")
 parser.add_option("--lai", dest="lai", default=-999, \
                   help = 'Set constant LAI (SP mode only)')
 parser.add_option("--model", dest="mymodel", default='', \
@@ -64,9 +67,10 @@ if ('hcru' in options.res):
     resx = 0.5
     resy = 0.5
     domainfile_orig = ccsm_input+'/share/domains/domain.clm/domain.lnd.360x720_cruncep.100429.nc'
-
     if (options.mymodel == 'CLM5'):
         surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_16pfts_Irrig_CMIP6_simyr1850_c170824.nc'
+    elif (options.crop):
+        surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_24pfts_simyr2000_c150227.nc'
     else:
         if (mysimyr == 2000):
             surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr2000_c180216.nc'
@@ -78,14 +82,14 @@ if ('hcru' in options.res):
     nyears_landuse=166
 elif ('f19' in options.res):
     domainfile_orig = ccsm_input+'/share/domains/domain.lnd.fv1.9x2.5_gx1v6.090206.nc'
-    surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_1.9x2.5_simyr1850_c171002.nc'
+    surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_1.9x2.5_simyr1850_c180306.nc'
     pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_1.9x2.5_rcp8.5_simyr1850-2100_c141219.nc'
     nyears_landuse=251
     resx = 2.5
     resy = 1.9
 elif ('f09' in options.res):
     domainfile_orig = ccsm_input+'/share/domains/domain.lnd.fv0.9x1.25_gx1v6.090309.nc'
-    surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_0.9x1.25_simyr1850_c171002.nc'
+    surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_0.9x1.25_simyr1850_c180306.nc'
     pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_0.9x1.25_rcp8.5_simyr1850-2100_c141219.nc'
     nyears_landuse=251
     resx = 1.25
@@ -163,7 +167,7 @@ else:
 if (options.res == 'hcru_hcru'):
      longxy = (numpy.cumsum(numpy.ones([721]))-1)*0.5
      latixy = (numpy.cumsum(numpy.ones([361]))-1)*0.5 -90.0
-elif (options.res == 'f19_f19'):
+elif ('f19' in options.res):
     longxy = (numpy.cumsum(numpy.ones([145]))-1)*2.5-1.25
     latixy_centers = (numpy.cumsum(numpy.ones([96]))-1)*(180.0/95) - 90.0
     latixy = numpy.zeros([97], numpy.float)
@@ -171,6 +175,15 @@ elif (options.res == 'f19_f19'):
     latixy[0]   =  -90
     latixy[96]  =  90
     for i in range(1,96):
+        latixy[i] = (latixy_centers[i-1]+latixy_centers[i])/2.0
+elif ('f09' in options.res):
+    longxy = (numpy.cumsum(numpy.ones([289]))-1)*1.25-0.625
+    latixy_centers = (numpy.cumsum(numpy.ones([192]))-1)*(180.0/191) - 90.0
+    latixy = numpy.zeros([193], numpy.float)
+    longxy[0]   = 0
+    latixy[0]   =  -90
+    latixy[192]  =  90
+    for i in range(1,192):
         latixy[i] = (latixy_centers[i-1]+latixy_centers[i])/2.0
 else:
     longxy = nffun.getvar(surffile_orig, 'LONGXY')
@@ -202,6 +215,7 @@ for n in range(0,n_grids):
           xgrid_max[n] = i
           mindist=thisdist
     else:
+      
       for i in range(0,longxy.shape[0]-1):
         if (lon_bounds[0] >= longxy[i]):
             xgrid_min[n] = i
@@ -364,15 +378,27 @@ for n in range(0,n_grids):
         pct_lake     = nffun.getvar(surffile_new, 'PCT_LAKE')
         pct_glacier  = nffun.getvar(surffile_new, 'PCT_GLACIER')
         pct_urban    = nffun.getvar(surffile_new, 'PCT_URBAN')
-        if (options.mymodel == 'CLM5'):
-            pct_crop = nffun.getvar(surffile_new, 'PCT_CROP')
+        if (options.mymodel == 'CLM5' or options.crop):
+          pct_crop = nffun.getvar(surffile_new, 'PCT_CROP')
+          pct_cft  = nffun.getvar(surffile_new, 'PCT_CFT')
+          #put fake P data in this datset
+          vars_in = ['LABILE_P','APATITE_P','SECONDARY_P','OCCLUDED_P']
+          soil_order = 1
+          labilep = 1.0
+          primp = 1.0
+          secondp = 1.0
+          occlp = 1.0
+          tempdata = Dataset(surffile_new, 'a')
+          for v in vars_in:
+            tempvar = tempdata.createVariable(v, 'f4',('lsmlat','lsmlon',))
+          tempvar = tempdata.createVariable('SOIL_ORDER', 'i4',('lsmlat','lsmlon',))
+          tempdata.close()
         else:
           soil_order   = nffun.getvar(surffile_new, 'SOIL_ORDER')
           labilep      = nffun.getvar(surffile_new, 'LABILE_P')
           primp        = nffun.getvar(surffile_new, 'APATITE_P')
           secondp      = nffun.getvar(surffile_new, 'SECONDARY_P')
           occlp        = nffun.getvar(surffile_new, 'OCCLUDED_P')
-
         #input from site-specific information
         soil_color   = nffun.getvar(surffile_new, 'SOIL_COLOR')
         pct_sand     = nffun.getvar(surffile_new, 'PCT_SAND')
@@ -387,11 +413,13 @@ for n in range(0,n_grids):
         monthly_height_bot = nffun.getvar(surffile_new, 'MONTHLY_HEIGHT_BOT')
 
         npft = 17
-        if (options.mymodel == 'CLM5'):
+        npft_crop = 0
+        if (options.crop or options.mymodel == 'CLM5'):
             npft = 15
+            npft_crop = 10
 
         #read file for site-specific PFT information
-        mypft_frac=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
         mypct_sand = 0.0 
         mypct_clay = 0.0
  
@@ -401,7 +429,7 @@ for n in range(0,n_grids):
                 if row[0] == options.site:
                     for thispft in range(0,5):
                         mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
-            if (sum(mypft_frac[0:npft]) == 0.0):
+            if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
                 print('*** Warning:  PFT data NOT found.  Using gridded data ***')
         #read file for site-specific soil information
             AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','rb'))
@@ -425,12 +453,20 @@ for n in range(0,n_grids):
             latixy[0][0] = lat[n]
             area[0] = 111.2*resy*111.321*math.cos((lon[n]*resx)*math.pi/180)*resx
 
-        if (not options.surfdata_grid or sum(mypft_frac[0:npft]) > 0.0):
+        if (not options.surfdata_grid or sum(mypft_frac[0:npft+npft_crop]) > 0.0):
             pct_wetland[0][0] = 0.0
             pct_lake[0][0]    = 0.0
             pct_glacier[0][0] = 0.0
-            if (options.mymodel == 'CLM5'):
-                pct_crop[0][0] = 0.0
+            if (options.crop or options.mymodel == 'CLM5'):
+               if sum(mypft_frac[0:npft]) > 0.0:
+                 pct_nat_veg[0][0] = 100.0
+                 pct_crop[0][0] = 0.0
+               else:
+                 pct_nat_veg[0][0] = 0.0
+                 pct_crop[0][0] = 100.0
+            else:
+                pct_nat_veg[0][0] = 0.0
+
             if ('US-SPR' in options.site and mysimyr !=2000):
                 #SPRUCE P initial data
                 soil_order[0][0] = 3
@@ -439,7 +475,6 @@ for n in range(0,n_grids):
                 secondp[0][0]    = 10.0
                 occlp[0][0]      = 5.0
 
-            pct_nat_veg[0][0] = 100.0
             for k in range(0,3):
                 pct_urban[k][0][0] = 0.0
             for k in range(0,10):
@@ -463,15 +498,18 @@ for n in range(0,n_grids):
               pct_pft[:,0,0] = 0.0
               pct_pft[int(options.mypft),0,0] = 100.0
             else:
-              for p in range(0,npft):
-                if (sum(mypft_frac[0:npft]) > 0.0):
-                    if (mypft_frac[p] > 0.0):
-                        if (p < 16):
-                           print 'Setting PFT '+str(p)+'('+pft_names[p]+') to '+ \
-                           str(mypft_frac[p])+'%'
-                        else:
-                           print 'Setting PFT '+str(p)+' to '+str(mypft_frac[p])+'%'
-                    pct_pft[p][0][0] = mypft_frac[p]
+              for p in range(0,npft+npft_crop):
+                #if (sum(mypft_frac[0:npft]) > 0.0):
+                #if (mypft_frac[p] > 0.0):
+                if (p < npft):
+                  if (mypft_frac[p] > 0.0):
+                    print('Setting Natural PFT '+str(p)+'('+pft_names[p]+') to '+str(mypft_frac[p])+'%')
+                  pct_pft[p][0][0] = mypft_frac[p]
+                else:
+                  if (mypft_frac[p] > 0.0):
+                    print('Setting Crop PFT '+str(p)+' to '+str(mypft_frac[p])+'%')
+                  pct_cft[p-npft][0][0] = mypft_frac[p]
+                  pct_pft[0][0][0] = 100.0
                 #maxlai = (monthly_lai).max(axis=0)
                 for t in range(0,12):
                     if (float(options.lai) > 0):
@@ -490,14 +528,15 @@ for n in range(0,n_grids):
         ierr = nffun.putvar(surffile_new, 'PCT_LAKE', pct_lake)
         ierr = nffun.putvar(surffile_new, 'PCT_GLACIER',pct_glacier)
         ierr = nffun.putvar(surffile_new, 'PCT_URBAN', pct_urban)
-        if (options.mymodel == 'CLM5'):
+        if (options.mymodel == 'CLM5' or options.crop):
             ierr = nffun.putvar(surffile_new, 'PCT_CROP', pct_crop)
-        else:
-            ierr = nffun.putvar(surffile_new, 'SOIL_ORDER', soil_order)
-            ierr = nffun.putvar(surffile_new, 'LABILE_P', labilep)
-            ierr = nffun.putvar(surffile_new, 'APATITE_P', primp)
-            ierr = nffun.putvar(surffile_new, 'SECONDARY_P', secondp)
-            ierr = nffun.putvar(surffile_new, 'OCCLUDED_P', occlp)
+            ierr = nffun.putvar(surffile_new, 'PCT_CFT', pct_cft)
+       
+        ierr = nffun.putvar(surffile_new, 'SOIL_ORDER', soil_order)
+        ierr = nffun.putvar(surffile_new, 'LABILE_P', labilep)
+        ierr = nffun.putvar(surffile_new, 'APATITE_P', primp)
+        ierr = nffun.putvar(surffile_new, 'SECONDARY_P', secondp)
+        ierr = nffun.putvar(surffile_new, 'OCCLUDED_P', occlp)
         ierr = nffun.putvar(surffile_new, 'SOIL_COLOR', soil_color)
         ierr = nffun.putvar(surffile_new, 'FMAX', fmax)
         ierr = nffun.putvar(surffile_new, 'ORGANIC', organic)
