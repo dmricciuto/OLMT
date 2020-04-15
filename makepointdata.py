@@ -434,10 +434,10 @@ for n in range(0,n_grids):
             if ('US-SPR' in options.site and mysimyr !=2000):
                 #SPRUCE P initial data
                 soil_order[0][0] = 3
-                labilep[0][0]    = 4.0
-                primp[0][0]      = 1.0
-                secondp[0][0]    = 10.0
-                occlp[0][0]      = 5.0
+                labilep[0][0]    = 1.0
+                primp[0][0]      = 0.1
+                secondp[0][0]    = 1.0
+                occlp[0][0]      = 1.0
 
             pct_nat_veg[0][0] = 100.0
             for k in range(0,3):
