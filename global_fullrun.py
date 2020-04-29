@@ -723,12 +723,12 @@ if (options.mc_ensemble <= 0):
                 if (mysubmit_type == 'qsub'):
                     output.write('#PBS -l walltime='+timestr+'\n')
                 else:
-                    if (myproject != ''):
-                      output.write('#SBATCH -A '+myproject+'\n')
                     output.write('#SBATCH --time='+timestr+'\n')
                     if ('anvil' in options.machine):
-                      output.write('#SBATCH --partition=acme-centos6\n')
-                      output.write('#SBATCH --account=condo\n')
+                      output.write('#SBATCH -A condo\n')
+                      output.write('#SBATCH -p acme-medium\n')
+                    elif (myproject != ''):
+                      output.write('#SBATCH -A '+myproject+'\n')
                     if ('cori' in options.machine or 'edison' in options.machine):
                          if (options.debug):
                              output.write('#SBATCH --partition=debug\n')

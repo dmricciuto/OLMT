@@ -652,7 +652,7 @@ else:
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
-    if ('compy' in options.machine):
+    if ('anvil' in options.machine or 'compy' in options.machine):
       myncap='ncap2'
     if (options.humhol):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
@@ -1525,7 +1525,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
     num=0
     #Launch ensemble if requested 
     mysubmit_type = 'qsub'
-    if ('compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
+    if ('anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
         os.system('mkdir -p '+PTCLMdir+'/scripts/'+myscriptsdir)
@@ -1549,9 +1549,6 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             else:
                 output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
                                      '\n')
-                if ('anvil' in options.machine):
-                  output_run.write('#PBS -q acme\n')
-                  output_run.write('#PBS -A ACME\n')
         else:
             output_run.write('#SBATCH --time='+timestr+'\n')
             output_run.write('#SBATCH -J ens_'+casename+'\n')
@@ -1567,6 +1564,12 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
                 output_run.write('#SBATCH --constraint=knl\n')
             if ('compy' in options.machine and options.debug):
               output_run.write('#SBATCH --qos=short\n')
+            if ('anvil' in options.machine):
+              output_run.write('#SBATCH -A condo\n')
+              if (int(options.ng) > 180):
+                output_run.write('#SBATCH -p acme-medium\n')
+              else:
+                output_run.write('#SBATCH -p acme-small\n')
         output_run.write("\n")
         if (options.machine == 'eos'):
             output_run.write('source $MODULESHOME/init/csh\n')
@@ -1598,6 +1601,8 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             output_run.write('module load nco\n')
         if ('compy' in options.machine):
             output_run.write('setenv LD_LIBRARY_PATH /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64_lin/gcc4.7:/share/apps/netcdf/4.6.3/intel/19.0.5/lib:/share/apps/hdf5/1.10.5/serial/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin:/share/apps/intel/2019u5/comepilers_and_libraries_2019.5.281/linux/mpi/intel64/libfabric/lib:/share/apps/pnetcdf/1.9.0/intel/19.0.5/intelmpi/2019u4/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib/release:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/ipp/lib/intel64:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mkl/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64/gcc4.7:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64/gcc4.7:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/daal/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/daal/../tbb/lib/intel64_lin/gcc4:/usr/lib64/\n\n')
+        if ('anvil' in options.machine):
+          output_run.write('setenv LD_LIBRARY_PATH /blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-17.0.0/netcdf-fortran-4.4.4-urmb6ss/lib:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-17.0.0/netcdf-cxx-4.2-3qkutvv/lib:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-17.0.0/netcdf-4.4.1-tckdgwl/lib:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-17.0.0/intel-mkl-2017.1.132-6qy7y5f/compilers_and_libraries_2017.1.132/linux/tbb/lib/intel64_lin/gcc4.7:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-17.0.0/intel-mkl-2017.1.132-6qy7y5f/compilers_and_libraries_2017.1.132/linux/compiler/lib/intel64_lin:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-17.0.0/intel-mkl-2017.1.132-6qy7y5f/compilers_and_libraries_2017.1.132/linux/mkl/lib/intel64_lin:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/intel-17.0.0/intel-mkl-2017.1.132-6qy7y5f/lib:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-4.8.5/gcc-6.5.0-fxnktbs/lib64:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-4.8.5/gcc-6.5.0-fxnktbs/lib:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-17.0.0-pwabdn2/compilers_and_libraries_2017.0.098/linux/compiler/lib/intel64:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-17.0.0-pwabdn2/compilers_and_libraries_2017.0.098/linux/compiler/lib/intel64_lin:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-17.0.0-pwabdn2/compilers_and_libraries_2017.0.098/linux/mpi/intel64/lib:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-17.0.0-pwabdn2/compilers_and_libraries_2017.0.098/linux/mpi/mic/lib:/blues/gpfs/software/centos7/spack-latest/opt/spack/linux-centos7-x86_64/gcc-6.5.0/intel-17.0.0-pwabdn2/lib\n\n')
         output_run.write('cd '+PTCLMdir+'\n')
         cnp = 'True'
         if (options.cn_only or options.c_only):
