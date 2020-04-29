@@ -465,7 +465,7 @@ for n in range(0,n_grids):
                  pct_nat_veg[0][0] = 0.0
                  pct_crop[0][0] = 100.0
             else:
-                pct_nat_veg[0][0] = 0.0
+                pct_nat_veg[0][0] = 100.0
 
             if ('US-SPR' in options.site and mysimyr !=2000):
                 #SPRUCE P initial data

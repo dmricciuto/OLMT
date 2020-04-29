@@ -145,7 +145,8 @@ for f in os.listdir(ens_dir):
                    if (finidat_file_orig[0:2] == './'):
                       finidat_file_orig = orig_dir+'/'+finidat_file_orig[2:]
                    #get finidat files from previous ensemble cases if available
-                   if ('1850' in casename and not ('ad_spinup' in casename)): 
+                   if (('1850' in casename or 'CROP' in casename) and not ('ad_spinup' in casename) and not \
+                          ('trans' in casename)): 
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('1850CNP','1850CN')+'_ad_spinup/g'+gst[1:]
                       if (os.path.exists(finidat_file_path)):
                             finidat_file_orig = finidat_file_path+'/*.clm2.r.*.nc'
@@ -153,6 +154,12 @@ for f in os.listdir(ens_dir):
                                 casename.replace('1850CNP','1850CN')+'_ad_spinup')
                    if ('20TR' in casename):
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('20TR','1850')+ \
+                                       '/g'+gst[1:]
+                      if (os.path.exists(finidat_file_path)):
+                          finidat_file_orig = finidat_file_path+'/*.clm2.r.*.nc'
+                          os.system('rm '+finidat_file_path+'/*ad_spinup*.clm2.r.*.nc')
+                   if ('trans' in casename):
+                      finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('_trans','')+ \
                                        '/g'+gst[1:]
                       if (os.path.exists(finidat_file_path)):
                           finidat_file_orig = finidat_file_path+'/*.clm2.r.*.nc'
