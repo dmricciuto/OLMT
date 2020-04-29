@@ -49,6 +49,8 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
+parser.add_option("--metdata_dir", dest="metdata_dir", default='', \
+                  help = 'Directory containing cpl_bypass met data (site only)')
 parser.add_option("--model", dest="mymodel", default='', \
                   help = 'Model to use (ELM,CLM5)')
 parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
@@ -353,7 +355,7 @@ else:
 surfdir = 'surfdata_map'
 if (options.mymodel == 'ELM'):
     if ('ECA' in compset):
-        parm_file = 'clm_params.c160709.nc'
+        parm_file = 'clm_params.c180713.nc'
     elif('RD' in compset):
         parm_file = 'clm_params_c180524.nc'
     else:
@@ -1242,8 +1244,11 @@ for i in range(1,int(options.ninst)+1):
             if (ptstr == ''):
               ptstr='1x1pt'
             output.write("metdata_type = 'site'\n")
-            output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+            if (options.metdata_dir == ''):
+              output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                              +"CLM1PT_data/"+ptstr+"_"+options.site_forcing+"/'\n")
+            else:
+              output.write(" metdata_bypass = '"+options.metdata_dir+"'\n")
         if (options.monthly_metdata != ''):
             output.write(" metdata_biases = '"+options.monthly_metdata+"'\n")
         if (options.co21850):
