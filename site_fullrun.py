@@ -811,8 +811,8 @@ for row in AFdatareader:
                                     output.write('#SBATCH --partition=regular\n')
                             if ('cades' in options.machine):
                                 output.write('#SBATCH -A ccsi\n')
-                                output.write('#SBATCH -p burst\n')
-                                output.write('#SBATCH --mem=128G\n')
+                                output.write('#SBATCH -p batch\n')
+                                output.write('#SBATCH --mem=64G\n')
                                 output.write('#SBATCH --ntasks-per-node 32\n')
                     elif ("#" in s and "ppn" in s):
                         if ('cades' in options.machine):
