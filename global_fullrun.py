@@ -700,8 +700,8 @@ for c in cases:
                       output.write('#SBATCH -p short\n')
                     if ('cades' in options.machine):
                       output.write('#SBATCH -A ccsi\n')
-                      output.write('#SBATCH -p burst\n')
-                      output.write('#SBATCH --mem=128G\n')
+                      output.write('#SBATCH -p batch\n')
+                      output.write('#SBATCH --mem=64G\n')
                       output.write('#SBATCH --ntasks-per-node 32\n')
             elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
                 output.write(s)
