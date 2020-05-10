@@ -116,8 +116,8 @@ elif (options.point_list != ''):
     n_grids=0
     point_pfts=[]
     for s in input_file:
-	if (n_grids == 0):
-	     header = s.split()
+        if (n_grids == 0):
+            header = s.split()
         else:
              data = s.split()
              dnum=0
@@ -141,7 +141,7 @@ elif (options.point_list != ''):
 elif (options.site != ''):
     print('\nCreating datasets for '+options.site+' using '+options.res+' resolution')
     issite = True
-    AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"rb"))
+    AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
     for row in AFdatareader:
         if row[0] == options.site:
             mylon=float(row[3])
@@ -255,10 +255,10 @@ if (n_grids > 1 and options.site == ''):       #remove duplicate points
   lat = lat_uniq
   point_pfts = point_pfts_uniq
   n_grids = n_grids_uniq
-  print n_grids, ' Unique points'
-  print n_dups, ' duplicate points removed'
-  print len(point_index)
-  print point_index
+  print(n_grids, ' Unique points')
+  print(n_dups, ' duplicate points removed')
+  print(len(point_index))
+  print(point_index)
 #---------------------Create domain data --------------------------------------------------
 
 print('Creating domain data')
@@ -310,7 +310,7 @@ for n in range(0,n_grids):
         ierr = nffun.putvar(domainfile_new, 'mask', mask)
         os.system('ncks -O --mk_rec_dim nj '+domainfile_new+' '+domainfile_new)
     elif (options.mymask != ''):
-       print 'Applying mask from '+options.mymask
+       print('Applying mask from '+options.mymask)
        os.system('ncks -d lon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+' -d lat,'+str(ygrid_min[n])+ \
               ','+str(ygrid_max[n])+' '+options.mymask+' mask_temp.nc')
        newmask = nffun.getvar('mask_temp.nc', 'PNW_mask')
@@ -342,7 +342,7 @@ for n in range(0,n_grids):
     nst = str(100000+n)[1:]
     surffile_new =  './temp/surfdata'+nst+'.nc'
     if (not os.path.exists(surffile_orig)):
-        print 'Error:  '+surffile_orig+' does not exist.  Aborting'
+        print('Error:  '+surffile_orig+' does not exist.  Aborting')
         sys.exit(1)
     if (isglobal):
         os.system('cp '+surffile_orig+' '+surffile_new)
@@ -396,7 +396,7 @@ for n in range(0,n_grids):
         mypct_clay = 0.0
  
         if (options.surfdata_grid == False and options.site != ''):
-            AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','rb'))
+            AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
             for row in AFdatareader:
                 if row[0] == options.site:
                     for thispft in range(0,5):
@@ -404,7 +404,7 @@ for n in range(0,n_grids):
             if (sum(mypft_frac[0:npft]) == 0.0):
                 print('*** Warning:  PFT data NOT found.  Using gridded data ***')
         #read file for site-specific soil information
-            AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','rb'))
+            AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
             for row in AFdatareader:
                 if row[0] == options.site:
                     mypct_sand = row[4]
@@ -443,10 +443,10 @@ for n in range(0,n_grids):
             for k in range(0,3):
                 pct_urban[k][0][0] = 0.0
             for k in range(0,10):
-                if (mypct_sand > 0.0 or mypct_clay > 0.0):
+                if (float(mypct_sand) > 0.0 or float(mypct_clay) > 0.0):
                     if (k == 0):
-                       print 'Setting %sand to '+str(mypct_sand)
-                       print 'Setting %clay to '+str(mypct_clay)
+                       print('Setting %sand to '+str(mypct_sand))
+                       print('Setting %clay to '+str(mypct_clay))
                     pct_sand[k][0][0]   = mypct_sand
                     pct_clay[k][0][0]   = mypct_clay
                 if ('US-SPR' in options.site):
@@ -459,7 +459,7 @@ for n in range(0,n_grids):
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
             if (options.mypft >= 0):
-              print 'Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%'
+              print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
               pct_pft[:,0,0] = 0.0
               pct_pft[int(options.mypft),0,0] = 100.0
             else:
@@ -467,10 +467,10 @@ for n in range(0,n_grids):
                 if (sum(mypft_frac[0:npft]) > 0.0):
                     if (mypft_frac[p] > 0.0):
                         if (p < 16):
-                           print 'Setting PFT '+str(p)+'('+pft_names[p]+') to '+ \
-                           str(mypft_frac[p])+'%'
+                           print('Setting PFT '+str(p)+'('+pft_names[p]+') to '+ \
+                           str(mypft_frac[p])+'%')
                         else:
-                           print 'Setting PFT '+str(p)+' to '+str(mypft_frac[p])+'%'
+                           print('Setting PFT '+str(p)+' to '+str(mypft_frac[p])+'%')
                     pct_pft[p][0][0] = mypft_frac[p]
                 #maxlai = (monthly_lai).max(axis=0)
                 for t in range(0,12):
@@ -546,7 +546,7 @@ if (options.nopftdyn == False):
     pftdyn_new = './temp/surfdata.pftdyn'+nst+'.nc'
     
     if (not os.path.exists(pftdyn_orig)):
-        print 'Error: '+pftdyn_orig+' does not exist.  Aborting'
+        print('Error: '+pftdyn_orig+' does not exist.  Aborting')
         sys.exit(1)
     if (isglobal):
         os.system('cp '+pftdyn_orig+' '+pftdyn_new)
@@ -582,7 +582,7 @@ if (options.nopftdyn == False):
         dynexist = False
         mypft_frac=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
         if (options.surfdata_grid == False and options.site != ''):
-            AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','rb'))
+            AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
             for row in AFdatareader:
                 #print(row[0], row[1], options.site)
                 if row[0] == options.site:
@@ -591,7 +591,7 @@ if (options.nopftdyn == False):
 
             if (os.path.exists(ccsm_input+'/lnd/clm2/PTCLM/'+options.site+'_dynpftdata.txt')):
                 dynexist = True
-                DYdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.site+'_dynpftdata.txt','rb'))
+                DYdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.site+'_dynpftdata.txt','r'))
                 dim = (19,200)
                 pftdata = numpy.zeros(dim)
                 for row in DYdatareader:
@@ -657,7 +657,7 @@ if (options.nopftdyn == False):
                     harvest_vh2[t][0][0] = 0.
             else:
                 #use time-varying files from gridded file
-                print 'using '+surffile_new+' for 1850 information'
+                print('using '+surffile_new+' for 1850 information')
                 nonpft = float(pct_lake_1850[n]+pct_glacier_1850[n]+ \
                                pct_wetland_1850[n]+sum(pct_urban_1850[0:3,n]))
                 if (options.mymodel == 'CLM5'):

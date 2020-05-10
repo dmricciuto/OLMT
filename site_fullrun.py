@@ -178,7 +178,7 @@ parser.add_option("--walltime", dest="walltime", default=6, \
 def submit(fname, submit_type='qsub', job_depend=''):
     job_depend_flag = ' -W depend=afterok:'
     if ('sbatch' in submit_type):
-	job_depend_flag = ' --dependency=afterok:'
+        job_depend_flag = ' --dependency=afterok:'
     if (job_depend != '' and submit_type != ''):
         os.system(submit_type+job_depend_flag+job_depend+' '+fname+' > temp/jobinfo')
     else:
@@ -203,19 +203,19 @@ def submit(fname, submit_type='qsub', job_depend=''):
 if (options.csmdir == ''):
    if (os.path.exists('../E3SM')):
        options.csmdir = os.path.abspath('../E3SM')
-       print 'Model root not specified.  Defaulting to '+options.csmdir
+       print('Model root not specified.  Defaulting to '+options.csmdir)
    else:
-       print 'Error:  Model root not specified.  Please set using --model_root'
+       print('Error:  Model root not specified.  Please set using --model_root')
        sys.exit(1)
 elif (not os.path.exists(options.csmdir)):
-     print 'Error:  Model root '+options.csmdir+' does not exist.'
+     print('Error:  Model root '+options.csmdir+' does not exist.')
      sys.exit(1)
 
 #get machine info if not specified
 npernode=32
 if (options.machine == ''):
    hostname = socket.gethostname()
-   print 'Machine not specified.  Using hostname '+hostname+' to determine machine'
+   print('Machine not specified.  Using hostname '+hostname+' to determine machine')
    if ('or-condo' in hostname):
        options.machine = 'cades'
        npernode=32
@@ -223,7 +223,7 @@ if (options.machine == ''):
        options.machine = 'edison'
        npernode = 24
    elif ('cori' in hostname):
-       print 'Cori machine not specified.  Setting to cori-haswell'
+       print('Cori machine not specified.  Setting to cori-haswell')
        options.machine = 'cori-haswell'
        npernode=32
    elif ('titan' in hostname):
@@ -233,14 +233,14 @@ if (options.machine == ''):
        options.machine = 'eos'
        npernode=32
    elif ('blues' in hostname or 'blogin' in hostname):
-       print 'Hostname = '+hostname+' and machine not specified.  Assuming anvil'
+       print('Hostname = '+hostname+' and machine not specified.  Assuming anvil')
        options.machine = 'anvil' 
        npernode=36
    elif ('compy' in hostname):
        options.machine = 'compy'
        npernode=40
    else:
-       print 'ERROR in site_fullrun.py:  Machine not specified.  Aborting'
+       print('ERROR in site_fullrun.py:  Machine not specified.  Aborting')
        sys.exit(1)
 
 if (options.ccsm_input != ''):
@@ -289,7 +289,7 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
     if (options.machine == 'titan' or options.machine == 'eos'):
         myinput = open('/ccs/home/'+myuser+'/.cesm_proj','r')
         for s in myinput:
-	   myproject=s[:-1]
+    	    myproject=s[:-1]
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
     elif (options.machine == 'cades'):
         runroot='/lustre/or-hydra/cades-ccsi/scratch/'+myuser
@@ -321,7 +321,7 @@ sitenum=0
 #create ensemble file if requested (so that all cases use the same)
 if (int(options.mc_ensemble) != -1):
     if (not(os.path.isfile(options.parm_list))):
-	print('parm_list file does not exist')
+        print('parm_list file does not exist')
         sys.exit()
     else:
         param_names=[]
@@ -329,7 +329,7 @@ if (int(options.mc_ensemble) != -1):
         param_max=[]
         input = open(options.parm_list,'r')
         for s in input:
-	    if (s):
+            if (s):
                 param_names.append(s.split()[0])
                 if (int(options.mc_ensemble) > 0):
                     if (len(s.split()) == 3):
@@ -380,7 +380,7 @@ for row in AFdatareader:
         site_endyear = int(row[7])
         ncycle   = endyear-startyear+1   #number of years in met cycle
         ny_ad = options.ny_ad
-	ny_fin = options.nyears_final_spinup
+        ny_fin = options.nyears_final_spinup
         if (int(options.ny_ad) % ncycle != 0):
           #AD spinup and final spinup lengths must be multiples of met data cyle.
           ny_ad = str(int(ny_ad) + ncycle - (int(ny_ad) % ncycle))
@@ -388,11 +388,11 @@ for row in AFdatareader:
           ny_fin = str(int(ny_fin) + ncycle - (int(ny_fin) % ncycle))
 
         if (options.nyears_transient == -1):
-          translen = endyear-1850+1        #length of transient run
-	  if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
-                   options.princeton or options.cruncepv8)):
-            print(endyear_trans, site_endyear)
- 	    translen = min(site_endyear,endyear_trans)-1850+1
+            translen = endyear-1850+1        #length of transient run
+            if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
+                options.princeton or options.cruncepv8)):
+                print(endyear_trans, site_endyear)
+                translen = min(site_endyear,endyear_trans)-1850+1
 
         #use site parameter file if it exists
         if (options.siteparms):
@@ -525,7 +525,7 @@ for row in AFdatareader:
         else:
             decomp_model = 'CTC'
         if (options.eca):
-	    mycompset = nutrients+'ECA'+decomp_model
+            mycompset = nutrients+'ECA'+decomp_model
         elif (options.fates):
             mycompset = 'CLM45ED'
         else:
@@ -553,8 +553,8 @@ for row in AFdatareader:
         if (sitenum == 0):
             if (options.exeroot != ''):
                 if (os.path.isfile(options.exeroot+'/'+myexe) == False):
-                    print 'Error:  '+options.exeroot+' does not exist or does '+ \
-                          'not contain an executable. Exiting'
+                    print('Error:  '+options.exeroot+' does not exist or does '+ \
+                          'not contain an executable. Exiting')
                     sys.exit(1)
                 else:
                     ad_exeroot = options.exeroot
@@ -571,7 +571,7 @@ for row in AFdatareader:
             cmd_adsp = cmd_adsp+' --compset I1850'+mycompset_adsp
             ad_case = site+'_I1850'+mycompset_adsp
         if (options.noad == False):
-	    ad_case = ad_case+'_ad_spinup'
+            ad_case = ad_case+'_ad_spinup'
         if (options.makemet):
             cmd_adsp = cmd_adsp+' --makemetdat'
         if (options.spinup_vars):
@@ -604,8 +604,8 @@ for row in AFdatareader:
                 cmd_fnsp = cmd_fnsp+' --run_startyear '+str(options.run_startyear)
             if (options.exeroot != ''):
               if (os.path.isfile(options.exeroot+'/'+myexe) == False):
-                  print 'Error:  '+options.exeroot+' does not exist or does '+ \
-                        'not contain an executable. Exiting'
+                  print('Error:  '+options.exeroot+' does not exist or does '+ \
+                        'not contain an executable. Exiting')
                   sys.exit(1)
               else:
                 ad_exeroot=options.exeroot
@@ -632,7 +632,7 @@ for row in AFdatareader:
         else:
             cmd_fnsp = cmd_fnsp+' --compset I1850'+mycompset
         if (options.spinup_vars):
-		cmd_fnsp = cmd_fnsp+' --spinup_vars'
+                cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans):	
                 cmd_fnsp = cmd_fnsp + ' --postproc_file '+options.postproc_file
 
@@ -686,7 +686,7 @@ for row in AFdatareader:
 
         #If not the first site, create point data here
         if ((sitenum > 0) and not options.nopointdata):
-                print 'Creating point data for '+site
+                print('Creating point data for '+site)
                 ptcmd = 'python makepointdata.py '+ \
                         ' --site '+site+' --sitegroup '+options.sitegroup+ \
                         ' --ccsm_input '+ccsm_input+' --model '+mymodel
@@ -696,7 +696,7 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --pft '+str(options.mypft)
                 result = os.system(ptcmd)
                 if (result > 0):
-                    print 'Site_fullrun:  Error creating point data for '+site
+                    print('Site_fullrun:  Error creating point data for '+site)
                     sys.exit(1)
 
         #Build Cases
@@ -713,7 +713,7 @@ for row in AFdatareader:
                         +str(endyear-startyear+1)
                 result = os.system(ptcmd)
             if (result > 0):
-                print 'Site_fullrun:  Error in runcase.py for ad_spinup '
+                print('Site_fullrun:  Error in runcase.py for ad_spinup ')
                 sys.exit(1)
         else:
           ad_case_firstsite = ad_case
@@ -732,7 +732,7 @@ for row in AFdatareader:
                     +str(int(ny_ad)+1)+' --spin_cycle '+str(endyear-startyear+1)
             result = os.system(ptcmd)
             if (result > 0):
-                print 'Site_fullrun:  Error in runcase.py final spinup'
+                print('Site_fullrun:  Error in runcase.py final spinup')
                 sys.exit(1)
 
         if (options.notrans == False):
@@ -751,7 +751,7 @@ for row in AFdatareader:
                  result = os.system(cmd_trns2)
 
             if (result > 0):
-                print 'Site_fullrun:  Error in runcase.py for transient'
+                print('Site_fullrun:  Error in runcase.py for transient')
                 sys.exit(1)
 
                  
@@ -771,7 +771,7 @@ for row in AFdatareader:
         for c in case_list:
             
             mysubmit_type = 'qsub'
-            groupnum = sitenum/npernode
+            groupnum = int(sitenum/npernode)
             if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
@@ -782,7 +782,7 @@ for row in AFdatareader:
                 elif (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/.case.run')):
                     input = open(caseroot+'/'+ad_case_firstsite+'/.case.run')
                 else:
-                    print caseroot+'/'+ad_case_firstsite+'/case.run file not found.  Aborting'
+                    print(caseroot+'/'+ad_case_firstsite+'/case.run file not found.  Aborting')
                     sys.exit(1)
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
@@ -978,7 +978,7 @@ for row in AFdatareader:
 
 #Submit PBS scripts for multi-site simualtions on 1 node
 if (options.ensemble_file == ''):
-    for g in range(0,groupnum+1):
+    for g in range(0,int(groupnum)+1):
         job_depend_run=''
         for thiscase in case_list:
             output = open('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs','a')
@@ -986,6 +986,10 @@ if (options.ensemble_file == ''):
             if ('trans_diags' in thiscase and options.machine == 'cades'):
                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             output.close()
-            job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
+            if (mysubmit_type == ''):
+                os.system('chmod u+x ./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
+                os.system('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
+            else:
+                job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
                                     job_depend_run, submit_type=mysubmit_type)
 

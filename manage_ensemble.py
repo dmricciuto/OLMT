@@ -107,7 +107,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
                  else:
                    output.append(mydata[0,myindex]*myfactor[index]+myoffset[index])
         for i in range(0,ndays_total/myavg[index]):
- 	    data[thiscol] = sum(output[(i*myavg[index]):((i+1)*myavg[index])])/myavg[index]
+            data[thiscol] = sum(output[(i*myavg[index]):((i+1)*myavg[index])])/myavg[index]
             thiscol=thiscol+1
         index=index+1
     if (options.microbe):
@@ -256,7 +256,7 @@ if (rank == 0):
             data[:,thisjob-1] = data_row
             parm_row = comm.recv(source=process, tag=6)
             parms[:,thisjob-1] = parm_row
-        print 'Received', thisjob
+        print('Received', thisjob)
         n_done = n_done+1
         comm.send(n_job, dest=process, tag=1)
         comm.send(0,     dest=process, tag=2)
@@ -269,7 +269,7 @@ if (rank == 0):
             data[:,thisjob-1] = data_row
             parm_row = comm.recv(source=process, tag=6)
             parms[:,thisjob-1] = parm_row
-        print 'Received', thisjob
+        print('Received', thisjob)
         n_done = n_done+1
         comm.send(-1, dest=process, tag=1)
         comm.send(-1, dest=process, tag=2)
@@ -307,7 +307,7 @@ if (rank == 0):
         for p in range(0,len(pmin)):
           myoutput.write(pmin[p]+' '+pmax[p]+'\n')
         myoutput.close()
-        print np.hstack((parm_out,data_out))
+        print(np.hstack((parm_out,data_out)))
         np.savetxt(UQ_output+'/foreden.csv', np.hstack((parm_out,data_out)), delimiter=',', header=eden_header[:-1])
 
     MPI.Finalize()
@@ -352,5 +352,5 @@ else:
                 comm.send(rank,  dest=0, tag=3)
                 comm.send(myjob, dest=0, tag=4)
 
-    print rank, ' complete'
+    print(rank, ' complete')
     MPI.Finalize()

@@ -25,14 +25,14 @@ parser.add_option('--harvest', dest='harvest', default=False, action="store_true
 casename = options.casename
 if (options.restart_year == ''):
         #if restart_year not provided, take the last existing restart file
-	restart_file = glob.glob(options.rundir+'/'+casename+'.clm2.r.*.nc')
+        restart_file = glob.glob(options.rundir+'/'+casename+'.clm2.r.*.nc')
         if (len(restart_file) > 1):
-    	   restart_file_last = restart_file[-1]
+            restart_file_last = restart_file[-1]
         else:
-           restart_file_last = restart_file[0]
-	year = int(restart_file_last[-19:-15])
+            restart_file_last = restart_file[0]
+        year = int(restart_file_last[-19:-15])
 else:
-	year = int(options.restart_year)
+        year = int(options.restart_year)
 
 if ('BGC' in casename):
 	options.bgc = True
@@ -77,7 +77,7 @@ if (options.harvest):
       rest_vals[i] = rest_vals[i]*0.05
       if (var_names_harvest[v] == 'LEAFC'):
         rest_vals[i] = 0.33/0.03
-        print rest_vals[i]
+        print(rest_vals[i])
       elif (var_names_harvest[v] == 'FROOTC'):
         rest_vals[i] = 0.33/0.03*0.666
       elif (var_names_harvest[v] == 'LEAFN'):

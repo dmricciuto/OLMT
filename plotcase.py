@@ -199,8 +199,8 @@ for c in range(0,ncases):
         tstep=-999
         input = open(mydir+"/lnd_in")
         for s in input:
-	    if ('hist_mfilt' in s):
-	        mfiltinfo = s.split()[2]
+            if ('hist_mfilt' in s):
+                mfiltinfo = s.split()[2]
                 npf = int(mfiltinfo.split(',')[0])
                 if (options.h1): 
                     npf = int(mfiltinfo.split(',')[1])
@@ -348,7 +348,7 @@ for c in range(0,ncases):
                     thisrow = thisrow+1
                 myobs_in.close()
             else:
-                print 'Error reading observations for '+mysites[c]
+                print('Error reading observations for '+mysites[c])
 
     #read monthly .nc files (default output)
     if (ftype == 'default'):
@@ -393,7 +393,7 @@ for c in range(0,ncases):
                             mydata[v,nsteps] = mydata[v,nsteps]+myvar_temp2
                     else:
                         if (v == 0 and m == 0):
-                           print 'Warning: '+myfile+' does not exist'
+                           print('Warning: '+myfile+' does not exist')
                         x[nsteps] = y+m/12.0
                         mydata[v,nsteps] = numpy.NaN
                         if (y-1 < yend_all):
@@ -492,7 +492,7 @@ for c in range(0,ncases):
                                 x[myind] = ystart+(ylast*n*nypf+y*nypf) + nypf*(i*1.0-0.5)/npf
                                 mydata[v,myind] = numpy.NaN
                                 nsteps=nsteps+1 
-  		    else:	
+                    else:	
                          if (v == 0):
                              print('Warning: '+myfile+' does not exist')
                          if (y-1 < yend_all):

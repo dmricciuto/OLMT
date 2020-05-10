@@ -55,9 +55,9 @@ orig_dir = str(os.path.abspath(options.runroot)+'/'+casename+'/run')
 new_dir  = orig_dir.replace(options.site_orig, options.site_new)
 if (options.suffix != ''):
   new_dir = new_dir.replace(casename,casename+'_'+options.suffix)
-print 'Copying from '+orig_dir+' to \n'+new_dir
+print('Copying from '+orig_dir+' to \n'+new_dir)
 if (new_dir == orig_dir):
-  print 'Error:  New and old directories are the same.  Exiting'
+  print('Error:  New and old directories are the same.  Exiting')
   sys.exit(1)
 
 #copy files to new directory
@@ -120,7 +120,7 @@ for f in os.listdir(new_dir):
                   s_out = s_out.replace(casename,casename+'_'+options.suffix)
             elif ('diri' in s and 'lnd' in f):
                   exedir = s.split()[2][1:-4]
-                  print exedir
+                  print(exedir)
                   s_out = s
             else:
                 s_out = s
@@ -165,7 +165,7 @@ if (os.path.exists('temp/global_'+options.casename+'_0.pbs') and options.suffix 
   file_out.write(mpicmd+' '+exedir+'/e3sm.exe\n')
   file_in.close()
   file_out.close()
-  print "Submitting the job:"
+  print("Submitting the job:")
   if ('cades' in options.machine or 'cori' in options.machine or 'edison' in options.machine):
     os.system('sbatch temp/global_'+options.casename+'_'+options.suffix+'.pbs')
   else:
@@ -186,7 +186,7 @@ if (options.site_orig != ''):
       args = s.split(' ')
       if ('--case' in args):
         caseind = args.index('--case')
-        print caseind
+        print(caseind)
         args[caseind+1] = args[caseind+1].replace(options.site_orig,options.site_new)
         siteind = args.index('--site')
         args[siteind+1] = args[siteind+1].replace(options.site_orig,options.site_new)

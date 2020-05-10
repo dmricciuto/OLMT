@@ -264,12 +264,12 @@ parser.add_option("--lai", dest="lai", default=-999, \
 if (options.csmdir == ''):
    if (os.path.exists('../E3SM')):
        options.csmdir = os.path.abspath('../E3SM')
-       print 'Model root not specified.  Defaulting to '+options.csmdir
+       print('Model root not specified.  Defaulting to '+options.csmdir)
    else:
-       print 'Error:  Model root not specified.  Please set using --model_root'
+       print('Error:  Model root not specified.  Please set using --model_root')
        sys.exit(1)
 elif (not os.path.exists(options.csmdir)):
-     print 'Error:  Model root '+options.csmdir+' does not exist.'
+     print('Error:  Model root '+options.csmdir+' does not exist.')
      sys.exit(1)
 
 #machine info:  cores per node
@@ -277,8 +277,8 @@ ppn=1
 if ('titan' in options.machine):
     ppn=16
     if (int(options.walltime) > 2 and int(options.ng) < 2048):
-        print 'Requested walltime too long'
-        print 'Setting to 2 hours.'
+        print('Requested walltime too long')
+        print('Setting to 2 hours.')
         options.walltime=2
 elif ('metis' in options.machine):
     ppn=16
@@ -308,7 +308,7 @@ if (options.mymodel == ''):
   elif ('E3SM' in options.csmdir or 'ACME' in options.csmdir):
       options.mymodel = 'ELM'
   else:
-      print 'Error:  Model not specified'
+      print('Error:  Model not specified')
       sys.exit(1)
 
 #check for valid csm directory
@@ -567,7 +567,7 @@ if (options.nopointdata == False):
         #Clean up
         os.system('rm makepointdata_rhea*') 
     else:
-        print ptcmd
+        print(ptcmd)
         result = os.system(ptcmd)
         if (result > 0):
             print ('PointCLM:  Error creating point data.  Aborting')
@@ -577,7 +577,7 @@ if (options.nopointdata == False):
 sitedatadir = os.path.abspath(PTCLMfiledir)
 os.chdir(sitedatadir)
 if (isglobal == False):
-    AFdatareader = csv.reader(open(options.sitegroup+'_sitedata.txt',"rb"))
+    AFdatareader = csv.reader(open(options.sitegroup+'_sitedata.txt',"r"))
     for row in AFdatareader:
         if row[0] == options.site:
             if (use_reanalysis):
@@ -640,7 +640,7 @@ else:
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
-    if ('compy' in options.machine):
+    if ('compy' in options.machine or 'ubuntu' in options.machine):
       myncap='ncap2'
     if (options.humhol):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
@@ -685,10 +685,10 @@ if (options.parm_vals != ''):
     parms = options.parm_vals.split('/')
     nparms = len(parms)
     for n in range(0,nparms):
-	parm_data=parms[n].split(',')
+        parm_data=parms[n].split(',')
         thisvar = nffun.getvar(pftfile, parm_data[0])
         if (len(parm_data) == 2):
-	   thisvar[...] = float(parm_data[1])
+            thisvar[...] = float(parm_data[1])
         elif (len(parm_data) == 3): 
            if (float(parm_data[1]) >= 0):
                thisvar[int(parm_data[1])] = float(parm_data[2])
@@ -849,7 +849,7 @@ if ('compy' in options.machine and int(options.np) < 80):
 
 comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV']
 for c in comps:
-    print 'Setting NTASKS_'+c+' to '+str(options.np)
+    print('Setting NTASKS_'+c+' to '+str(options.np))
     os.system('./xmlchange NTASKS_'+c+'='+str(options.np))
     os.system('./xmlchange NTHRDS_'+c+'=1')
 
@@ -865,7 +865,7 @@ os.system('./xmlchange STOP_OPTION='+options.run_units)
 os.system('./xmlchange STOP_N='+str(options.run_n))
 
 if (options.rest_n > 0):
-  print 'Setting REST_N to '+str(options.rest_n)
+  print('Setting REST_N to '+str(options.rest_n))
   os.system('./xmlchange REST_N='+str(options.rest_n))
 
 #--------------------------CESM setup ----------------------------------------
@@ -977,8 +977,8 @@ for i in range(1,int(options.ninst)+1):
 
     if ('20TR' not in compset and int(options.hist_mfilt) == -1):
 	#default to annual for spinup runs if not specified
-	options.hist_mfilt = 1
-	options.hist_nhtfrq = -8760
+        options.hist_mfilt = 1
+        options.hist_nhtfrq = -8760
 
     if (options.hist_mfilt != -1 and not options.diags):
         if (options.ad_spinup):
@@ -1037,7 +1037,7 @@ for i in range(1,int(options.ninst)+1):
         output.write(" hist_empty_htapes = .true.\n")
         h0varst = " hist_fincl1 = "
         for v in var_list_spinup:
-	    h0varst = h0varst+"'"+v+"',"
+            h0varst = h0varst+"'"+v+"',"
         h0varst = h0varst[:-1]+"\n"
         output.write(h0varst)
 
@@ -1067,14 +1067,14 @@ for i in range(1,int(options.ninst)+1):
         output.write(h3varst)
         output.write(h4varst)
     elif ('20TR' in compset and (options.trans_varlist != '' or options.ilambvars)):
-	trans_varlist = options.trans_varlist.split(',')
+        trans_varlist = options.trans_varlist.split(',')
         if (options.ilambvars):
             trans_varlist = ilamb_outputs
-	output.write(" hist_empty_htapes = .true.\n")
+        output.write(" hist_empty_htapes = .true.\n")
         h0varst = " hist_fincl1 = "
-	for v in trans_varlist:
-	    h0varst = h0varst+"'"+v+"',"
-	h0varst = h0varst[:-1]+"\n"
+        for v in trans_varlist:
+            h0varst = h0varst+"'"+v+"',"
+        h0varst = h0varst[:-1]+"\n"
         output.write(h0varst)
 
     if (options.ad_spinup):
@@ -1251,10 +1251,10 @@ for i in range(1,int(options.ninst)+1):
 #if (isglobal):
 os.system("./xmlchange -id BATCH_SYSTEM --val none")
 if (options.no_config == False):
-    print 'Running case.setup'
+    print('Running case.setup')
     result = os.system('./case.setup > case_setup.log')
     if (result > 0):
-        print 'Error: runcase.py failed to setup case'
+        print('Error: runcase.py failed to setup case')
         sys.exit(1)
 else:
     print("Warning:  No case configure performed")
@@ -1282,7 +1282,7 @@ infile.close()
 outfile.close()
 os.system('mv Macros.make.tmp Macros.make')
 
-if (options.mymodel == 'ELM'):
+if (options.mymodel == 'ELM' and not ('ubuntu' in options.machine)):
   infile  = open("./Macros.cmake")
   outfile = open("./Macros.cmake.tmp",'a')
 
@@ -1317,15 +1317,15 @@ if (options.clean_build):
     os.system('./case.build --clean')
 #compile cesm
 if (options.no_build == False):
-    print 'Running case.build'
+    print('Running case.build')
     if ('edison' in options.machine or 'titan' in options.machine):
         #send output to screen since build times are very slow
         result = os.system('./case.build') 
     else:
         result = os.system('./case.build > case_build.log')
     if (result > 0):
-        print 'Error:  Pointclm.py failed to build case.  Aborting'
-        print 'See '+os.getcwd()+'/case_build.log for details'
+        print('Error:  Pointclm.py failed to build case.  Aborting')
+        print('See '+os.getcwd()+'/case_build.log for details')
         sys.exit(1)
 else:
     os.system('./xmlchange BUILD_COMPLETE=TRUE')
@@ -1440,7 +1440,7 @@ os.chdir(PTCLMdir)
 
 if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
     if (not(os.path.isfile(options.parm_list))):
-	print('parm_list file does not exist')
+        print('parm_list file does not exist')
         sys.exit(1)
     elif (isglobal):
         print('Ensemble simulations not supported for regional/global simulations')
@@ -1451,7 +1451,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
         param_max=[]
         input = open(options.parm_list,'r')
         for s in input:
-	    if (s):
+            if (s):
                 param_names.append(s.split()[0])
                 if (int(options.mc_ensemble) > 0):
                     if (len(s.split()) == 3):
@@ -1486,8 +1486,8 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
         numpy.savetxt('mcsamples_'+casename+'.txt', numpy.transpose(samples))
         options.ensemble_file = 'mcsamples_'+casename+'.txt'
 
-    print str(n_parameters)+' parameters are being modified' 
-    print str(nsamples)+' parameter samples provided'
+    print(str(n_parameters)+' parameters are being modified') 
+    print(str(nsamples)+' parameter samples provided')
   
     #total number of processors required in each pbs script
     np_total = int(options.np)*int(options.ng)
@@ -1532,7 +1532,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
               if (options.debug):
                 output_run.write('#SBATCH --qos=debug\n')
               else:
-	        output_run.write('#SBATCH --qos=regular\n')
+                output_run.write('#SBATCH --qos=regular\n')
               if ('haswell' in options.machine):
                 output_run.write('#SBATCH --constraint=haswell\n')
               if ('knl' in options.machine):
@@ -1549,7 +1549,7 @@ if (options.ensemble_file != '' or int(options.mc_ensemble) != -1):
             output_run.write('source $MODULESHOME/init/csh\n')
             output_run.write('module load nco\n')
             output_run.write('module load cray-netcdf\n')
-	    output_run.write('module unload python\n')
+            output_run.write('module unload python\n')
             output_run.write('module load python/2.7.5\n')
             output_run.write('module unload PrgEnv-intel\n')
             output_run.write('module load PrgEnv-gnu\n')

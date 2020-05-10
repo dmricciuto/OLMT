@@ -449,7 +449,7 @@ class Frame(wx.Frame):
         sites_toplot=self.m_site.GetSelections()
         doall = False
         for i in sites_toplot:
-	    if (i == 0): 
+            if (i == 0):
                 doall=True
         thisrow=0
         mysite=''
@@ -503,8 +503,8 @@ class Frame(wx.Frame):
         
         #if len(mycaseprefix.split(',') > 1:
            
-        print 'python plotcase.py --case '+mycaseprefix+' --site '+mysite[:-1] \
-                  +' --compset '+compset+' --spinup'+' --vars '+myvar[:-1]+' --csmdir '+rundir
+        print('python plotcase.py --case '+mycaseprefix+' --site '+mysite[:-1] \
+                  +' --compset '+compset+' --spinup'+' --vars '+myvar[:-1]+' --csmdir '+rundir)
         os.system('python plotcase.py --case '+mycaseprefix+' --site '+mysite[:-1] \
                   +' --compset '+compset+' --spinup'+' --vars '+myvar[:-1]+' --csmdir '+rundir)
     
@@ -611,7 +611,7 @@ class Frame(wx.Frame):
         sites_torun = self.m_site.GetSelections()
         doall = False
         for i in sites_torun:
-	    if (i == 0): 
+            if (i == 0): 
                 doall=True
  
         mysites=[]
@@ -643,7 +643,7 @@ class Frame(wx.Frame):
         myconly=self.conly.GetValue()
         mycnonly=self.cnonly.GetValue()
         mycpl_bypass=self.cpl_bypass.GetValue()
-	myonehour=self.onehour.GetValue()     
+        myonehour=self.onehour.GetValue()     
         mycruncep=self.cruncep.GetValue()
         mygswp3=self.gswp3.GetValue()
         myc14=self.c14.GetValue()
@@ -727,7 +727,7 @@ class Frame(wx.Frame):
             cmd = cmd+' --C14'
         cmd = cmd+' --runroot '+rundir
         
-        print cmd
+        print(cmd)
         os.system(cmd)
           
     def OnAbout(self, event):
@@ -754,8 +754,8 @@ elif ('eos' in hostname or 'titan' in hostname):
   ccsm_input = '/lustre/atlas/world-shared/cli900/cesm/inputdata'
   rundir = '/lustre/atlas/scratch/cli112/'+username
 else:
-  ccsm_input='/home/'+username+'/models/ccsm_inputdata'
-  machine=oic2
+  ccsm_input='/home/'+username+'/models/inputdata'
+  machine='oic2'
 
 os.chdir(ccsm_input+'/lnd/clm2/PTCLM')
 
@@ -783,7 +783,7 @@ for filename in os.listdir("./"):
 
 #load site information for default group
 fname="./"+mysitegroup_current+"_sitedata.txt"
-AFdatareader = csv.reader(open(fname,"rb"))
+AFdatareader = csv.reader(open(fname,"r"))
 nsites=0
 for row in AFdatareader:
     if nsites > 0:

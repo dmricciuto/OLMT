@@ -212,7 +212,7 @@ myoutput = open('myoutput_sse.txt','w')
 myind = 0
 for p in parm_names:
         myoutput.write(str(parm_names[myind])+' '+str(parm_indices[myind])+' '+str(parm_values[myind])+'\n')
-	myind = myind+1
+        myind = myind+1
 
 for filename in os.listdir(UQdir+'/'+options.constraints):
   if (not os.path.isdir(filename)):
@@ -289,7 +289,7 @@ for filename in os.listdir(UQdir+'/'+options.constraints):
                     #PFT-specific constraints 
                     model_val = myvals[doy,PFT-1]
                     if (unc < 0):
-    	              unc = value*0.25 #default uncertainty set to 25%
+                        unc = value*0.25 #default uncertainty set to 25%
                     sse = sse + ((model_val-value) /unc)**2
                     myoutput.write(str(myvarname)+' '+yst+' '+str(doy)+' '+str(PFT)+' '+ \
                                        str(model_val)+' '+str(value)+' '+str(unc)+' '+str(sse)+'\n')

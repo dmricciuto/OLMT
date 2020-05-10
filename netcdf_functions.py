@@ -35,8 +35,7 @@ def putvar(fname, varname, varvals):
         if (len(varvals) > 1):
           var[:] = varvals
         else:
-          
-        nffile.close()
+            nffile.close()
     else:
         nffile = netcdf.NetCDFFile(fname,"a")
         var = nffile.variables[varname]

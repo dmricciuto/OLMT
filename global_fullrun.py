@@ -250,7 +250,7 @@ elif ('anvil' in options.machine):
 elif ('compy' in options.machine):
     ccsm_input = '/compyfs/inputdata'
 
-print options.machine
+print(options.machine)
 #default compilers
 if (options.compiler == ''):
     if (options.machine == 'titan' or options.machine == 'metis'):
@@ -273,7 +273,7 @@ if (options.mpilib == ''):
     elif ('compy' in options.machine):
         options.mpilib = 'impi'
 
-print options.mpilib
+print(options.mpilib)
 mycaseid   = options.mycaseid
 srcmods    = options.srcmods_loc
 
@@ -294,11 +294,11 @@ if (options.project != ''):
   myproject = options.project
 else: 
   if (os.path.exists(os.environ.get('HOME')+'/.cesm_proj')):
-    print 'Getting project from '+os.environ.get('HOME')+'/.cesm_proj'
+    print('Getting project from '+os.environ.get('HOME')+'/.cesm_proj')
     myinput = open(os.environ.get('HOME')+'/.cesm_proj','r')
     for s in myinput:
         myproject=s[:-1]
-    print 'Project = '+myproject
+    print('Project = '+myproject)
  
 #case run and case root directories
 if (options.runroot == ''):
@@ -666,7 +666,7 @@ for c in cases:
         elif (os.path.isfile(caseroot+'/'+c+'/.case.run')):
             input = open(caseroot+'/'+c+'/.case.run')
         else:
-            print 'case.run file not found.  Aborting'
+            print('case.run file not found.  Aborting')
             sys.exit(1)
 
         for s in input:
