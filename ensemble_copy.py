@@ -239,9 +239,9 @@ for p in parm_names:
       elif (parm_indices[pnum] > 0):
          param[parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] == 0):
-         param = parm_values[pnum]
+         param[:] = parm_values[pnum]
       else:
-         param[...] = parm_values[pnum]
+         param = parm_values[pnum]
       ierr = nffun.putvar(myfile, p, param)
       if ('fr_flig' in p):
          param=nffun.getvar(myfile, 'fr_fcel')

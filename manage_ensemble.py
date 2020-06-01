@@ -176,10 +176,12 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
              parms[pnum] = mydata[...]
          else:                #Regular parameter file
            mydata = nffun.getvar(pfname,p) 
-           if (int(ppfts[pnum]) >= 0):
+           if (int(ppfts[pnum]) > 0):
              parms[pnum] = mydata[int(ppfts[pnum])]
-           else:
+           elif(int(ppfts[pnum]) == 0):
              parms[pnum] = mydata[0]
+           else:
+             parms[pnum] = mydata
          pnum=pnum+1
 
     return ierr
