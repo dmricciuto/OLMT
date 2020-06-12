@@ -79,6 +79,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
     index=0
     ierr = 0
     thiscol = 0
+    print(thisjob)
     for v in myvars:
         ndays_total = 0
         output = []
@@ -95,7 +96,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
             if (os.path.exists(fname)):
               mydata = nffun.getvar(fname,v)   
             else:
-              mydata = np.zeros([365,1], np.float)+np.NaN
+              mydata = np.zeros([365,2], np.float)+np.NaN
             #get output and average over days/years
             n_days = myday_end[index]-myday_start[index]+1
             ndays_total = ndays_total + n_days
@@ -494,28 +495,28 @@ if (rank == 0):
         np.savetxt(options.casename+'_postprocessed.txt', data_out)
         #UQ-ready outputs (80% of data for traning, 20% for validation)
         UQ_output = 'UQ_output/'+options.casename
-        os.system('mkdir -p '+UQ_output)
-        np.savetxt(UQ_output+'/ytrain.dat', data_out[0:int(len(good)*0.8),:])
-        np.savetxt(UQ_output+'/yval.dat',   data_out[int(len(good)*0.8):,:])
-        np.savetxt(UQ_output+'/ptrain.dat', parm_out[0:int(len(good)*0.8),:])
-        np.savetxt(UQ_output+'/pval.dat', parm_out[int(len(good)*0.8):,:])
-        myoutput = open(UQ_output+'/pnames.txt', 'w')
+        os.system('mkdir -p '+UQ_output+'/data')
+        np.savetxt(UQ_output+'/data/ytrain.dat', data_out[0:int(len(good)*0.8),:])
+        np.savetxt(UQ_output+'/data/yval.dat',   data_out[int(len(good)*0.8):,:])
+        np.savetxt(UQ_output+'/data/ptrain.dat', parm_out[0:int(len(good)*0.8),:])
+        np.savetxt(UQ_output+'/data/pval.dat', parm_out[int(len(good)*0.8):,:])
+        myoutput = open(UQ_output+'/data/pnames.txt', 'w')
         eden_header=''
         for p in pnames:
           myoutput.write(p+'\n')
           eden_header=eden_header+p+','
         myoutput.close()
-        myoutput = open(UQ_output+'/outnames.txt', 'w')
+        myoutput = open(UQ_output+'/data/outnames.txt', 'w')
         for v in myvars:
           myoutput.write(v+'\n')
           eden_header=eden_header+v+','
         myoutput.close()
-        myoutput = open(UQ_output+'/param_range.txt', 'w')
+        myoutput = open(UQ_output+'/data/param_range.txt', 'w')
         for p in range(0,len(pmin)):
           myoutput.write(pmin[p]+' '+pmax[p]+'\n')
         myoutput.close()
         print(np.hstack((parm_out,data_out)))
-        np.savetxt(UQ_output+'/foreden.csv', np.hstack((parm_out,data_out)), delimiter=',', header=eden_header[:-1])
+        np.savetxt(UQ_output+'/data/foreden.csv', np.hstack((parm_out,data_out)), delimiter=',', header=eden_header[:-1])
 
     MPI.Finalize()
 

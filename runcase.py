@@ -83,6 +83,8 @@ parser.add_option("--cruncep", dest="cruncep", default=False, \
                   help = "use cru-ncep data", action="store_true")
 parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
                   help = "use cru-ncep data", action="store_true")
+parser.add_option("--crujra", dest="crujra", default=False, \
+                  help = "use crujra data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
 parser.add_option("--gswp3", dest="gswp3", default=False, \
@@ -450,7 +452,7 @@ if (options.mycaseid != ""):
 
 #CRU-NCEP 2 transient phases
 if ('CRU' in compset or options.cruncep or options.gswp3 or \
-            options.cruncepv8 or options.princeton or options.cplhist):
+            options.crujra or options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
     use_reanalysis = False
@@ -1206,6 +1208,10 @@ for i in range(1,int(options.ninst)+1):
                     output.write(" metdata_type = 'cru-ncep'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                          +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715/cpl_bypass_full'\n")
+            elif (options.crujra):
+                    output.write(" metdata_type = 'crujra'\n")
+                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.CRUJRA.0.5d.v1.c190604/cpl_bypass_full'\n")
             elif (options.gswp3):
                 if (options.livneh):
                     output.write(" metdata_type = 'gswp3_livneh'\n")
@@ -1611,7 +1617,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             mpicmd = 'mpirun'
             if ('cades' in options.machine):
                 mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
-            cmd = mpicmd+' -np '+str(np_total)+' --hostfile $PBS_NODEFILE python manage_ensemble.py ' \
+            cmd = mpicmd+' -np '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
                ' --site '+options.site

@@ -135,6 +135,8 @@ parser.add_option("--cruncep", dest="cruncep", default=False, \
                   action="store_true", help = 'Use CRU-NCEP meteorology')
 parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
                   help = "use cru-ncep data", action="store_true")
+parser.add_option("--crujra", dest="crujra", default=False, \
+                  help = "use crujra data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
 parser.add_option("--site_forcing", dest="site_forcing", default="", \
@@ -357,7 +359,7 @@ if (options.caseroot == '' or (os.path.exists(options.caseroot) == False)):
 else:
     caseroot = os.path.abspath(options.caseroot)
 
-if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton):
+if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton or options.crujra):
     startyear = 1901
     endyear = 1920
     if (options.cruncep):
@@ -374,6 +376,9 @@ if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton):
     if (options.daymet):
         startyear = 1980
         endyear = 2010
+    if (options.crujra):
+        site_endyear = 2017
+
 elif (options.site_forcing):
    #UMB only - test case
    startyear=2000
@@ -481,6 +486,8 @@ if (options.cruncep):
     basecmd = basecmd+' --cruncep'
 if (options.cruncepv8):
     basecmd = basecmd+' --cruncepv8'
+if (options.crujra):
+    basecmd = basecmd+' --crujra'
 if (options.gswp3):
     basecmd = basecmd+' --gswp3'
 if (options.princeton):
