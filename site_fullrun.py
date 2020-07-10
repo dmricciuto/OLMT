@@ -245,6 +245,9 @@ if (options.machine == ''):
    elif ('compy' in hostname):
        options.machine = 'compy'
        npernode=40
+   elif ('ubuntu' in hostname):
+       options.machine = 'ubuntu'
+       npernode = 8
    else:
        print('ERROR in site_fullrun.py:  Machine not specified.  Aborting')
        sys.exit(1)
@@ -545,7 +548,10 @@ for row in AFdatareader:
             mycompset_adsp = mycompset
         if (options.crop):
             mycompset = 'CLM45CNCROP'
-            mycompset_adsp = mycompset        
+            mycompset_adsp = mycompset   
+        if (options.fates):
+            mycompset = 'CLM45ED'
+            mycompset_adsp = mycompset
         myexe = 'e3sm.exe'
         if ('clm5' in options.csmdir):
             mycompset = 'Clm50BgcGs'
@@ -574,7 +580,7 @@ for row in AFdatareader:
             cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
 
         if (options.cpl_bypass):
-            if (options.crop):
+            if (options.crop or options.fates):
               cmd_adsp = cmd_adsp+' --compset ICB'+mycompset_adsp
               ad_case = site+'_ICB'+mycompset_adsp
             else:
@@ -600,7 +606,7 @@ for row in AFdatareader:
         if mycaseid !='':
             basecase=mycaseid+'_'+site
             if (options.cpl_bypass):
-                if (options.crop):
+                if (options.crop or options.fates):
                   basecase = basecase+'_ICB'+mycompset
                 else:
                   basecase = basecase+'_ICB1850'+mycompset
@@ -608,7 +614,7 @@ for row in AFdatareader:
                 basecase = basecase+'_I1850'+mycompset
         else:
             if (options.cpl_bypass):
-                if (options.crop):
+                if (options.crop or options.fates):
                   basecase = site+'_ICB'+mycompset
                 else:
                   basecase=site+'_ICB1850'+mycompset
@@ -649,7 +655,7 @@ for row in AFdatareader:
             if (options.sp):
               cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
             else:
-              if (options.crop):
+              if (options.crop or options.fates):
                 cmd_fnsp = cmd_fnsp+' --compset ICB'+mycompset
               else:
                 cmd_fnsp = cmd_fnsp+' --compset ICB1850'+mycompset
@@ -658,7 +664,7 @@ for row in AFdatareader:
         if (options.spinup_vars):
                 cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans):	
-		cmd_fnsp = cmd_fnsp+' --spinup_vars'
+                cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans and options.constraints == ''):	
                 cmd_fnsp = cmd_fnsp + ' --postproc_file '+options.postproc_file
 
@@ -670,7 +676,7 @@ for row in AFdatareader:
             options.hist_nhtfrq+' --hist_mfilt '+options.hist_mfilt+' --no_build' + \
             ' --exeroot '+ad_exeroot+' --nopointdata'
         if (options.cpl_bypass):
-            if (options.crop):
+            if (options.crop or options.fates):
               cmd_trns = cmd_trns+' --istrans --compset ICB'+mycompset
             else:
               cmd_trns = cmd_trns+' --compset ICB20TR'+mycompset
@@ -767,7 +773,7 @@ for row in AFdatareader:
         if (options.notrans == False):
             print('\nSetting up transient case\n')
             if (sitenum == 0):
-                if (options.crop):
+                if (options.crop or options.fates):
                   tr_case_firstsite = fin_case_firstsite+'_trans'
                 else:
                   tr_case_firstsite = fin_case_firstsite.replace('1850','20TR')
@@ -902,6 +908,8 @@ for row in AFdatareader:
                   modelst = 'ICBCLM45BC'
                 if (options.crop):
                   modelst = 'ICBCLM45CNCROP'
+                if (options.fates):
+                  modelst = 'ICBCLM45ED'
 
             basecase = site
             if (mycaseid != ''):
@@ -953,20 +961,20 @@ for row in AFdatareader:
                 output.write("cd "+runroot+'/'+basecase+"_"+modelst+"/run\n")
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
             if (sitenum == 0 and 'transient' in c):
-                if (options.crop):
+                if (options.crop or options.fates):
                   output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_trans\n")
                 else:
                   output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"\n")
                 output.write('./case.submit --no-batch &\n')
             elif ('transient' in c):
-                if (options.crop):
+                if (options.crop or options.fates):
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst+"_trans/run\n")
                 else:
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"/run\n")
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
             if ('trans_diags' in c):
                  if (options.cpl_bypass):
-                     if (options.crop):
+                     if (options.crop or options.fates):
                        mycompsetcb = 'ICB'+mycompset+'_trans'
                      else:
                        mycompsetcb = 'ICB20TR'+mycompset
@@ -1013,14 +1021,14 @@ for row in AFdatareader:
                     cases.append(basecase+'_'+modelst.replace('CNP','CN')+'_ad_spinup')
             cases.append(basecase+'_'+modelst)
             if (options.notrans == False):
-                if (options.crop):
+                if (options.crop or options.fates):
                   cases.append(basecase+'_'+modelst+'_trans')
                 else:
                   cases.append(basecase+'_'+modelst.replace('1850','20TR'))
             job_depend_run=''    
             if (len(cases) > 1 and options.constraints != ''):
               cases=[]    #QPSO will run all cases
-              if (options.crop):
+              if (options.crop or options.fates):
                 cases.append(basecase+'_'+modelst+'_trans')
               else:
                 cases.append(basecase+'_'+modelst.replace('1850','20TR'))
