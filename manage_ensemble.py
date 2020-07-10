@@ -94,9 +94,11 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
               myindex = mypft[index]
               hol_add = 17
             if (os.path.exists(fname)):
-              mydata = nffun.getvar(fname,v)   
+              mydata = nffun.getvar(fname,v)  
+              if (len(mydata) < 365):
+                mydata = np.zeros([365,34], np.float)+np.NaN
             else:
-              mydata = np.zeros([365,2], np.float)+np.NaN
+              mydata = np.zeros([365,34], np.float)+np.NaN
             #get output and average over days/years
             n_days = myday_end[index]-myday_start[index]+1
             ndays_total = ndays_total + n_days

@@ -157,6 +157,8 @@ parser.add_option("--ng", dest="ng", default=256, \
                   help = 'number of groups to run in ensemble mode')
 parser.add_option("--fates", dest="fates", default=False, \
                   help = 'Use fates model', action="store_true")
+parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
+                  help = 'Fates parameter file to use')
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
                   help = 'Temperature to add to atmospheric forcing')
 parser.add_option("--add_co2", dest="addco2", default=0.0, \
@@ -486,6 +488,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --gswp3'
         if (options.princeton):
             basecmd = basecmd+' --princeton'
+        if (options.fates_paramfile != ''):
+            basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
         if (options.surfdata_grid):
             basecmd = basecmd+' --surfdata_grid'
         if (options.ensemble_file != ''):   
