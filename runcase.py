@@ -1093,7 +1093,7 @@ for i in range(1,int(options.ninst)+1):
         output.write(h3varst)
         output.write(h4varst)
     elif (('20TR' in compset or options.istrans) and (options.trans_varlist != '' or options.ilambvars)):
-	trans_varlist = options.trans_varlist.split(',')
+        trans_varlist = options.trans_varlist.split(',')
         if (options.ilambvars):
             trans_varlist = ilamb_outputs
         output.write(" hist_empty_htapes = .true.\n")
