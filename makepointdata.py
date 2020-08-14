@@ -27,6 +27,10 @@ parser.add_option("--pft", dest="mypft", default=-1, \
                   help = 'Replace all gridcell PFT with this value')
 parser.add_option("--point_list", dest="point_list", default='', \
                   help = 'File containing list of points to run (unstructured)')
+parser.add_option("--point_area_kmxkm", dest="point_area_km2", default=None, \
+                  help = 'user-specific area in km2 of each point in point list (unstructured')
+parser.add_option("--point_area_degxdeg", dest="point_area_deg2", default=None, \
+                  help = 'user-specific area in degreeXdegree of each point in point list (unstructured')
 parser.add_option("--keep_duplicates", dest="keep_duplicates", default=False, \
                   help = 'Keep duplicate points', action='store_true')
 parser.add_option("--ccsm_input", dest="ccsm_input", \
@@ -58,7 +62,7 @@ ccsm_input = os.path.abspath(options.ccsm_input)
 #------------------- get site information ----------------------------------
 
 #Remove existing temp files
-os.system('rm temp/*.nc')
+os.system('find ./temp/ -name "*.nc*" -exec rm {} \; ')
 
 lat_bounds = options.lat_bounds.split(',')
 lon_bounds = options.lon_bounds.split(',')
@@ -247,16 +251,32 @@ if (n_grids > 1 and options.site == ''):       #remove duplicate points
   point_pfts_uniq = [point_pfts[0]]
   point_index = [1]
   myoutput = open('point_list_output.txt','w')
-  myoutput.write(str(lon[0])+','+str(lat[0])+','+str(point_index[0])+'\n')
+  #myoutput.write(str(lon[0])+','+str(lat[0])+','+str(point_index[0])+'\n')
+  myoutput.write(str(lon[0])+','+str(lat[0])+','+str(point_index[0])+','+ \
+                 str(xgrid_min_uniq[0])+','+str(ygrid_min_uniq[0])+'\n')
+    
+  print('Total grids', n_grids)
   for n in range (1,n_grids):
       is_unique = True
-      for m in range(0,n_grids_uniq):
-          if (xgrid_min[n] == xgrid_min_uniq[m] and ygrid_min[n] == ygrid_min_uniq[m] \
-              and point_pfts[n] == point_pfts_uniq[m]):
-               n_dups = n_dups+1
-               is_unique = False
-               #point_index.append(m+1)
-      if (is_unique or options.keep_duplicates):
+      #for m in range(0,n_grids_uniq):
+      #    if (xgrid_min[n] == xgrid_min_uniq[m] and ygrid_min[n] == ygrid_min_uniq[m] \
+      #        and point_pfts[n] == point_pfts_uniq[m]):
+      #         n_dups = n_dups+1
+      #         is_unique = False
+      #         #point_index.append(m+1)
+      # the above is time-costing
+      if not options.keep_duplicates:
+        xidx = numpy.where(numpy.asarray(xgrid_min_uniq) == xgrid_min[n])
+        if len(xidx[0])>0: # more than 0 indicates duplicated 'x'
+            # search 'y indx' in same positions of 'ygrid_min_uniq' 
+            yidx = numpy.where(numpy.asarray(ygrid_min_uniq)[xidx] == ygrid_min[n])
+            if len(yidx[0])>0: # both 'x','y' have duplicated points
+                pidx = numpy.where(numpy.asarray(point_pfts_uniq)[xidx[0][yidx]] == point_pfts[n])
+                if len(pidx[0])>0:
+                    n_dups = n_dups + 1
+                    is_unique = False
+      if (is_unique):
+      #if (is_unique or options.keep_duplicates):
           xgrid_min_uniq.append(xgrid_min[n])
           ygrid_min_uniq.append(ygrid_min[n])
           point_pfts_uniq.append(point_pfts[n])      
@@ -264,7 +284,9 @@ if (n_grids > 1 and options.site == ''):       #remove duplicate points
           lat_uniq.append(lat[n])
           n_grids_uniq = n_grids_uniq+1
           point_index.append(n_grids_uniq)
-      myoutput.write(str(lon[n])+','+str(lat[n])+','+str(point_index[n])+'\n')
+          myoutput.write(str(lon[n])+','+str(lat[n])+','+str(point_index[n_grids_uniq-1])+','+ \
+                       str(xgrid_min_uniq[n_grids_uniq-1])+','+str(ygrid_min_uniq[n_grids_uniq-1])+'\n')
+      #myoutput.write(str(lon[n])+','+str(lat[n])+','+str(point_index[n])+'\n')
   myoutput.close()
   xgrid_min = xgrid_min_uniq
   xgrid_max = xgrid_min_uniq
@@ -274,18 +296,24 @@ if (n_grids > 1 and options.site == ''):       #remove duplicate points
   lat = lat_uniq
   point_pfts = point_pfts_uniq
   n_grids = n_grids_uniq
-  print(n_grids, ' Unique points')
-  print(n_dups, ' duplicate points removed')
-  print(len(point_index))
-  print(point_index)
+  if (not options.keep_duplicates):
+    print(n_grids, ' Unique points')
+    print(n_dups, ' duplicate points removed')
+  #print(len(point_index))
+  #print(point_index)
 #---------------------Create domain data --------------------------------------------------
 
 print('Creating domain data')
 os.system('mkdir -p ./temp')
 
+# 'AREA' in surfdata.nc is in KM2, which later used for scaling a point
+area_orig = nffun.getvar(surffile_orig, 'AREA')
+
+
+domainfile_tmp = 'domain??????.nc' # filename pattern of 'domainfile_new'
 domainfile_list=''
 for n in range(0,n_grids):
-    nst = str(100000+n)[1:]
+    nst = str(1000000+n)[1:]
     domainfile_new = './temp/domain'+nst+'.nc'
     if (not os.path.exists(domainfile_orig)):
         print('Error:  '+domainfile_orig+' does not exist.  Aborting')
@@ -294,8 +322,29 @@ for n in range(0,n_grids):
     if (isglobal):
         os.system('cp '+domainfile_orig+' '+domainfile_new)
     else:
-        os.system('ncks -d ni,'+str(xgrid_min[n])+','+str(xgrid_max[n])+' -d nj,'+str(ygrid_min[n])+ \
+        os.system('ncks -h -O -d ni,'+str(xgrid_min[n])+','+str(xgrid_max[n])+' -d nj,'+str(ygrid_min[n])+ \
               ','+str(ygrid_max[n])+' '+domainfile_orig+' '+domainfile_new)
+
+    # scaling x/y length for original grid
+    if (options.point_area_km2 != None):
+        area_n = area_orig[ygrid_min[n],xgrid_min[n]]
+        if(float(area_n)>0.0):
+            # asssuming a square of area (km2) in projected flat surface system
+            # its longitude/latitude range not square anymore
+            # (note: this is very coarse estimation)
+            side_km = math.sqrt(float(options.point_area_km2))
+            if(lat[n]==90.0): lat[n]=lat[n]-0.00001
+            if(lat[n]==-90.0): lat[n]=lat[n]+0.00001
+            ratio_lon2lat = math.cos(math.radians(lat[n]))
+            yscalar = side_km/math.sqrt(area_n)
+            xscalar = yscalar/ratio_lon2lat
+    if (options.point_area_deg2 != None):
+        area_n = area_orig[ygrid_min[n],xgrid_min[n]]
+        if(float(area_n)>0.0):
+            side_deg = math.sqrt(float(options.point_area_deg2)) # degx X degy, NOT square radians
+            yscalar = side_deg/resy
+            xscalar = side_deg/resx
+
 
     if (issite):
         frac = nffun.getvar(domainfile_new, 'frac')
@@ -324,13 +373,31 @@ for n in range(0,n_grids):
             ierr = nffun.putvar(domainfile_new, 'xv', xv)
             ierr = nffun.putvar(domainfile_new, 'yv', yv)
             ierr = nffun.putvar(domainfile_new, 'area', area)
-       
+            
+        elif (options.point_area_km2 != None or options.point_area_deg2 != None):
+            xc[0] = lon[n]
+            yc[0] = lat[n]
+            xv[0][0][0] = lon[n]-resx*xscalar
+            xv[0][0][1] = lon[n]+resx*xscalar
+            xv[0][0][2] = lon[n]-resx*xscalar
+            xv[0][0][3] = lon[n]+resx*xscalar
+            yv[0][0][0] = lat[n]-resy*yscalar
+            yv[0][0][1] = lat[n]-resy*yscalar
+            yv[0][0][2] = lat[n]+resy*yscalar
+            yv[0][0][3] = lat[n]+resy*yscalar
+            area[0] = area[0]*xscalar*yscalar
+            ierr = nffun.putvar(domainfile_new, 'xc', xc)
+            ierr = nffun.putvar(domainfile_new, 'yc', yc)
+            ierr = nffun.putvar(domainfile_new, 'xv', xv)
+            ierr = nffun.putvar(domainfile_new, 'yv', yv)
+            ierr = nffun.putvar(domainfile_new, 'area', area)
+        
         ierr = nffun.putvar(domainfile_new, 'frac', frac)
         ierr = nffun.putvar(domainfile_new, 'mask', mask)
-        os.system('ncks -O --mk_rec_dim nj '+domainfile_new+' '+domainfile_new)
+        os.system('ncks -h -O --mk_rec_dim nj '+domainfile_new+' '+domainfile_new)
     elif (options.mymask != ''):
        print('Applying mask from '+options.mymask)
-       os.system('ncks -d lon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+' -d lat,'+str(ygrid_min[n])+ \
+       os.system('ncks -h -O -d lon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+' -d lat,'+str(ygrid_min[n])+ \
               ','+str(ygrid_max[n])+' '+options.mymask+' mask_temp.nc')
        newmask = nffun.getvar('mask_temp.nc', 'PNW_mask')
        ierr = nffun.putvar(domainfile_new, 'mask', newmask)
@@ -340,25 +407,48 @@ for n in range(0,n_grids):
 
 domainfile_new = './temp/domain.nc'
 if (n_grids > 1):
-    os.system('ncrcat '+domainfile_list+' '+domainfile_new)
-    os.system('nccopy -u  '+domainfile_new+' '+domainfile_new+'.tmp')
-    os.system('ncpdq -O -a ni,nj '+domainfile_new+'.tmp '+domainfile_new)
-    #os.system('ncwa -O -a ni -d ni,0,0 '+domainfile_new+'.tmp1 '+domainfile_new+'.tmp2')
-    os.system('ncrename -h -O -d ni,ni_temp '+domainfile_new+' '+domainfile_new+' ')
-    os.system('ncrename -h -O -d nj,ni '+domainfile_new+' '+domainfile_new+' ')
-    os.system('ncrename -h -O -d ni_temp,nj '+domainfile_new+' '+domainfile_new+' ')
-    os.system('rm ./temp/domain?????.nc*')
-    #os.system('mv '+domainfile_new+'.tmp3 '+domainfile_new)
-    #os.system('rm '+domainfile_new+'.tmp*')
+    #ierr = os.system('ncrcat -h '+domainfile_list+' '+domainfile_new) # OS error if '_list' too long
+    ierr = os.system('find ./temp/ -name "'+domainfile_tmp+ \
+                     '" | xargs ls | sort | ncrcat -O -h -o'+domainfile_new)
+    if(ierr!=0): print('Error: ncrcat -', ierr); os.sys.exit()
+    ierr = os.system('nccopy -6 -u '+domainfile_new+' '+domainfile_new+'.tmp') #NC-3  with large dataset support due to 64bit offset
+    if(ierr!=0): print('Error: nccopy -6 -u ', ierr); os.sys.exit()
+    ierr = os.system('ncpdq -h -O -a ni,nj '+domainfile_new+'.tmp '+domainfile_new)
+    if(ierr!=0): print('Error: ncpdq', ierr); os.sys.exit()
+    ierr = os.system('ncrename -h -O -d ni,ni_temp '+domainfile_new+' '+domainfile_new+' ')
+    if(ierr!=0): print('Error: ncrename', ierr); os.sys.exit()
+    ierr = os.system('ncrename -h -O -d nj,ni '+domainfile_new+' '+domainfile_new+' ')
+    if(ierr!=0): print('Error: ncrename', ierr); os.sys.exit()
+    ierr = os.system('ncrename -h -O -d ni_temp,nj '+domainfile_new+' '+domainfile_new+' ')
+    if(ierr!=0): print('Error: ncrename', ierr); os.sys.exit()
+    os.system('find ./temp/ -name '+domainfile_tmp+' -exec rm {} \;')
+    os.system('rm '+domainfile_new+'.tmp*')
 else:
-    os.system('mv '+domainfile_list+' '+domainfile_new)
+    if(ierr!=0): os.system('mv '+domainfile_list+' '+domainfile_new)
+    
+#
+if(ierr==0): 
+    # NC-4 classic better for either NC-4 or NC-3 tools, 
+    # but 'ncrename' not good with NC-4
+    ierr = os.system('nccopy -7 -u '+domainfile_new+' '+domainfile_new+'.tmp')
+    if(ierr!=0): 
+        print('Error: nccopy -7 -u '); os.sys.exit()
+    else:
+        ierr = os.system('mv '+domainfile_new+'.tmp '+domainfile_new)
+
+    print("INFO: Extracted and Compiled '"+ domainfile_new + "' FROM: '" + domainfile_orig+"'! \n")
+else:
+    print("FAILED: Extracted and Compiled '"+ domainfile_new + "' FROM: '" + domainfile_orig+"'! \n")
+    os.sys.exit(-1)
+
 
 #-------------------- create surface data ----------------------------------
 print('Creating surface data')
 
 surffile_list = ''
+surffile_tmp = 'surfdata??????.nc' # filename pattern of 'surffile_new'
 for n in range(0,n_grids):
-    nst = str(100000+n)[1:]
+    nst = str(1000000+n)[1:]
     surffile_new =  './temp/surfdata'+nst+'.nc'
     if (not os.path.exists(surffile_orig)):
         print('Error:  '+surffile_orig+' does not exist.  Aborting')
@@ -367,10 +457,10 @@ for n in range(0,n_grids):
         os.system('cp '+surffile_orig+' '+surffile_new)
     else:
         if ('ne' in options.res):
-          os.system('ncks --fix_rec_dmn time -d gridcell,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
+          os.system('ncks -h -O --fix_rec_dmn time -d gridcell,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
             ' '+surffile_orig+' '+surffile_new)
         else:
-          os.system('ncks --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
+          os.system('ncks -h -O --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
              ' -d lsmlat,'+str(ygrid_min[n])+','+str(ygrid_max[n])+' '+surffile_orig+' '+surffile_new)
 
     if (issite):
@@ -446,7 +536,12 @@ for n in range(0,n_grids):
                 print('*** Warning:  Soil data NOT found.  Using gridded data ***')
         else:
           try:
-            mypft_frac[point_pfts[n]] = 100.0
+            #mypft_frac[point_pfts[n]] = 100.0
+            if(point_pfts[n]!=-1):
+                mypft_frac[point_pfts[n]] = 100.0
+            else:
+                mypft_frac = pct_pft
+
           except NameError:
             print('using PFT information from surface data')
 
@@ -457,6 +552,15 @@ for n in range(0,n_grids):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
             area[0] = 111.2*resy*111.321*math.cos((lon[n]*resx)*math.pi/180)*resx
+        elif (options.point_area_km2 != None):
+            longxy[0][0] = lon[n]
+            latixy[0][0] = lat[n]
+            area[0] = float(options.point_area_km2)
+        elif (options.point_area_deg2 != None): # degx X degy (NOT square radians of area)
+            longxy[0][0] = lon[n]
+            latixy[0][0] = lat[n]
+            side_deg = math.sqrt(float(options.point_area_deg2)) # a square of lat/lon degrees assummed
+            area[0][0] = 111.2*side_deg*111.321*math.cos((lon[n]*side_deg)*math.pi/180)*side_deg
 
         if (not options.surfdata_grid or sum(mypft_frac[0:npft+npft_crop]) > 0.0):
             pct_wetland[0][0] = 0.0
@@ -507,12 +611,12 @@ for n in range(0,n_grids):
                 #if (sum(mypft_frac[0:npft]) > 0.0):
                 #if (mypft_frac[p] > 0.0):
                 if (p < npft):
-                  if (mypft_frac[p] > 0.0):
-                    print('Setting Natural PFT '+str(p)+'('+pft_names[p]+') to '+str(mypft_frac[p])+'%')
+                  #if (mypft_frac[p] > 0.0): # too long print for long-list points
+                  #  print('Setting Natural PFT '+str(p)+'('+pft_names[p]+') to '+str(mypft_frac[p])+'%')
                   pct_pft[p][0][0] = mypft_frac[p]
                 else:
-                  if (mypft_frac[p] > 0.0):
-                    print('Setting Crop PFT '+str(p)+' to '+str(mypft_frac[p])+'%')
+                  #if (mypft_frac[p] > 0.0):
+                  #  print('Setting Crop PFT '+str(p)+' to '+str(mypft_frac[p])+'%')
                   pct_cft[p-npft][0][0] = mypft_frac[p]
                   pct_pft[0][0][0] = 100.0
                 #maxlai = (monthly_lai).max(axis=0)
@@ -564,20 +668,39 @@ for n in range(0,n_grids):
 surffile_new = './temp/surfdata.nc'
 
 if (n_grids > 1):
-  os.system('ncecat '+surffile_list+' '+surffile_new)
-  os.system('rm ./temp/surfdata?????.nc*')
+  #os.system('ncecat '+surffile_list+' '+surffile_new) # not works with too long '_list'
+  ierr = os.system('find ./temp/ -name "'+surffile_tmp+ \
+                 '" | xargs ls | sort | ncecat -O -h -o'+surffile_new)
+  if(ierr!=0): print('Error: ncecat '); os.sys.exit()
+  #os.system('rm ./temp/surfdata?????.nc*') # not works with too many files
+  os.system('find ./temp/ -name "'+surffile_tmp+'" -exec rm {} \;')
+
   #remove ni dimension
-  os.system('ncwa -O -a lsmlat -d lsmlat,0,0 '+surffile_new+' '+surffile_new+'.tmp')
-  os.system('nccopy -3 -u '+surffile_new+'.tmp'+' '+surffile_new+'.tmp2')
-  os.system('ncpdq -a lsmlon,record '+surffile_new+'.tmp2 '+surffile_new+'.tmp3')
-  os.system('ncwa -O -a lsmlon -d lsmlon,0,0 '+surffile_new+'.tmp3 '+surffile_new+'.tmp4')
-  os.system('ncrename -h -O -d record,gridcell '+surffile_new+'.tmp4 '+surffile_new+'.tmp5')
+  ierr = os.system('ncwa -h -O -a lsmlat -d lsmlat,0,0 '+surffile_new+' '+surffile_new+'.tmp')
+  if(ierr!=0): print('Error: ncwa '); os.sys.exit()
+  ierr = os.system('nccopy -6 -u '+surffile_new+'.tmp'+' '+surffile_new+'.tmp2') #NC-3 with large dataset support (64bit offset)
+  if(ierr!=0): print('Error: nccopy -6 -u '); os.sys.exit()
+  ierr = os.system('ncpdq -h -a lsmlon,record '+surffile_new+'.tmp2 '+surffile_new+'.tmp3')
+  if(ierr!=0): print('Error: ncpdq '); os.sys.exit()
+  ierr = os.system('ncwa -h -O -a lsmlon -d lsmlon,0,0 '+surffile_new+'.tmp3 '+surffile_new+'.tmp4')
+  if(ierr!=0): print('Error: ncwa '); os.sys.exit()
+  ierr = os.system('ncrename -h -O -d record,gridcell '+surffile_new+'.tmp4 '+surffile_new+'.tmp5')
+  if(ierr!=0): print('Error: ncrename '); os.sys.exit()
 
   os.system('mv '+surffile_new+'.tmp5 '+surffile_new)
   os.system('rm '+surffile_new+'.tmp*')
 else:
   os.system('mv '+surffile_list+' '+surffile_new)
 
+# NC-4 classic better for either NC-4 or NC-3 tools (though not writable as NC-4), 
+# but 'ncrename' used above may not works with NC-4
+ierr = os.system('nccopy -7 -u '+surffile_new+' '+surffile_new+'.tmp')
+if(ierr!=0): 
+    print('Error: nccopy -7 -u '); os.sys.exit()
+else:
+    ierr = os.system('mv '+surffile_new+'.tmp '+surffile_new)
+
+print("INFO: Extracted and Compiled '"+ surffile_new + "' FROM: '" + surffile_orig+"'! \n")
 
 #-------------------- create pftdyn surface data ----------------------------------
 
@@ -585,8 +708,9 @@ if (options.nopftdyn == False):
 
   print('Creating dynpft data')
   pftdyn_list = ''
+  pftdyn_tmp = 'surfdata.pftdyn??????.nc' # filename pattern of 'pftdyn_new'
   for n in range(0,n_grids):
-    nst = str(100000+n)[1:]
+    nst = str(1000000+n)[1:]
     pftdyn_new = './temp/surfdata.pftdyn'+nst+'.nc'
     
     if (not os.path.exists(pftdyn_orig)):
@@ -596,10 +720,10 @@ if (options.nopftdyn == False):
         os.system('cp '+pftdyn_orig+' '+pftdyn_new)
     else:
         if ('ne' in options.res):
-          os.system('ncks --fix_rec_dmn time -d gridcell,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
+          os.system('ncks -h -O --fix_rec_dmn time -d gridcell,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
                   ' '+pftdyn_orig+' '+pftdyn_new)
         else:
-          os.system('ncks --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
+          os.system('ncks -h -O --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
                   ' -d lsmlat,'+str(ygrid_min[n])+','+str(ygrid_max[n])+' '+pftdyn_orig+' '+pftdyn_new)
     if (issite):
         landfrac     = nffun.getvar(pftdyn_new, 'LANDFRAC_PFT')
@@ -657,6 +781,16 @@ if (options.nopftdyn == False):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
             area[0][0] = 111.2*resy*111.321*math.cos((lon[n]*resx)*math.pi/180)*resx
+        elif (options.point_area_km2 != None):
+            longxy[0][0] = lon[n]
+            latixy[0][0] = lat[n]
+            area[0] = float(options.point_area_km2)
+        elif (options.point_area_deg2 != None): # degx X degy (NOT square radians of area)
+            longxy[0][0] = lon[n]
+            latixy[0][0] = lat[n]
+            side_deg = math.sqrt(float(options.point_area_deg2)) # a square of lat/lon degrees assummed
+            area[0][0] = 111.2*side_deg*111.321*math.cos((lon[n]*side_deg)*math.pi/180)*side_deg
+
         thisrow = 0
         for t in range(0,nyears_landuse):     
             if (options.surfdata_grid == False):
@@ -701,7 +835,7 @@ if (options.nopftdyn == False):
                     harvest_vh2[t][0][0] = 0.
             else:
                 #use time-varying files from gridded file
-                print('using '+surffile_new+' for 1850 information')
+                #print('using '+surffile_new+' for 1850 information') # too much printing if long list points
                 nonpft = float(pct_lake_1850[n]+pct_glacier_1850[n]+ \
                                pct_wetland_1850[n]+sum(pct_urban_1850[0:3,n]))
                 if (options.mymodel == 'CLM5'):
@@ -740,17 +874,39 @@ if (options.nopftdyn == False):
       os.system('rm -rf '+pftdyn_new)
 
   if (n_grids > 1):
-      os.system('ncecat '+pftdyn_list+' '+pftdyn_new)
+      #ios.system('ncecat -h '+pftdyn_list+' '+pftdyn_new) # not works with too long '_list'
+      ierr = os.system('find ./temp/ -name "'+pftdyn_tmp+ \
+                    '" | xargs ls | sort | ncecat -O -h -o'+pftdyn_new)
+      if(ierr!=0): print('Error: ncecat '); os.sys.exit()
 
-      os.system('rm ./temp/surfdata.pftdyn?????.nc*')
+      #os.system('rm ./temp/surfdata.pftdyn?????.nc*') # 'rm' not works for too long file list
+      os.system('find ./temp/ -name "'+pftdyn_tmp+'" -exec rm {} \;')
+
       #remove ni dimension
-      os.system('ncwa -O -a lsmlat -d lsmlat,0,0 '+pftdyn_new+' '+pftdyn_new+'.tmp')
-      os.system('nccopy -3 -u '+pftdyn_new+'.tmp'+' '+pftdyn_new+'.tmp2')
-      os.system('ncpdq -a lsmlon,record '+pftdyn_new+'.tmp2 '+pftdyn_new+'.tmp3')
-      os.system('ncwa -O -a lsmlon -d lsmlon,0,0 '+pftdyn_new+'.tmp3 '+pftdyn_new+'.tmp4')
-      os.system('ncrename -h -O -d record,gridcell '+pftdyn_new+'.tmp4 '+pftdyn_new+'.tmp5')
+      ierr = os.system('ncwa -h -O -a lsmlat -d lsmlat,0,0 '+pftdyn_new+' '+pftdyn_new+'.tmp')
+      if(ierr!=0): print('Error: ncwa '); os.sys.exit()
+      ierr = os.system('nccopy -6 -u '+pftdyn_new+'.tmp'+' '+pftdyn_new+'.tmp2') # NC-3 with large dataset support due to 64bit offset
+      if(ierr!=0): print('Error: nccopy -6 -u '); os.sys.exit()
+      ierr = os.system('ncpdq -h -a lsmlon,record '+pftdyn_new+'.tmp2 '+pftdyn_new+'.tmp3')
+      if(ierr!=0): print('Error: ncpdq '); os.sys.exit()
+      ierr = os.system('ncwa -h -O -a lsmlon -d lsmlon,0,0 '+pftdyn_new+'.tmp3 '+pftdyn_new+'.tmp4')
+      if(ierr!=0): print('Error: ncwa '); os.sys.exit()
+      ierr = os.system('ncrename -h -O -d record,gridcell '+pftdyn_new+'.tmp4 '+pftdyn_new+'.tmp5')
+      if(ierr!=0): print('Error: ncrename '); os.sys.exit()
 
       os.system('mv '+pftdyn_new+'.tmp5 '+pftdyn_new)
       os.system('rm '+pftdyn_new+'.tmp*')
   else:
       os.system('mv '+pftdyn_list+' '+pftdyn_new)
+      
+  
+  # NC-4 classic better for either NC-4 or NC-3 tools, 
+  # but 'ncrename' used above may not works with NC-4
+  ierr = os.system('nccopy -7 -u '+pftdyn_new+' '+pftdyn_new+'.tmp')
+  if(ierr!=0):    
+      print('Error: nccopy -7 -u '); os.sys.exit()
+  else:
+      ierr = os.system('mv '+pftdyn_new+'.tmp '+pftdyn_new)
+
+  print("INFO: Extracted and Compiled '"+ pftdyn_new + "' FROM: '" + pftdyn_orig+"'! \n")
+
