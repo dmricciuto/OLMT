@@ -106,8 +106,12 @@ parser.add_option("--res", dest="res", default="CLM_USRDAT", \
 parser.add_option("--point_list", dest="point_list", default='', \
                   help = 'File containing list of points to run')
 
-
 # model input options
+parser.add_option("--point_area_kmxkm", dest="point_area_kmxkm", default=None, \
+                  help = 'user-specific area in kmxkm of each point in point list (unstructured')
+parser.add_option("--point_area_degxdeg", dest="point_area_degxdeg", default=None, \
+                  help = 'user-specific area in degreeXdegree of each point in point list (unstructured')
+
 parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--site", dest="site", default='', \
@@ -217,6 +221,10 @@ parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
 parser.add_option("--nopointdata", action="store_true", \
                   dest="nopointdata", help="Do NOT make point data (use data already created)", \
                   default=False)
+parser.add_option("--makepointdata_only", action="store_true", \
+                  dest="makepointdata_only", \
+                  help="make point data for later use ONLY, i.e. no model config/build/submit)", \
+                  default=False)
 #parser.add_option("--cleanlogs",dest="cleanlogs", help=\
 #                   "Removes temporary and log files that are created",\
 #                   default=False,action="store_true")
@@ -309,6 +317,20 @@ parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
+# If only make point(s) data, reset relevant options.
+if (options.makepointdata_only):
+    options.no_config   = True
+    options.no_build    = True
+    options.no_submit   = True
+    options.nopointdata = False
+    options.domainfile  = ""
+    options.surffile = ""
+    options.pftdynfile=""
+    options.nopftdyn = False
+elif(options.domainfile!="" and options.surffile!="" and \
+    (options.nopftdyn or options.pftdynfile!="")):
+    options.nopointdata = True
+    
 
 #Set default model root
 if (options.csmdir == ''):
@@ -604,11 +626,23 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --crop'
     if (isglobal):
         ptcmd = ptcmd + ' --res '+options.res
+        
+        # if using global dataset to extract for running at a list of grid-points
         if (options.point_list != ''):
             ptcmd = ptcmd+' --point_list '+options.point_list
+            # changing resolution of extracted grid point area
+            if(options.point_area_kmxkm!=None):# area in a square measured by kmxkm
+                ptcmd = ptcmd+' --point_area_kmxkm '+options.point_area_kmxkm
+            elif(options.point_area_degxdeg!=None):# area in a square measured by degreexdegree
+                ptcmd = ptcmd+' --point_area_degxdeg '+options.point_area_degxdeg
 
     else:
-        ptcmd = ptcmd + ' --site '+options.site+' --sitegroup '+options.sitegroup       
+        ptcmd = ptcmd + ' --site '+options.site+' --sitegroup '+options.sitegroup
+
+    if(options.domainfile != ''):
+        ptcmd = ptcmd + ' --nodomain '
+    if(options.surffile !=''):
+        ptcmd = ptcmd + ' --nosurfdata '
 
     if (options.machine == 'eos' or options.machine == 'titan'):
         os.system('rm temp/*.nc')
@@ -651,6 +685,22 @@ if (options.nopointdata == False):
         if (result > 0):
             print ('PointCLM:  Error creating point data.  Aborting')
             sys.exit(1)
+
+    if(options.makepointdata_only):
+        print ('PointCLM:  Successfully creating point data ONLY, i.e. no further config/build/run CLM/ELM')
+        print ('PointCLM:  Files are in ./temp/*.nc, which you may save/rename properly for later use')
+        sys.exit(0)
+
+if(options.domainfile != ''):
+    print('\n -----INFO: using user-provided DOMAIN')
+    print('domain file: '+ options.domainfile)
+if(options.surffile !=''):
+    print('\n -----INFO: using user-provided SURFDATA')
+    print('surface data file: '+ options.surffile)
+if(options.pftdynfile !='' or options.nopftdyn):
+    print('\n -----INFO: using user-provided 20th landuse data file')
+    print('20th landuse data file: '+ options.pftdynfile+"'\n")
+
 
 #get site year information
 sitedatadir = os.path.abspath(PTCLMfiledir)
@@ -720,7 +770,8 @@ else:
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
-    if ('compy' in options.machine or 'ubuntu' in options.machine):
+    if ('compy' in options.machine or 'ubuntu' in options.machine \
+          or 'mymac' in options.machine):
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
@@ -832,6 +883,7 @@ if (options.project != ''):
 if (options.compiler != ''):
    cmd = cmd+' --compiler '+options.compiler
 cmd = cmd+' > create_newcase.log'
+print(cmd)
 result = os.system(cmd)
 
 if (os.path.isdir(casedir)):
@@ -1355,8 +1407,7 @@ for i in range(1,int(options.ninst)+1):
                 output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                           +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full'\n")
 #                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
-
-        elif options.metdir != '':
+        elif options.metdir != 'none':
             output.write(" metdata_type = 'gswp3v1_daymet'\n") # This needs to be updated for other types
             output.write(" metdata_bypass = '%s'\n"%options.metdir)
             
