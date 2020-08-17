@@ -41,6 +41,10 @@ parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="0", \
                   help = 'output file timestep (transient only)')
 parser.add_option("--point_list", dest="point_list", default='', \
                   help = 'File containing list of points to run')
+parser.add_option("--point_area_kmxkm", dest="point_area_kmxkm", default=None, \
+                  help = 'user-specific area in kmxkm of each point in point list (unstructured')
+parser.add_option("--point_area_degxdeg", dest="point_area_degxdeg", default=None, \
+                  help = 'user-specific area in degreeXdegree of each point in point list (unstructured')
 parser.add_option("--lat_bounds", dest="lat_bounds", default='-90,90', \
                   help = 'latitude range for regional run')
 parser.add_option("--lon_bounds", dest="lon_bounds", default='-180,180', \
@@ -434,6 +438,11 @@ basecmd = 'python runcase.py --surfdata_grid --ccsm_input '+ \
     +options.machine+' --res '+options.res+' --model_root '+csmdir
 if (options.point_list != ''):
     basecmd = basecmd+' --point_list '+options.point_list
+    # changing resolution of extracted grid point area
+    if(options.point_area_kmxkm!=None):# area in a square measured by kmxkm
+        basecmd = basecmd+' --point_area_kmxkm '+options.point_area_kmxkm
+    elif(options.point_area_degxdeg!=None):# area in a square measured by degreexdegree
+        basecmd = basecmd+' --point_area_degxdeg '+options.point_area_degxdeg
     lat_bounds = [-999,-999]
     lon_bounds = [-999,-999]
 if (srcmods != ''):
