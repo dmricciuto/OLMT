@@ -69,6 +69,10 @@ parser.add_option("--notrans", action="store_true", dest="notrans", default=Fals
                   help='Do not perform transient simulation (spinup only)')
 parser.add_option("--nopointdata", action="store_true", dest="nopointdata", \
                   default=False, help="do not generate point data")
+parser.add_option("--makepointdata_only", action="store_true", \
+                  dest="makepointdata_only", \
+                  help="make point data for later use ONLY, i.e. no model build/run)", \
+                  default=False)
 parser.add_option("--nyears_final_spinup", dest="nyears_final_spinup", default='200', \
                   help="base no. of years for final spinup")
 parser.add_option("--parm_list", dest="parm_list", default='parm_list', \
@@ -89,6 +93,8 @@ parser.add_option("--surffile", dest="surffile", default='', \
                   help = 'Use specified surface data file')
 parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'Domain file to use')
+parser.add_option("--landusefile", dest="pftdynfile", default='', \
+                  help='user-defined dynamic PFT file')
 parser.add_option("--parm_file", dest="parm_file", default="", \
                   help = 'parameter file to use')
 parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
@@ -264,6 +270,12 @@ elif ('anvil' in options.machine):
 elif ('compy' in options.machine):
     ccsm_input = '/compyfs/inputdata'
 
+if (options.makepointdata_only): # don't configure/build/run model
+    options.noad = False
+    options.nofn = True
+    options.notrans = True
+    options.nopointdata = False
+    
 print(options.machine)
 #default compilers
 if (options.compiler == ''):
@@ -452,6 +464,8 @@ if (mycaseid != ''):
     basecmd = basecmd+' --caseidprefix '+mycaseid
 if (options.nopointdata):
     basecmd = basecmd+' --nopointdata'
+if (options.makepointdata_only):
+    basecmd = basecmd+' --makepointdata_only'
 if (options.project != ''):
     basecmd = basecmd+' --project '+options.project
 if (options.parm_vals != ''):
@@ -525,6 +539,8 @@ if (options.surffile != ''):
     basecmd = basecmd+' --surffile '+options.surffile
 if (options.domainfile != ''):
     basecmd = basecmd+' --domainfile '+options.domainfile
+if (options.pftdynfile != ''):
+    basecmd = basecmd + ' --landusefile '+options.pftdynfile
 basecmd = basecmd + ' --np '+str(options.np)
 basecmd = basecmd + ' --tstep '+str(options.tstep)
 basecmd = basecmd + ' --co2_file '+options.co2_file
@@ -662,16 +678,20 @@ os.system('mkdir -p temp')
 #build cases
 if (options.noad == False):
     print('\nSetting up ad_spinup case\n')
-    os.system(cmd_adsp)
+    ierror = os.system(cmd_adsp)
+    if ierror != 0: sys.exit(-1)
 if (options.nofn == False):
     print('\nSetting up final spinup case\n')
-    os.system(cmd_fnsp)
+    ierror = os.system(cmd_fnsp)
+    if ierror != 0: sys.exit(-1)
 if (options.notrans == False):
     print('\nSetting up transient case\n')
-    os.system(cmd_trns)
+    ierror = os.system(cmd_trns)
+    if ierror != 0: sys.exit(-1)
 if ((options.cruncep or options.gswp3 or options.cruncepv8) and not options.cpl_bypass):
     print('\nSetting up transient case phase 2\n')
-    os.system(cmd_trns2)
+    ierror = os.system(cmd_trns2)
+    if ierror != 0: sys.exit(-1)
         
 
 cases=[]

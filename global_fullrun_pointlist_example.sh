@@ -1,11 +1,17 @@
 #!/bin/sh -f
 
 python ./global_fullrun.py \
- --caseidprefix TestOMLT6pt --point_list pointlist_example \
+ --caseidprefix TESTdaymet --point_list daymet_zone_mappings.txt \
+ --point_area_kmxkm 1.0 \
  --nyears_ad_spinup 200 --nyears_final_spinup 600 --tstep 1 \
- --machine cades --compiler gnu --mpilib openmpi \
+ --machine mymac --compiler gnu --mpilib mpich \
  --cpl_bypass --spinup_vars \
  --gswp3 \
- --model_root /lustre/or-hydra/cades-ccsi/proj-shared/models/e3sm \
- --caseroot /lustre/or-hydra/cades-ccsi/proj-shared/project_acme/cases \
- --np 6
+ --model_root /Users/f9y/mygithub/E3SM \
+ --caseroot /Users/f9y//project_acme/cases \
+ --runroot /Users/f9y//project_acme/scratch \
+ --ccsm_input /Users/f9y/clm4_5_inputdata \
+ --np 1
+
+#### --point_area_kmxkm 1.0 \
+
