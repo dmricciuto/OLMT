@@ -751,8 +751,6 @@ for row in AFdatareader:
 
         if (options.spinup_vars):
                 cmd_fnsp = cmd_fnsp+' --spinup_vars'
-        if (options.ensemble_file != '' and options.notrans):	
-                cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans and options.constraints == ''):	
                 cmd_fnsp = cmd_fnsp + ' --postproc_file '+options.postproc_file
 
