@@ -164,6 +164,8 @@ parser.add_option("--C13", dest="C13", default=False, action="store_true", \
                   help = 'Switch to turn on C13')
 parser.add_option("--C14", dest="C14", default=False, action="store_true", \
                   help = 'Use C14 as C13 (no decay)')
+parser.add_option("--aero_rcp85",dest="aerorcp85", action="store_true", default=False,help="Use RCP8.5 aerosols")
+parser.add_option("--ndep_rcp85",dest="ndeprcp85", action="store_true", default=False,help="Use RCP8.5 N dep")
 parser.add_option("--harvmod", action="store_true", dest='harvmod', default=False, \
                   help="turn on harvest modification:  All harvest at first timestep")
 parser.add_option("--no_dynroot", dest="no_dynroot", default=False, action="store_true", \
@@ -222,9 +224,16 @@ parser.add_option("--landusefile", dest="pftdynfile", default='', \
 parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
                     help='Do not submit jobs')
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
-
+parser.add_option("--dryrun",dest="dryrun",default=False,action="store_true",help="Do not execute commands")
 (options, args) = parser.parse_args()
 
+def runcmd(cmd,echo=True):
+    if echo:
+        print(cmd)
+    if not options.dryrun:
+        return os.system(cmd)
+    else:
+        return 0
 
 
 #----------------------------------------------------------
@@ -234,21 +243,21 @@ def submit(fname, submit_type='qsub', job_depend=''):
     if ('sbatch' in submit_type):
         job_depend_flag = ' --dependency=afterok:'
     if (job_depend != '' and submit_type != ''):
-        os.system(submit_type+job_depend_flag+job_depend+' '+fname+' > temp/jobinfo')
+        runcmd(submit_type+job_depend_flag+job_depend+' '+fname+' > temp/jobinfo')
     else:
       if (submit_type == ''):
-        os.system('chmod a+x '+fname)
-        os.system('./'+fname+' > temp/jobinfo')
+        runcmd('chmod a+x '+fname)
+        runcmd('./'+fname+' > temp/jobinfo')
       else:
-        os.system(submit_type+' '+fname+' > temp/jobinfo')
-    if (submit_type != ''):
+        runcmd(submit_type+' '+fname+' > temp/jobinfo')
+    if (submit_type != '' and not options.dryrun):
       myinput = open('temp/jobinfo')
       for s in myinput:
           thisjob = re.search('[0-9]+', s).group(0)
       myinput.close()
     else:
-      thisjob=0 
-    os.system('rm temp/jobinfo')
+      thisjob="0"
+      runcmd('rm temp/jobinfo')
     return thisjob
 
 
@@ -596,6 +605,10 @@ for row in AFdatareader:
         basecmd = basecmd + ' --np '+str(options.np)
         basecmd = basecmd + ' --tstep '+str(options.tstep)
         basecmd = basecmd + ' --co2_file '+options.co2_file
+        if (options.aerorcp85):
+            basecmd = basecmd + ' --aero_rcp85'
+        if (options.ndeprcp85):
+            basecmd = basecmd + ' --ndep_rcp85'
         if (options.compiler != ''):
             basecmd = basecmd + ' --compiler '+options.compiler
         basecmd = basecmd + ' --mpilib '+options.mpilib
@@ -883,8 +896,8 @@ for row in AFdatareader:
         basecase = site
         if (mycaseid != ''):
                 basecase = mycaseid+'_'+site
-        os.system('mkdir -p temp')
-        os.system('mkdir -p scripts/'+myscriptsdir)
+        runcmd('mkdir -p temp')
+        runcmd('mkdir -p scripts/'+myscriptsdir)
 
         mymodel = 'ELM'
         if ('clm5' in csmdir):
@@ -904,8 +917,7 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --humhol'
                 if (options.marsh):
                     ptcmd = ptcmd+' --marsh'
-                print(ptcmd)
-                result = os.system(ptcmd)
+                result = runcmd(ptcmd)
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)
                     sys.exit(1)
@@ -915,15 +927,13 @@ for row in AFdatareader:
             print('\n\nSetting up ad_spinup case\n')
             if (sitenum == 0):
                 ad_case_firstsite = ad_case
-                print(cmd_adsp+'\n')
-                result = os.system(cmd_adsp)
+                result = runcmd(cmd_adsp)
             else:
                 ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                         ad_case_firstsite+' --site_orig '+firstsite +\
                         ' --site_new '+site+' --nyears '+str(ny_ad)+' --spin_cycle ' \
                         +str(endyear-startyear+1)
-                print(ptcmd)
-                result = os.system(ptcmd)
+                result = runcmd(ptcmd)
             if (result > 0):
                 print('Site_fullrun:  Error in runcase.py for ad_spinup ')
                 sys.exit(1)
@@ -962,15 +972,17 @@ for row in AFdatareader:
                   tr_case_firstsite = fin_case_firstsite+'_trans'
                 else:
                   tr_case_firstsite = fin_case_firstsite.replace('1850','20TR')
-                print(cmd_trns)
-                result = os.system(cmd_trns)
+                result = runcmd(cmd_trns)
             else:
                  ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                         tr_case_firstsite+' --site_orig '+firstsite +\
                         ' --site_new '+site+' --finidat_year '+str(int(ny_fin)+1)+ \
                         ' --nyears '+str(translen)
-                 print(ptcmd)
-                 result = os.system(ptcmd)
+                 result = runcmd(ptcmd)
+            if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
+                 print('\nSetting up transient case phase 2\n')
+                 result = runcmd(cmd_trns2)
+
             if (result > 0):
                 print('Site_fullrun:  Error in runcase.py for transient')
                 sys.exit(1)
