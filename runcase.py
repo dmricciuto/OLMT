@@ -211,8 +211,12 @@ parser.add_option("--CH4", dest="CH4", default=False, \
                   help = 'To turn on CN with CLM4me', action="store_true")
 parser.add_option("--1850_ndep", dest="ndep1850", default=False, \
                   help = 'Use constant 1850 N deposition', action="store_true")
+parser.add_option("--ndep_rcp85", dest="ndeprcp85", default=False, \
+                  help = 'Use RCP8.5 N deposition', action="store_true")
 parser.add_option("--1850_aero", dest="aero1850", default=False, \
                   help = 'Use constant 1850 aerosol deposition', action="store_true")
+parser.add_option("--aero_rcp85", dest="aerorcp85", default=False, \
+                  help = 'Use RCP8.5 aerosol deposition', action="store_true")
 parser.add_option("--1850_co2", dest="co21850", default=False, \
                   help = 'Use constant 1850 CO2 concentration', action="store_true")
 parser.add_option("--C13", dest="C13", default=False, \
@@ -751,9 +755,11 @@ else:
 
 os.system('mkdir -p '+tmpdir)
 if (options.mod_parm_file != ''):
+    print('nccopy -3 '+options.mod_parm_file+' '+tmpdir+'/clm_params.nc')
     os.system('nccopy -3 '+options.mod_parm_file+' '+tmpdir+'/clm_params.nc')
 else:
     print(parm_file)
+    print('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' '+tmpdir+'/clm_params.nc')
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
@@ -783,6 +789,11 @@ else:
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
     ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
+
+    # BSulman: These Nfix constants can break the model if they don't have the right length.
+    #os.system(myncap+' -O -s "Nfix_NPP_c1 = br_mr*+1.8" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "Nfix_NPP_c2 = br_mr*0.003" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "nfix_timeconst = br_mr*10.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
 
 os.system('chmod u+w ' +tmpdir+'/clm_params.nc')
 if (options.parm_file != ''):
@@ -1295,6 +1306,9 @@ for i in range(1,int(options.ninst)+1):
         if (options.ndep1850 == True):
           output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
             "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1850-1850_1.9x2.5_c100428.nc'\n")
+        elif options.ndeprcp85:
+          output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
+            "/lnd/clm2/ndepdata/fndep_clm_rcp8.5_simyr1849-2106_1.9x2.5_c100428.nc'\n")
         else:
           output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
             "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1849-2106_1.9x2.5_c100428.nc'\n")
@@ -1430,6 +1444,9 @@ for i in range(1,int(options.ninst)+1):
         if (options.aero1850):
           output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
                          +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1850-1850_1.9x2.5_c100402.nc'\n")
+        elif (options.aerorcp85):
+          output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
+                         +"trop_mozart_aero/aero/aerosoldep_rcp8.5_monthly_1849-2104_1.9x2.5_c100201.nc'\n")
         else:
           output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
                          +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1849-2104_1.9x2.5_c100402.nc'\n")
