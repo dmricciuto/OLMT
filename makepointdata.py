@@ -335,9 +335,10 @@ for n in range(0,n_grids):
             side_km = math.sqrt(float(options.point_area_km2))
             if(lat[n]==90.0): lat[n]=lat[n]-0.00001
             if(lat[n]==-90.0): lat[n]=lat[n]+0.00001
-            ratio_lon2lat = math.cos(math.radians(lat[n]))
-            yscalar = side_km/math.sqrt(area_n)
-            xscalar = yscalar/ratio_lon2lat
+            kmratio_lon2lat = math.cos(math.radians(lat[n]))
+            re_km = 6371.22
+            yscalar = side_km/(math.pi*re_km/180.0*resy)
+            xscalar = side_km/(math.pi*re_km/180.0*resx*kmratio_lon2lat)
     if (options.point_area_deg2 != None):
         area_n = area_orig[ygrid_min[n],xgrid_min[n]]
         if(float(area_n)>0.0):
@@ -386,6 +387,8 @@ for n in range(0,n_grids):
             yv[0][0][2] = lat[n]+resy*yscalar
             yv[0][0][3] = lat[n]+resy*yscalar
             area[0] = area[0]*xscalar*yscalar
+            if(options.point_area_km2 != None):
+                area[0] = float(options.point_area_km2)/re_km/re_km # there is about 0.3% error with calculation above
             ierr = nffun.putvar(domainfile_new, 'xc', xc)
             ierr = nffun.putvar(domainfile_new, 'yc', yc)
             ierr = nffun.putvar(domainfile_new, 'xv', xv)
@@ -551,7 +554,7 @@ for n in range(0,n_grids):
         if (options.site != ''):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
-            area[0] = 111.2*resy*111.321*math.cos((lon[n]*resx)*math.pi/180)*resx
+            area[0] = 111.2*resy*111.321*math.cos((lat[n]*resx)*math.pi/180)*resx
         elif (options.point_area_km2 != None):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
@@ -560,7 +563,7 @@ for n in range(0,n_grids):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
             side_deg = math.sqrt(float(options.point_area_deg2)) # a square of lat/lon degrees assummed
-            area[0][0] = 111.2*side_deg*111.321*math.cos((lon[n]*side_deg)*math.pi/180)*side_deg
+            area[0][0] = 111.2*side_deg*111.321*math.cos((lat[n]*side_deg)*math.pi/180)*side_deg
 
         if (not options.surfdata_grid or sum(mypft_frac[0:npft+npft_crop]) > 0.0):
             pct_wetland[0][0] = 0.0
@@ -780,7 +783,7 @@ if (options.nopftdyn == False):
         if (options.site != ''):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
-            area[0][0] = 111.2*resy*111.321*math.cos((lon[n]*resx)*math.pi/180)*resx
+            area[0][0] = 111.2*resy*111.321*math.cos((lat[n]*resx)*math.pi/180)*resx
         elif (options.point_area_km2 != None):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
@@ -789,7 +792,7 @@ if (options.nopftdyn == False):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
             side_deg = math.sqrt(float(options.point_area_deg2)) # a square of lat/lon degrees assummed
-            area[0][0] = 111.2*side_deg*111.321*math.cos((lon[n]*side_deg)*math.pi/180)*side_deg
+            area[0][0] = 111.2*side_deg*111.321*math.cos((lat[n]*side_deg)*math.pi/180)*side_deg
 
         thisrow = 0
         for t in range(0,nyears_landuse):     
