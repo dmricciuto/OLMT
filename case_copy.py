@@ -45,6 +45,9 @@ parser.add_option('--machine', dest='machine', default='cades', \
                   help = 'machine')
 parser.add_option('--warming', dest='warming', default='0.0', \
                   help = 'warming level to apply')
+#if LND model name changed from 'CLM' to 'ELM'
+parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
+                  help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
 (options, args) = parser.parse_args()
 
 
@@ -89,6 +92,8 @@ for f in os.listdir(new_dir):
                 year_orig = str((s.split('.')[-2:-1])[0])[0:4]
                 year_new = str(10000+int(options.finyr))[1:]
                 s_out = s.replace('.clm2.r.'+year_orig, '.clm2.r.'+year_new)
+                if (options.lndnamechanged):
+                    s_out = s.replace('.elm.r.'+year_orig, '.elm.r.'+year_new)
                 s_out = s_out.replace(options.site_orig, options.site_new)
                 if (options.suffix != ''):
                   s_out = s_out.replace(casename,casename+'_'+options.suffix)

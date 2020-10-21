@@ -283,6 +283,9 @@ parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
+#if LND model name changed from 'CLM' to 'ELM'
+parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
+                  help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
@@ -475,6 +478,11 @@ if (options.finidat_case != ''):
     finidat = runroot+'/'+options.finidat_case+'/run/'+ \
               options.finidat_case+'.clm2.r.'+finidat_yst[1:]+ \
               '-01-01-00000.nc'
+    if (options.lndnamechanged):
+        finidat = runroot+'/'+options.finidat_case+'/run/'+ \
+              options.finidat_case+'.elm.r.'+finidat_yst[1:]+ \
+              '-01-01-00000.nc'
+       
 
 if (options.finidat != ''):
     finidat = options.finidat
@@ -877,7 +885,10 @@ os.system('./xmlchange DIN_LOC_ROOT_CLMFORC='+options.ccsm_input+'/atm/datm7/')
 
 #define mask and resoultion
 if (isglobal == False):
-    os.system('./xmlchange CLM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
+    if (options.res != 'CLM_USRDAT'):
+        os.system('./xmlchange ELM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
+    else:
+        os.system('./xmlchange CLM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
 if (options.ad_spinup):
     if (options.mymodel == 'ELM'):
         os.system("./xmlchange --append CLM_BLDNML_OPTS='-bgc_spinup on'")
@@ -1394,6 +1405,8 @@ for i in range(1,int(options.ninst)+1):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
     output.close()
+# LND model name changed from 'CLM' to 'ELM'
+if (options.lndnamechanged): os.system('mv ./user_nl_clm ./user_nl_elm')
 
 #configure case
 #if (isglobal):
