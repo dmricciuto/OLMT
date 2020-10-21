@@ -178,6 +178,9 @@ parser.add_option("--walltime", dest="walltime", default=24, \
                   help = "desired walltime for each job (hours)")
 parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
                     help='Do not submit jobs')
+#if LND model name changed from 'CLM' to 'ELM'
+parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
+                  help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
 
 (options, args) = parser.parse_args()
 
@@ -541,6 +544,9 @@ if (options.domainfile != ''):
     basecmd = basecmd+' --domainfile '+options.domainfile
 if (options.pftdynfile != ''):
     basecmd = basecmd + ' --landusefile '+options.pftdynfile
+if (options.lndnamechanged): #indicating LND name changed from 'CLM' to 'ELM'
+    basecmd = basecmd + ' --lndnamechanged '
+
 basecmd = basecmd + ' --np '+str(options.np)
 basecmd = basecmd + ' --tstep '+str(options.tstep)
 basecmd = basecmd + ' --co2_file '+options.co2_file
@@ -848,6 +854,10 @@ if (options.mc_ensemble <= 0):
                 output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
                              str(int(ny_ad)+1)+' --BGC\n')
+            elif (options.lndnamechanged):
+                output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
+                             '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
+                             str(int(ny_ad)+1)+' --lndnamechanged\n')
             else:
                 output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ad_case+' --restart_year '+ \
