@@ -101,6 +101,8 @@ parser.add_option("--livneh", dest="livneh", default=False, \
                   action="store_true", help = "Livneh correction to CRU precip (CONUS only)")
 parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = "Daymet correction to GSWP3 precip (CONUS only)")
+parser.add_option("--daymet4", dest="daymet4", default=False, \
+                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 forcing with user-provided domain and surface data)")
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to\n")
 parser.add_option("--compiler", dest="compiler", default='', \
@@ -382,6 +384,28 @@ if (options.ccsm_input == '' or (os.path.exists(options.ccsm_input) \
 else:
     options.ccsm_input = os.path.abspath(options.ccsm_input)
 
+#----------------------------------------------------------------------------------
+# check for a specific forcing data, GSWP3-Daymet4, to offline ELM
+# This is high-resolution dataset, usually together with user-defined domain and surface data
+if (options.daymet4):
+    if (not options.gswp3): options.gswp3 = True
+    if (options.metdir=='none'):
+        print('Error:  must provide user-defined " --metdir " for " --daymet4"')
+        sys.exit(1)
+    if (options.domainfile==''):
+        print('Error:  must provide user-defined " --domainfile " for " --daymet4"')
+        sys.exit(1)
+    if (options.surffile==''):
+        print('Error:  must provide user-defined " --surffile " for " --daymet4"')
+        sys.exit(1)
+    if (options.istrans  or '20TR' in options.compset):
+        if(options.pftdynfile=='' and not options.nopftdyn):
+            print('Error:  must provide user-defined " --pftdynfile " for " --daymet4"')
+            sys.exit(1)
+#----------------------------------------------------------------------------------
+
+
+
 compset = options.compset
 isglobal = False
 if (options.site == ''):
@@ -494,8 +518,10 @@ casename    = options.site+"_"+compset
 if (options.mycaseid != ""):
     casename = options.mycaseid+'_'+casename
 
+if (options.metdir!='none'):# obviously user-provided met forcing is not reanalysis type
+    use_reanalysis = False
 #CRU-NCEP 2 transient phases
-if ('CRU' in compset or options.cruncep or options.gswp3 or \
+elif ('CRU' in compset or options.cruncep or options.gswp3 or \
             options.crujra or options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
@@ -658,6 +684,9 @@ if(options.surffile !=''):
 if(options.pftdynfile !='' or options.nopftdyn):
     print('\n -----INFO: using user-provided 20th landuse data file')
     print('20th landuse data file: '+ options.pftdynfile+"'\n")
+if(options.metdir != 'none'):
+    print('\n -----INFO: using user-provided forcing data')
+    print('Under directory: '+ options.metdir)
 
 
 #get site year information
@@ -1371,7 +1400,10 @@ for i in range(1,int(options.ninst)+1):
                           +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full'\n")
 #                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
         elif options.metdir != 'none':
-            output.write(" metdata_type = 'gswp3v1_daymet'\n") # This needs to be updated for other types
+            if (options.daymet4 and options.gswp3):
+                output.write(" metdata_type = 'gswp3_daymet4'\n")
+            else:
+                output.write(" metdata_type = 'gswp3v1_daymet'\n") # This needs to be updated for other types
             output.write(" metdata_bypass = '%s'\n"%options.metdir)
         else:
             if (options.site_forcing == ''):
