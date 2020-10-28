@@ -157,6 +157,8 @@ parser.add_option("--livneh", dest="livneh", default=False, \
                   action="store_true", help = "Livneh correction to CRU precip (CONUS only)")
 parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = "Daymet correction to GSWP3 precip (CONUS only)")
+parser.add_option("--daymet4", dest="daymet4", default=False, \
+                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 forcing with user-provided domain and surface data)")
 parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, \
                   help = "Bypass coupler", action="store_true")
 parser.add_option("--spinup_vars", dest = "spinup_vars", default=False, \
@@ -392,6 +394,9 @@ if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton o
     if (options.daymet):
         startyear = 1980
         endyear = 2010
+    if (options.daymet4):
+        startyear = 1980
+        endyear = 2014
     if (options.crujra):
         site_endyear = 2017
 
@@ -517,6 +522,9 @@ if (options.livneh):
     basecmd = basecmd+' --livneh'
 if (options.daymet):
     basecmd = basecmd+' --daymet'
+if (options.daymet4): # gswp3 v2 spatially-downscaled by daymet v4, usually together with user-defined domain and surface data
+    basecmd = basecmd+' --daymet4'
+    if (not options.gswp3): basecmd = basecmd+' --gswp3'
 if (options.cplhist):
     basecmd = basecmd+' --cplhist'
 if (options.mymask != ''):
