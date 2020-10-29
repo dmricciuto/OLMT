@@ -892,6 +892,9 @@ else:
   result = os.system('./xmlchange PIO_VERSION=2')
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
+    if(options.compiler == 'pgi' or options.compiler == 'PGI'):
+        # pgi compiler for PIO2 has issue of 'USE_CXX == TRUE' in Macro.cmake or Macro.make 
+        result = os.system('./xmlchange PIO_VERSION=1')
 #if (options.debug):
 #    result = os.system('./xmlchange DEBUG=TRUE')
 
