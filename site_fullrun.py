@@ -80,6 +80,8 @@ parser.add_option("--SP", dest="sp", default=False, action="store_true", \
                   help = 'Use satellite phenology mode')
 parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
                   help = 'Copy sourcemods from this location')
+parser.add_option("--domainfile", dest="domainfile", default="", \
+                  help = 'Domain file to use')
 parser.add_option("--parm_file", dest="parm_file", default="", \
                   help = 'parameter file to use')
 parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
@@ -154,9 +156,11 @@ parser.add_option("--parm_list", dest="parm_list", default='parm_list', \
 parser.add_option("--mc_ensemble", dest="mc_ensemble", default=-1, \
                   help = 'Monte Carlo ensemble (argument is # of simulations)')
 parser.add_option("--ng", dest="ng", default=256, \
-                  help = 'number of groups to run in ensemble mode')
+        help = 'number of groups to run in ensemble mode')
 parser.add_option("--fates", dest="fates", default=False, \
                   help = 'Use fates model', action="store_true")
+parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
+                  help = 'Which version of fates_nutrient to use (RD or ECA)')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
@@ -490,6 +494,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --princeton'
         if (options.fates_paramfile != ''):
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
+        if (options.fates_nutrient != ''):
+            basecmd = basecmd+ ' --fates_nutrient '+options.fates_nutrient
         if (options.surfdata_grid):
             basecmd = basecmd+' --surfdata_grid'
         if (options.ensemble_file != ''):   
@@ -525,7 +531,9 @@ for row in AFdatareader:
           basecmd = basecmd+' --hist_vars '+options.hist_vars
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
- 
+        if (options.domainfile != ''):
+          basecmd = basecmd+' --domainfile '+options.domainfile 
+
 #---------------- build commands for runCLM.py -----------------------------
 
         #ECA or CTC
@@ -595,6 +603,9 @@ for row in AFdatareader:
         else:
             cmd_adsp = cmd_adsp+' --compset I1850'+mycompset_adsp
             ad_case = site+'_I1850'+mycompset_adsp
+            #if (options.fates):
+            #    cmd_adsp = cmd_adsp+' --compset I'+mycompset_adsp
+            #    ad_case = site+'_I'+mycompset_adsp
         if (options.noad == False):
             ad_case = ad_case+'_ad_spinup'
         if (options.makemet):
@@ -616,6 +627,8 @@ for row in AFdatareader:
                   basecase = basecase+'_ICB1850'+mycompset
             else: 
                 basecase = basecase+'_I1850'+mycompset
+                #if (options.fates):
+                #    basecase = basecase+'_I'+mycompset
         else:
             if (options.cpl_bypass):
                 if (options.crop or options.fates):
@@ -624,6 +637,8 @@ for row in AFdatareader:
                   basecase=site+'_ICB1850'+mycompset
             else:
                 basecase=site+'_I1850'+mycompset
+                #if (options.fates):
+                #    basecase = basecase+'_I'+mycompset
             if (options.sp):
                 basecase=site+'_ICBCLM45BC'
         if (options.noad):
@@ -665,6 +680,9 @@ for row in AFdatareader:
                 cmd_fnsp = cmd_fnsp+' --compset ICB1850'+mycompset
         else:
             cmd_fnsp = cmd_fnsp+' --compset I1850'+mycompset
+            #if (options.fates):
+            #    cmd_fnsp = cmd_fnsp+' --compset I'+mycompset
+
         if (options.spinup_vars):
                 cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans):	
@@ -801,7 +819,8 @@ for row in AFdatareader:
         case_list = []
         if (options.noad == False):
             case_list.append('ad_spinup')
-            case_list.append('iniadjust')
+            if (not options.fates):
+              case_list.append('iniadjust')
         case_list.append('fn_spinup')
         if (options.diags):
             case_list.append('spinup_diags')
@@ -914,6 +933,9 @@ for row in AFdatareader:
                   modelst = 'ICBCLM45CNCROP'
                 if (options.fates):
                   modelst = 'ICBCLM45ED'
+            else:
+                if (options.fates):
+                    modelst = 'I1850CLM45ED'
 
             basecase = site
             if (mycaseid != ''):

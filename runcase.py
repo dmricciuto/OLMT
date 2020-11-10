@@ -238,6 +238,8 @@ parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'Domain file to use')
 parser.add_option("--fates_hydro", dest="fates_hydro", default=False, action="store_true", \
                   help = 'Set fates hydro to true')
+parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
+                  help = 'Which version of fates_nutrient to use (RD or ECA)')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
@@ -356,9 +358,9 @@ else:
 
 surfdir = 'surfdata_map'
 if (options.mymodel == 'ELM'):
-    if ('ECA' in compset):
+    if ('ECA' in compset or 'ECA' in options.fates_nutrient):
         parm_file = 'clm_params.c180713.nc'
-    elif('RD' in compset):
+    elif('RD' in compset or 'RD' in options.fates_nutrient):
         parm_file = 'clm_params_c180524.nc'
     else:
         parm_file = 'clm_params_c180301.nc'   #FATES/CROP
@@ -484,7 +486,7 @@ if (os.path.exists(casedir)):
         print('--rmold specified.  Removing old case ')
         os.system('rm -rf '+casedir)
     else:
-        var = raw_input('proceed (p), remove old (r), or exit (x)? ')
+        var = input('proceed (p), remove old (r), or exit (x)? ')
         if var[0] == 'r':
             os.system('rm -rf '+casedir)
         if var[0] == 'x':
@@ -512,7 +514,8 @@ if (options.rmold):
 
 #------Make domain, surface data and pftdyn files ------------------
 mysimyr=1850
-if ('1850' not in compset and '20TR' not in compset):
+if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset):
+    #note - spinup with 2000 conditions for FATES
     mysimyr=2000
 
 if (options.nopointdata == False):
@@ -651,11 +654,14 @@ os.system('mkdir -p '+tmpdir)
 if (options.mod_parm_file != ''):
     os.system('nccopy -3 '+options.mod_parm_file+' '+tmpdir+'/clm_params.nc')
 else:
+    print(parm_file)
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
     if ('compy' in options.machine or 'ubuntu' in options.machine):
       myncap='ncap2'
+
+    flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     if (options.humhol):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
       print('humhol_ht = 0.15m')
@@ -664,6 +670,7 @@ else:
       print('qflx_h2osfc_surfrate = 1.0e-7')
       print('setting rsub_top_globalmax = 1.2e-5')
       print('Making br_mr a PFT-specific parameter')
+      #flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -674,7 +681,7 @@ else:
       ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
+    #flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
     ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
 
@@ -779,7 +786,10 @@ os.chdir(casedir)
 #env_build
 result = os.system('./xmlchange SAVE_TIMING=FALSE')
 result = os.system('./xmlchange EXEROOT='+exeroot)
-result = os.system('./xmlchange PIO_VERSION=2')
+if ('ED' in compset):
+  result = os.system('./xmlchange PIO_VERSION=1')
+else:
+  result = os.system('./xmlchange PIO_VERSION=2')
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
 #if (options.debug):
@@ -800,7 +810,8 @@ os.system('./xmlchange RUNDIR='+rundir)
 os.system('./xmlchange DOUT_S=TRUE')
 os.system('./xmlchange DOUT_S_ROOT='+runroot+'/archive/'+casename)
 os.system('./xmlchange DIN_LOC_ROOT='+options.ccsm_input)
-    
+os.system('./xmlchange DIN_LOC_ROOT_CLMFORC='+options.ccsm_input+'/atm/datm7/')    
+
 #define mask and resoultion
 if (isglobal == False):
     os.system('./xmlchange CLM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
@@ -1105,12 +1116,13 @@ for i in range(1,int(options.ninst)+1):
 
     if (options.ad_spinup):
         #Write long-term average pool values
-        output.write(" hist_dov2xy = .true., .false.\n")
-        h1_advars = ['CWDX_vr', 'SOIL2X_vr', 'SOIL3X_vr', 'DEADSTEMX','DEADCROOTX', 'LITR3X_vr','LEAFC','TOTVEGC','TLAI']
-        if ('CTC' in compset):
+        if (not 'ED' in compset):
+          output.write(" hist_dov2xy = .true., .false.\n")
+          h1_advars = ['CWDX_vr', 'SOIL2X_vr', 'SOIL3X_vr', 'DEADSTEMX','DEADCROOTX', 'LITR3X_vr','LEAFC','TOTVEGC','TLAI']
+          if ('CTC' in compset):
             h1_advars.append('SOIL4X_vr')
-        outst = "hist_fincl2 = "
-        for h in h1_advars:
+          outst = "hist_fincl2 = "
+          for h in h1_advars:
             if 'X' in h:
               outst = outst+"'"+h.replace('X','C')+"',"
               outst = outst+"'"+h.replace('X','N')+"',"
@@ -1118,7 +1130,9 @@ for i in range(1,int(options.ninst)+1):
                   outst = outst+"'"+h.replace('X','P')+"',"
             else:
               outst = outst+"'"+h+"',"
-        output.write(outst[:-1]+'\n')
+          output.write(outst[:-1]+'\n')
+        else:
+          output.write(" suplphos = 'ALL'\n")
         if (options.mymodel == 'ELM'):
             output.write(" finidat = ''\n")
     elif (options.coldstart == False):
@@ -1147,7 +1161,7 @@ for i in range(1,int(options.ninst)+1):
     if ('ED' in compset and options.fates_hydro):
       output.write(" use_fates_planthydro = .true.\n")
 
-    if ('CROP' in compset or 'RD' in compset or 'ECA' in compset):
+    if ('CROP' in compset or 'RD' in compset or 'ECA' in compset or options.fates_nutrient != ''):
         #soil order parameter file
         output.write(" fsoilordercon = '"+rundir+"/CNP_parameters.nc'\n")
         #output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
@@ -1161,7 +1175,7 @@ for i in range(1,int(options.ninst)+1):
             "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1849-2106_1.9x2.5_c100428.nc'\n")
         if (options.vsoilc):
             output.write(" use_vertsoilc = .true.\n")
-        if (options.centbgc):
+        if (options.centbgc or 'ECA' in options.fates_nutrient):
             output.write(" use_century_decomp = .true.\n")
         if (options.no_dynroot):
             output.write(" use_dynroot = .false.\n")
@@ -1171,8 +1185,18 @@ for i in range(1,int(options.ninst)+1):
             output.write(" use_nitrif_denitrif = .true.\n")
         if ('CROP' in compset):
             output.write(" suplphos = 'ALL'\n")
-        if (options.CH4 or (not options.bulk_denitrif)):
+        if (options.fates_nutrient != ''):
+            output.write(" fates_parteh_mode = 2\n")
+            if (not options.c_only):
+              output.write(" suplnitro = 'NONE'\n")
+            else:
+              output.write(" suplnitro = 'ALL'\n")
+        elif (options.fates):    #C-only mode (no nutrient enabled)
+            options.write(" fates_parteh_mode = 1\n")
+        if ((options.CH4 or (not options.bulk_denitrif)) and options.fates_nutrient == ''):
             output.write(" use_lch4 = .true.\n")
+        elif (options.fates_nutrient != ''):
+            output.write(" use_lch4 = .false.\n")  
         if (options.nofire):
             output.write(" use_nofire = .true.\n")
         if (options.C13):
@@ -1186,11 +1210,15 @@ for i in range(1,int(options.ninst)+1):
             output.write(" nyears_ad_carbon_only = 0\n")
             output.write(" spinup_mortality_factor = 1\n")
         elif (options.c_only):
-            output.write(" nyears_ad_carbon_only = 0\n")
+            output.write(" nyears_ad_carbon_only = 9999\n")
             output.write(" spinup_mortality_factor = 10\n")
         else:
             output.write(" nyears_ad_carbon_only = 25\n")
             output.write(" spinup_mortality_factor = 10\n")
+        if ('ECA' in options.fates_nutrient):
+            output.write(" nu_com = 'ECA'\n")
+        elif ('RD' in options.fates_nutrient):
+            output.write(" nu_com = 'RD'\n")
     if (cpl_bypass):
         if (use_reanalysis):
             if (options.cruncepv8):
@@ -1439,7 +1467,10 @@ if (not cpl_bypass and not isglobal):
                 temp = s.replace('CLM1PT_data', 'TEMPSTRING')
                 s    = temp.replace(str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site, 'CLM1PT_data')
                 temp  =s.replace('TEMPSTRING', str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site)
+                #s    = temp.replace('atm//CLM1PT_data','atm/datm7/CLM1PT_data')
                 myoutput.write(temp)
+            elif ('ED' in compset and 'FLDS' in s):
+                print('Not including FLDS in atm stream file')
             else:
                 myoutput.write(s)
         myinput.close()
