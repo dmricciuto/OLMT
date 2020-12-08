@@ -23,3 +23,6 @@ python ./site_fullrun.py \
 #      --cpl_bypass \
 #      --metdir /Users/f9y/mygithub/pt-e3sm-inputdata/atm/datm7/atm_forcing.datm7.GSWP3_daymet.1x1pt_kougarok-NGEE/cpl_bypass_full \
 
+# for using recent ELM codes, in which nearly all 'CLM' word changed to 'ELM'
+#      --res ELM_USRDAT --lndnamechanged \
+
