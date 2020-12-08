@@ -54,6 +54,10 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+parser.add_option("--usersurfnc", dest="usersurfnc", default="none", \
+                  help = 'User-provided surface data nc file, with one or more variable(s) as defined')
+parser.add_option("--usersurfvar", dest="usersurfvar", default="none", \
+                  help = 'variable name(s) in User-provided surface data nc file, separated by ","')
 (options, args) = parser.parse_args()
 
 
@@ -127,6 +131,24 @@ elif (options.point_list != ''):
     input_file = open(options.point_list,'r')
     n_grids=0
     point_pfts=[]
+    
+    # if providing a user-defined nc file for extracting surface data other than standard inputs
+    if (options.usersurfnc!='none'):
+        if (options.usersurfvar=='none'):
+            print('must provide variable name(s) for extracting data from : ',options.usersurfnc)
+            sys.exit()
+        else:
+            mysurfvar = options.usersurfvar.split(',')
+        mysurfnc = Dataset(options.usersurfnc,'r') # must provide the full path and file name
+        mysurf_lat = numpy.asarray(mysurfnc['LATIXY'])
+        mysurf_lon = numpy.asarray(mysurfnc['LONGXY'])
+        ix=numpy.where(mysurf_lon<0.0)
+        if(ix[0].size>0): mysurf_lon[ix]=mysurf_lon[ix]+360.0
+        point_mysurf = {}
+        point_ij = []
+        for isurfvar in mysurfvar:
+            point_mysurf[isurfvar] = []
+        
     for s in input_file:
         if (n_grids == 0):
             header = s.split()
@@ -141,13 +163,35 @@ elif (options.point_list != ''):
                           mylon = mylon+360
                       lon.append(mylon)
                  elif ('lat' in header[dnum]):
+                      mylat = float(d)
                       lat.append(float(d))
                  elif ('pft' in header[dnum]):
                       point_pfts[n_grids-1] = int(d)
                  if (int(options.mypft) >= 0):    #overrides info in file
                      point_pfts[n_grids-1] = options.mypft
+                
                  dnum=dnum+1
+             #
+             #overrides data from a PCT_PFT nc input file (TIP: only index here to speed-up loop)
+             if(options.usersurfnc!='none' and options.usersurfvar!='none'):
+                    dx=numpy.abs(mysurf_lon-mylon)
+                    dy=numpy.abs(mysurf_lat-mylat)
+                    dxy = numpy.sqrt(dx*dx+dy*dy)
+                    ixy = numpy.unravel_index(numpy.argmin(dxy, axis=None), dxy.shape)
+                    if (n_grids==1):
+                        point_ij=[ixy[0],ixy[1]]
+                    else:
+                        point_ij=numpy.vstack((point_ij,[ixy[0],ixy[1]]))
+        
         n_grids=n_grids+1
+        if(divmod(n_grids, 100)[1]==0): print("grid counting: \n",n_grids)
+    
+    #overrides data from a PCT_PFT nc input file, after all index are assembled
+    if(options.usersurfnc!='none' and options.usersurfvar!='none'):
+        for isurfvar in mysurfvar:
+            isurfvar_vals = numpy.asarray(mysurfnc[isurfvar])[:,point_ij[:,0],point_ij[:,1]]
+            point_mysurf[isurfvar] = numpy.transpose(isurfvar_vals)
+
     input_file.close()
     n_grids = n_grids-1
 elif (options.site != ''):
@@ -309,6 +353,9 @@ os.system('mkdir -p ./temp')
 # 'AREA' in surfdata.nc is in KM2, which later used for scaling a point
 area_orig = nffun.getvar(surffile_orig, 'AREA')
 
+# in case NCO bin path not in $PATH
+os.environ["PATH"] += ':/usr/local/nco/bin'
+os.environ["PATH"] += ':/Users/f9y/ATS_ROOT/amanzi_tpls-install-master-Debug/bin'
 
 domainfile_tmp = 'domain??????.nc' # filename pattern of 'domainfile_new'
 domainfile_list=''
@@ -522,6 +569,7 @@ for n in range(0,n_grids):
         mypct_clay = 0.0
  
         if (options.surfdata_grid == False and options.site != ''):
+            #read file for site-specific PFT information
             AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
             for row in AFdatareader:
                 if row[0] == options.site:
@@ -529,7 +577,7 @@ for n in range(0,n_grids):
                         mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
             if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
                 print('*** Warning:  PFT data NOT found.  Using gridded data ***')
-        #read file for site-specific soil information
+            #read file for site-specific soil information
             AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
             for row in AFdatareader:
                 if row[0] == options.site:
@@ -541,9 +589,38 @@ for n in range(0,n_grids):
           try:
             #mypft_frac[point_pfts[n]] = 100.0
             if(point_pfts[n]!=-1):
+                # a single PFT of 100% indicated by input option
                 mypft_frac[point_pfts[n]] = 100.0
             else:
                 mypft_frac = pct_pft
+
+            # multiple PFTs' pct are read-in from a nc file
+            if('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
+                sum_nat=numpy.sum(pct_pft)
+                if ('PCT_PFT' in point_mysurf.keys()):
+                    if(numpy.sum(point_mysurf['PCT_PFT'][n])>0.0):
+                        pct_pft[:,0,0] = point_mysurf['PCT_PFT'][n]
+                elif('PCT_NAT_PFT' in point_mysurf.keys()):
+                    if(numpy.sum(point_mysurf['PCT_NAT_PFT'][n])>0.0):
+                        pct_pft[:,0,0] = point_mysurf['PCT_NAT_PFT'][n]
+                else:
+                    print('Error: PCT_PFT or PCT_NAT_PFT is used variable name for PFT fraction in surface data')
+                    sys.exit()
+                # in case PCT not summed to 100.0
+                sum_nat2=numpy.sum(pct_pft[:,0,0])
+                if (sum_nat2!=100.0):
+                    adj=100.0/sum_nat2
+                    pct_pft[:,0,0] = pct_pft[:,0,0] * adj
+                if (sum_nat<100.0):
+                    pct_pft[:,0,0] = pct_pft[:,0,0]*sum_nat/100.0
+                if(numpy.sum(pct_pft[:,0,0])!=sum_nat):
+                    # this is rare to occur, after TWO corrections above, 
+                    # seems due to numerical error relevant to machine
+                    # have to fix it if any (will throw error when used by ELM)
+                    err=sum_nat - numpy.sum(pct_pft[:,0,0])
+                    err_ix=numpy.argmax(pct_pft[:,0,0])
+                    pct_pft[err_ix,0,0]=pct_pft[err_ix,0,0]+err
+                    print('Error correction - ', err,numpy.sum(pct_pft[:,0,0]))
 
           except NameError:
             print('using PFT information from surface data')
@@ -659,7 +736,8 @@ for n in range(0,n_grids):
         ierr = nffun.putvar(surffile_new, 'MONTHLY_HEIGHT_TOP', monthly_height_top)
         ierr = nffun.putvar(surffile_new, 'MONTHLY_HEIGHT_BOT', monthly_height_bot)
         ierr = nffun.putvar(surffile_new, 'MONTHLY_LAI', monthly_lai)
-    else:
+    
+    else: # not if(issite)
         if (int(options.mypft) >= 0):
           pct_pft      = nffun.getvar(surffile_new, 'PCT_NAT_PFT')
           pct_pft[:,:,:] = 0.0
@@ -836,6 +914,36 @@ if (options.nopftdyn == False):
                     harvest_sh3[t][0][0] = 0.
                     harvest_vh1[t][0][0] = 0.
                     harvest_vh2[t][0][0] = 0.
+            
+                #
+                # multiple natural PFTs' pct are read-in from a nc file
+                if('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
+                    print('Message: PCT_NAT_PFT is extracted from a non-dynamical surface data FOR surfdata.pftdyn.nc')
+                    sum_nat=numpy.sum(pct_pft[t,:,0,0]) # this is the original, saved for use later
+                    if ('PCT_PFT' in point_mysurf.keys()):
+                        if(numpy.sum(point_mysurf['PCT_PFT'][n])>0.0):
+                            pct_pft[t,:,0,0] = point_mysurf['PCT_PFT'][n]
+                    elif('PCT_NAT_PFT' in point_mysurf.keys()):
+                        if(numpy.sum(point_mysurf['PCT_NAT_PFT'][n])>0.0):
+                            pct_pft[t,:,0,0] = point_mysurf['PCT_NAT_PFT'][n]
+                    else:
+                        print('Error: PCT_PFT or PCT_NAT_PFT is used variable name for PFT fraction in non-dynamical surface data')
+                        sys.exit()
+                    # in case new PCT not summed to 100.0
+                    sum_nat2=numpy.sum(pct_pft[t,:,0,0]) # this is the updated above
+                    if (sum_nat2!=100.0):
+                        adj=100.0/sum_nat2
+                        pct_pft[t,:,0,0] = pct_pft[t,:,0,0] * adj
+                    if (sum_nat<100.0):
+                        pct_pft[t,:,0,0] = pct_pft[t,:,0,0]*sum_nat/100.0
+                    if(numpy.sum(pct_pft[t,:,0,0])!=sum_nat):
+                        # this is rare to occur, after TWO corrections above, 
+                        # seems due to numerical error relevant to machine
+                        # have to fix it if any (will throw error when used by ELM)
+                        err=sum_nat - numpy.sum(pct_pft[t,:,0,0])
+                        err_ix=numpy.argmax(pct_pft[t,:,0,0])
+                        pct_pft[t,err_ix,0,0]=pct_pft[t,err_ix,0,0]+err
+
             else:
                 #use time-varying files from gridded file
                 #print('using '+surffile_new+' for 1850 information') # too much printing if long list points
@@ -856,6 +964,7 @@ if (options.nopftdyn == False):
                         #which might not agree with 1850 values
                         #WARNING: - large errors may result if files are inconsistent
                         pct_pft[t][p][0][0] = pct_pft[t][p][0][0]/sumpft*(100.0) #-nonpft)
+            
 
         ierr = nffun.putvar(pftdyn_new, 'LANDFRAC_PFT', landfrac)
         ierr = nffun.putvar(pftdyn_new, 'PFTDATA_MASK', pftdata_mask)
