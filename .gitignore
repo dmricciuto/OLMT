@@ -1,3 +1,7 @@
-# directories for temporary storage
+# directories for temporary storage / user customisation
 scripts/
 temp/
+srcmods*
+
+# files created by OLMT executions
+run.*
