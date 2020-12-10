@@ -6,187 +6,201 @@ import subprocess
 import numpy
 import re
 
+
+### Run options
 parser = OptionParser();
 
-parser.add_option("--ad_Pinit", dest="ad_Pinit", default=False, action="store_true",\
-                  help="Initialize AD spinup with P pools and use CNP mode")
+# general OLMT options
 parser.add_option("--caseidprefix", dest="mycaseid", default="", \
                   help="Unique identifier to include as a prefix to the case name")
 parser.add_option("--caseroot", dest="caseroot", default='', \
-                  help = "case root directory (default = ./, i.e., under scripts/)")
-parser.add_option("--compare_cases", dest="compare", default='', \
-                 help = 'caseidprefix(es) to compare')
-parser.add_option("--exeroot", dest="exeroot", default="", \
-                 help="Location of executable")
-parser.add_option("--ccsm_input", dest="ccsm_input", \
-                  default='', \
-                  help = "input data directory for CESM (required)")
-parser.add_option("--crop", action="store_true", default=False, \
-                  help="Perform a crop model simulation")
-parser.add_option("--clean_build", action="store_true", default=False, \
-                  help="Perform a clean build")
-parser.add_option("--constraints", dest="constraints", default="", \
-                  help="Directory containing model constraints")
-parser.add_option("--namelist_file", dest="namelist_file", default='', \
-                  help="File containing custom namelist options for user_nl_clm")
-parser.add_option("--model_root", dest="csmdir", default='', \
-                  help = "base CESM directory")
-parser.add_option("--compiler", dest="compiler", default = '', \
-                  help = "compiler to use (pgi*, gnu)")
-parser.add_option("--diags", dest="diags", default=False, \
-                 action="store_true", help="Write special outputs for diagnostics")
-parser.add_option("--debugq", dest="debug", default=False, \
-                 action="store_true", help='Use debug queue and options')
-parser.add_option("--hist_mfilt_trans", dest="hist_mfilt", default="365", \
-                  help = 'number of output timesteps per file (transient only)')
-parser.add_option("--hist_mfilt_spinup", dest="hist_mfilt_spinup", default="-999", \
-                  help = 'number of output timesteps per file (transient only)')
-parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-999", \
-                  help = 'output file timestep (transient only)')
-parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="-24", \
-                  help = 'output file timestep (transient only)')
-parser.add_option("--hist_vars", dest="hist_vars", default='', \
-                  help = 'Output only selected variables in h0 file (comma delimited)')
-parser.add_option("--humhol", dest="humhol", default=False, \
-                  help = 'Use hummock/hollow microtopography', action="store_true")
-parser.add_option("--lai", dest="lai", default=-999, \
-                  help = 'Set constant LAI (SP mode only)')
-parser.add_option("--machine", dest="machine", default = '', \
-                  help = "machine to use")
-parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
-                      help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
-parser.add_option("--noad", action="store_true", dest="noad", default=False, \
-                  help='Do not perform ad spinup simulation')
-parser.add_option("--nofire", dest="nofire", default=False, \
-                  action="store_true", help='Turn off fire algorithms')
-parser.add_option("--nopointdata", action="store_true", \
-                  dest="nopointdata", help="Do NOT make point data (use data already created)", \
-                  default=False)
-parser.add_option("--notrans", action="store_true", dest="notrans", default=False, \
-                  help='Do not perform transient simulation (spinup only)')
-parser.add_option("--nyears_final_spinup", dest="nyears_final_spinup", default='200', \
-                  help="base no. of years for final spinup")
-parser.add_option("--pft", dest="mypft", default=-1, \
-                  help = 'Use this PFT (override site default)')
+                  help = "case root directory, where submission scripts live (default = ./, i.e., under scripts/)")
 parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
-parser.add_option("--run_startyear", dest="run_startyear", default="1850", \
-                  help="Starting year for simulation (SP model only)")
-parser.add_option("--site", dest="site", default='', \
-                  help = '6-character FLUXNET code to run (required)')
-parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
-                  help = "site group to use (default AmeriFlux)")
-parser.add_option("--SP", dest="sp", default=False, action="store_true", \
-                  help = 'Use satellite phenology mode')
-parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
-                  help = 'Copy sourcemods from this location')
-parser.add_option("--domainfile", dest="domainfile", default="", \
-                  help = 'Domain file to use')
-parser.add_option("--parm_file", dest="parm_file", default="", \
-                  help = 'parameter file to use')
-parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
-                  help = 'parameter file to use')
-parser.add_option("--parm_vals", dest="parm_vals", default="", \
-                  help = 'User specified parameter values')
+parser.add_option("--exeroot", dest="exeroot", default="", \
+                  help="Location of executable")
+parser.add_option("--archiveroot", dest="archiveroot", default='', \
+                  help = "archive root directory only for mesabi")
+parser.add_option("--constraints", dest="constraints", default="", \
+                  help="Directory containing model constraints")
+parser.add_option("--compare_cases", dest="compare", default='', \
+                  help = 'caseidprefix(es) to compare')
 parser.add_option("--postproc_file", dest="postproc_file", default="postproc_vars", \
                   help = 'File for ensemble post processing')
-parser.add_option("--nopftdyn", action="store_true", dest="nopftdyn", \
-                      default=False, help='Do not use dynamic PFT file')
-parser.add_option("--np", dest="np", default=1, \
-                  help = 'number of processors')
-parser.add_option("--tstep", dest="tstep", default=0.5, \
-                  help = 'CLM timestep (hours)')
-parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
-                  help = 'CLM timestep (hours)')
-parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
-                  help = 'number of years to run ad_spinup')
-parser.add_option("--nyears_transient", dest="nyears_transient", default=-1, \
-                  help = 'number of years to run transient')
-parser.add_option("--metdir", dest="metdir", default="none", \
-                  help = 'subdirectory for met data forcing')
-parser.add_option("--C13", dest="C13", default=False, \
-                      help = 'Switch to turn on C13', action="store_true")
-parser.add_option("--C14", dest="C14", default=False, \
-                  help = 'Use C14 as C13 (no decay)', action="store_true")
 parser.add_option("--ninst", dest="ninst", default=1, \
-                      help = 'number of land model instances')
-parser.add_option("--ECA", action="store_true", dest="eca", default=False, \
-                  help = 'Use ECA compset')
-parser.add_option("--harvmod", action="store_true", dest='harvmod', default=False, \
-                    help="turn on harvest modification:  All harvest at first timestep")
-parser.add_option("--bulk_denitrif", dest="bulk_denitrif", default=False, \
-                  help = 'To turn on BGC nitrification-denitrification', action="store_true")
-parser.add_option("--no_dynroot", dest="no_dynroot", default=False, \
-                  help = 'Turn off dynamic root distribution', action="store_true")
-parser.add_option("--vertsoilc", dest="vsoilc", default=False, \
-                  help = 'To turn on CN with multiple soil layers, excluding CENTURY C module (CLM4ME on as well)', action="store_true")
-parser.add_option("--centbgc", dest="centbgc", default=False, \
-                  help = 'To turn on CN with multiple soil layers, CENTURY C module (CLM4ME on as well)', action="store_true")
-parser.add_option("--CH4", dest="CH4", default=False, \
-                  help = 'To turn on CN with CLM4me', action="store_true")
-parser.add_option("--makemetdata", action="store_true", dest="makemet", default=False, \
-                    help="generate site meteorology")
-parser.add_option("--cruncep", dest="cruncep", default=False, \
-                  action="store_true", help = 'Use CRU-NCEP meteorology')
-parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
-                  action="store_true", help = 'Use CRU-NCEP meteorology')
-parser.add_option("--gswp3", dest="gswp3", default=False, \
-                  action="store_true", help = 'Use GSWP3 meteorology')
-parser.add_option("--princeton", dest="princeton", default=False, \
-                  action="store_true", help = 'Use Princeton meteorology')
-parser.add_option("--surfdata_grid", dest="surfdata_grid", default=False, \
-                  help = 'Use gridded surface data instead of site data', action="store_true")
-parser.add_option("--surffile", dest="surffile", default='', \
-                  help = 'Use specified surface data file')
-parser.add_option("--siteparms",dest = "siteparms", default=False, \
-                  action="store_true", help = 'Use default PFT parameters')
-parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, \
-                  help = "Bypass coupler", action="store_true")
-parser.add_option("--spinup_vars", dest = "spinup_vars", default=False, \
-                  help = "limit output variables for spinup", action="store_true")
-parser.add_option("--trans_varlist", dest = "trans_varlist", default='', help = "Transient outputs")
-parser.add_option("--c_only", dest="c_only", default=False, \
-                  help='Carbon only (saturated N&P)', action ="store_true")
-parser.add_option("--cn_only", dest="cn_only", default=False, \
-                  help='Carbon/Nitrogen only (saturated P)', action ="store_true")
+                  help = 'number of land model instances')
+parser.add_option("--mc_ensemble", dest="mc_ensemble", default=-1, \
+                  help = 'Monte Carlo ensemble (argument is # of simulations)')
+parser.add_option("--ng", dest="ng", default=256, \
+                  help = 'number of groups to run in ensemble mode')
 parser.add_option("--ensemble_file", dest="ensemble_file", default='', \
                   help = 'Parameter sample file to generate ensemble')
 parser.add_option("--parm_list", dest="parm_list", default='parm_list', \
                   help = 'File containing list of parameters to vary')
-parser.add_option("--mc_ensemble", dest="mc_ensemble", default=-1, \
-                  help = 'Monte Carlo ensemble (argument is # of simulations)')
-parser.add_option("--ng", dest="ng", default=256, \
-        help = 'number of groups to run in ensemble mode')
-parser.add_option("--fates", dest="fates", default=False, \
-                  help = 'Use fates model', action="store_true")
-parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
-                  help = 'Which version of fates_nutrient to use (RD or ECA)')
-parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
-                  help = 'Fates parameter file to use')
-parser.add_option("--add_temperature", dest="addt", default=0.0, \
-                  help = 'Temperature to add to atmospheric forcing')
-parser.add_option("--add_co2", dest="addco2", default=0.0, \
-                  help = 'CO2 (ppmv) to add to atmospheric forcing')
-parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
-                  help = 'Date (YYYYMMDD) to begin addding temperature')
-parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
-                  help = 'Date (YYYYMMDD) to begin addding CO2')
-
-#Changed by Ming for mesabi
-parser.add_option("--archiveroot", dest="archiveroot", default='', \
-                  help = "archive root directory only for mesabi")
-#Added by Kirk to include the modified parameter file
 parser.add_option("--mod_parm_file", dest="mod_parm_file", default='', \
                   help = "adding the path to the modified parameter file")
 parser.add_option("--mod_parm_file_P", dest="mod_parm_file_P", default='', \
                   help = "adding the path to the modified parameter file")
+parser.add_option("--nopftdyn", dest="nopftdyn", default=False, action="store_true", \
+                  help='Do not use dynamic PFT file')
+
+# general model build options
+parser.add_option("--model_root", dest="csmdir", default='', \
+                  help = "base CESM directory")
+parser.add_option("--compiler", dest="compiler", default = '', \
+                  help = "compiler to use (pgi*, gnu)")
+parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
+                  help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
+parser.add_option("--debugq", dest="debug", default=False, action="store_true", \
+                  help='Use debug queue and options')
+parser.add_option("--clean_build", action="store_true", default=False, \
+                  help="Perform a clean build")
+parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, action="store_true", \
+                  help = "Bypass coupler")
+parser.add_option("--machine", dest="machine", default = '', \
+                  help = "machine to use")
+parser.add_option("--np", dest="np", default=1, \
+                  help = 'number of processors')
 parser.add_option("--walltime", dest="walltime", default=6, \
                   help = "desired walltime for each job (hours)")
 
+# CASE options
+parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
+                  help = 'number of years to run ad_spinup')
+parser.add_option("--nyears_final_spinup", dest="nyears_final_spinup", default='200', \
+                  help="base no. of years for final spinup")
+parser.add_option("--nyears_transient", dest="nyears_transient", default=-1, \
+                  help = 'number of years to run transient')
+parser.add_option("--ad_Pinit", dest="ad_Pinit", default=False, action="store_true", \
+                  help="Initialize AD spinup with P pools and use CNP mode")
+parser.add_option("--noad", action="store_true", dest="noad", default=False, \
+                  help='Do not perform ad spinup simulation')
+parser.add_option("--notrans", action="store_true", dest="notrans", default=False, \
+                  help='Do not perform transient simulation (spinup only)')
+
+# model input options
+parser.add_option("--site", dest="site", default='', \
+                  help = '6-character FLUXNET code to run (required)')
+parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
+                  help = "site group to use (default AmeriFlux)")
+# metdata 
+parser.add_option("--ccsm_input", dest="ccsm_input", default='', \
+                  help = "input data directory for CESM (required)")
+parser.add_option("--nopointdata", dest="nopointdata", default=False, action="store_true", \
+                  help="Do NOT make point data (use data already created)")
+parser.add_option("--metdir", dest="metdir", default="none", \
+                  help = 'subdirectory for met data forcing')
+parser.add_option("--makemetdata", action="store_true", dest="makemet", default=False, \
+                  help="generate site meteorology")
+parser.add_option("--cruncep", dest="cruncep", default=False, action="store_true", \
+                  help = 'Use CRU-NCEP meteorology')
+parser.add_option("--cruncepv8", dest="cruncepv8", default=False, action="store_true", \
+                  help = 'Use CRU-NCEP meteorology')
+parser.add_option("--gswp3", dest="gswp3", default=False, action="store_true", \
+                  help = 'Use GSWP3 meteorology')
+parser.add_option("--princeton", dest="princeton", default=False, action="store_true", \
+                  help = 'Use Princeton meteorology')
+parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
+                  help = 'CLM timestep (hours)')
+parser.add_option("--add_co2", dest="addco2", default=0.0, \
+                  help = 'CO2 (ppmv) to add to atmospheric forcing')
+parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin addding CO2')
+parser.add_option("--add_temperature", dest="addt", default=0.0, \
+                  help = 'Temperature to add to atmospheric forcing')
+parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin addding temperature')
+# surface data
+parser.add_option("--surfdata_grid", dest="surfdata_grid", default=False, action="store_true", \
+                  help = 'Use gridded surface data instead of site data')
+parser.add_option("--surffile", dest="surffile", default='', \
+                  help = 'Use specified surface data file')
+parser.add_option("--domainfile", dest="domainfile", default="", \
+                  help = 'Domain file to use')
+# parameters
+parser.add_option("--pft", dest="mypft", default=-1, \
+                  help = 'Use this PFT (override site default)')
+parser.add_option("--siteparms",dest = "siteparms", default=False, action="store_true", \
+                  help = 'Use default PFT parameters')
+parser.add_option("--parm_file", dest="parm_file", default="", \
+                  help = 'parameter file to use')
+parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
+                  help = 'parameter file to use')
+parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
+                  help = 'Fates parameter file to use')
+parser.add_option("--parm_vals", dest="parm_vals", default="", \
+                  help = 'User specified parameter values')
+
+# model structural config options
+parser.add_option("--namelist_file", dest="namelist_file", default='', \
+                  help="File containing custom namelist options for user_nl_clm")
+parser.add_option("--tstep", dest="tstep", default=0.5, \
+                  help = 'CLM timestep (hours)')
+parser.add_option("--SP", dest="sp", default=False, action="store_true", \
+                  help = 'Use satellite phenology mode')
+parser.add_option("--lai", dest="lai", default=-999, \
+                  help = 'Set constant LAI (SP mode only)')
+parser.add_option("--run_startyear", dest="run_startyear", default="1850", \
+                  help="Starting year for simulation (SP mode only)")
+parser.add_option("--crop", action="store_true", default=False, \
+                  help="Perform a crop model simulation")
+parser.add_option("--humhol", dest="humhol", default=False, action="store_true", \
+                  help = 'Use hummock/hollow microtopography')
+parser.add_option("--nofire", dest="nofire", default=False, action="store_true", \
+                  help='Turn off fire algorithms')
+parser.add_option("--C13", dest="C13", default=False, action="store_true", \
+                  help = 'Switch to turn on C13')
+parser.add_option("--C14", dest="C14", default=False, action="store_true", \
+                  help = 'Use C14 as C13 (no decay)')
+parser.add_option("--harvmod", action="store_true", dest='harvmod', default=False, \
+                  help="turn on harvest modification:  All harvest at first timestep")
+parser.add_option("--bulk_denitrif", dest="bulk_denitrif", default=False, action="store_true", \
+                  help = 'To turn on BGC nitrification-denitrification')
+parser.add_option("--no_dynroot", dest="no_dynroot", default=False, action="store_true", \
+                  help = 'Turn off dynamic root distribution')
+parser.add_option("--vertsoilc", dest="vsoilc", default=False, action="store_true", \
+                  help = 'To turn on CN with multiple soil layers, excluding CENTURY C module (CLM4ME on as well)')
+parser.add_option("--centbgc", dest="centbgc", default=False, action="store_true", \
+                  help = 'To turn on CN with multiple soil layers, CENTURY C module (CLM4ME on as well)')
+parser.add_option("--CH4", dest="CH4", default=False, action="store_true", \
+                  help = 'To turn on CN with CLM4me')
+parser.add_option("--fates", dest="fates", default=False, action="store_true", \
+                  help = 'Use fates model')
+parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
+                  help = 'Which version of fates_nutrient to use (RD or ECA)')
+parser.add_option("--ECA", dest="eca", default=False, action="store_true", \
+                  help = 'Use ECA compset')
+parser.add_option("--c_only", dest="c_only", default=False, action ="store_true",  \
+                  help='Carbon only (saturated N&P)')
+parser.add_option("--cn_only", dest="cn_only", default=False, action ="store_true", \
+                  help='Carbon/Nitrogen only (saturated P)') 
+parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
+                  help = 'Copy sourcemods from this location')
+
+# model output options
+parser.add_option("--hist_vars", dest="hist_vars", default='', \
+                  help = 'Output only selected variables in h0 file (comma delimited)')
+parser.add_option("--diags", dest="diags", default=False, action="store_true", 
+                  help="Write special outputs for diagnostics")
+parser.add_option("--trans_varlist", dest = "trans_varlist", default='', \
+                  help = "Transient outputs")
+parser.add_option("--hist_mfilt_trans", dest="hist_mfilt", default="365", \
+                  help = 'number of output timesteps per file (transient only)')
+parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="-24", \
+                  help = 'output file timestep (transient only)')
+parser.add_option("--spinup_vars", dest = "spinup_vars", default=False, action="store_true", \
+                  help = "limit output variables for spinup")
+parser.add_option("--hist_mfilt_spinup", dest="hist_mfilt_spinup", default="-999", \
+                  help = 'number of output timesteps per file (spinup only)')
+parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-999", \
+                  help = 'output file timestep (spinup only)')
+
 (options, args) = parser.parse_args()
 
-#------------ define function for pbs submission
 
+
+#----------------------------------------------------------
+# define function for pbs submission
 def submit(fname, submit_type='qsub', job_depend=''):
     job_depend_flag = ' -W depend=afterok:'
     if ('sbatch' in submit_type):
@@ -209,9 +223,9 @@ def submit(fname, submit_type='qsub', job_depend=''):
     os.system('rm temp/jobinfo')
     return thisjob
 
-#----------------------------------------------------------
 
-#Set default model root
+#----------------------------------------------------------
+# Set default model root
 if (options.csmdir == ''):
    if (os.path.exists('../E3SM')):
        options.csmdir = os.path.abspath('../E3SM')
@@ -229,6 +243,9 @@ if (options.machine == ''):
    hostname = socket.gethostname()
    print('Machine not specified.  Using hostname '+hostname+' to determine machine')
    if ('or-condo' in hostname):
+       options.machine = 'cades'
+       npernode=32
+   elif ('or-slurm' in hostname):
        options.machine = 'cades'
        npernode=32
    elif ('edison' in hostname):
@@ -1065,7 +1082,7 @@ for row in AFdatareader:
         #    job_fullrun = submit('temp/site_fullrun.pbs', submit_type=mysubmit_type)
         sitenum = sitenum+1
 
-#Submit PBS scripts for multi-site simualtions on 1 node
+#Submit PBS scripts for multi-site simulations on 1 node
 if (options.ensemble_file == ''):
     for g in range(0,int(groupnum)+1):
         job_depend_run=''
@@ -1082,3 +1099,6 @@ if (options.ensemble_file == ''):
                 job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
                                     job_depend_run, submit_type=mysubmit_type)
 
+
+
+# END
