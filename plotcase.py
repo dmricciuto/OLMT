@@ -369,7 +369,7 @@ for c in range(0,ncases):
                         if (y == ystart and m == 0 and c == 0):
                             nffile = netcdf.netcdf_file(myfile,"r")
                             varout=nffile.variables[myvars[v]]
-                            var_long_names.append(varout.long_name)
+                            var_long_names.append(varout.long_name.decode('utf_8'))
                             nffile.close()
                             if (float(options.scale_factor) < -900):
                                 if ('gC/m^2/s' in varout.units):
@@ -377,10 +377,10 @@ for c in range(0,ncases):
                                     var_units.append('g.C/m2/day')
                                 else:
                                     myscalefactors.append(1.0)
-                                    var_units.append(varout.units.replace('^',''))
+                                    var_units.append(varout.units.decode('utf_8').replace('^',''))
                             else:
                                 myscalefactors.append(float(options.scale_factor))
-                                var_units.append(varout.units.replace('^',''))
+                                var_units.append(varout.units.decode('utf_8').replace('^',''))
                         
                         if (y == ystart and m == 0 and v == 0):      # get lat/lon info
                             nffile = netcdf.netcdf_file(myfile,"r")
@@ -408,7 +408,7 @@ for c in range(0,ncases):
     if (ftype == 'custom'):
         for v in range(0,nvar):
             nsteps=0
-            nfiles = (yend-ystart)/nypf
+            nfiles = int((yend-ystart)/nypf)
             nc=1
             starti=0
             ylast=0
@@ -454,9 +454,9 @@ for c in range(0,ncases):
                         if (y == starti and n == 0 and c == 0):
                             nffile = netcdf.netcdf_file(myfile,"r")
                             varout=nffile.variables[myvars[v]]
-                            var_long_names.append(varout.long_name)
+                            var_long_names.append(varout.long_name.decode('utf_8'))
                             if (float(options.scale_factor) < -900):
-                                if ('gC/m^2/s' in varout.units):
+                                if ('gC/m^2/s' in varout.units.decode('utf_8')):
                                     if (npf >= 365):
                                         myscalefactors.append(3600*24)
                                         var_units.append('g.C/m2/day')
@@ -465,10 +465,10 @@ for c in range(0,ncases):
                                         var_units.append('g.C/m2/yr')
                                 else:
                                     myscalefactors.append(1.0)
-                                    var_units.append(varout.units.replace('^',''))
+                                    var_units.append(varout.units.decode('utf_8').replace('^',''))
                             else:
                                  myscalefactors.append(float(options.scale_factor))
-                                 var_units.append(varout.units.replace('^',''))
+                                 var_units.append(varout.units.decode('utf_8').replace('^',''))
                             nffile.close()
                         if (y == starti and n == 0 and v == 0):      # get lat/lon info
                             nffile = netcdf.netcdf_file(myfile,"r")
@@ -636,7 +636,7 @@ for v in range(0,len(myvars)):
                     mytime[:] = (x_toplot[0,0:snum[c]]-ystart)*365
                     #myname = outdata.createVariable('site_name','c',('lat','lon','strlen'))
                     myname = outdata.createVariable('site_name','c',('gridcell','strlen'))
-                    myname[:,:] = ''   #changed for gridcell
+                    myname[:,:] = ' '   #changed for gridcell
                     outdata.close()
         for ftype in range(0,2):
             outdata = netcdf.netcdf_file('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+ftype_suffix[ftype]+".nc","a",mmap=False)
