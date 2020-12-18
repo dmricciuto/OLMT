@@ -1191,7 +1191,7 @@ for i in range(1,int(options.ninst)+1):
               output.write(" suplnitro = 'NONE'\n")
             else:
               output.write(" suplnitro = 'ALL'\n")
-        elif (options.fates):    #C-only mode (no nutrient enabled)
+        elif ('ED' in compset):    #C-only mode (no nutrient enabled)
             options.write(" fates_parteh_mode = 1\n")
         if ((options.CH4 or (not options.bulk_denitrif)) and options.fates_nutrient == ''):
             output.write(" use_lch4 = .true.\n")
