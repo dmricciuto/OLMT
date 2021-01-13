@@ -1,7 +1,9 @@
 # directories for temporary storage / user customisation
 scripts/
 temp/
+plots/
 srcmods*
 
 # files created by OLMT executions
 run.*
+*.pyc
