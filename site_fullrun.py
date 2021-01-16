@@ -83,9 +83,9 @@ parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
 parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
-# metdata 
 parser.add_option("--ccsm_input", dest="ccsm_input", default='', \
                   help = "input data directory for CESM (required)")
+# metdata 
 parser.add_option("--nopointdata", dest="nopointdata", default=False, action="store_true", \
                   help="Do NOT make point data (use data already created)")
 parser.add_option("--metdir", dest="metdir", default="none", \
@@ -241,6 +241,7 @@ elif (not os.path.exists(options.csmdir)):
 npernode=32
 if (options.machine == ''):
    hostname = socket.gethostname()
+   print('')
    print('Machine not specified.  Using hostname '+hostname+' to determine machine')
    if ('or-condo' in hostname):
        options.machine = 'cades'
