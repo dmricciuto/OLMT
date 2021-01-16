@@ -109,37 +109,106 @@ mycases = options.mycase.split(',')
 mysites = options.site.split(',')
 mycompsets = options.compset.split(',')
 
+print('')
+print(mycases)
+print(mysites)
+print(mycompsets)
+
 ncases = 1
-if (len(mycases) > 1):
-  ncases = len(mycases)
-  mysites=[]
-  for c in range(0,ncases):
-    mysites.append(options.site)
-    #if (len(mycompsets) == 1):
-    mycompsets.append(options.compset)
-  mytitles = mycases
-elif (len(mysites) > 1):
-  ncases = len(mysites)
-  mycases=[]
-  mycompsets=[]
-  for c in range(0,ncases):
-    mycases.append(options.mycase)
-    mycompsets.append(options.compset)
-  mytitles = mysites
-elif (len(mycompsets) > 1):
-  ncases = len(mycompsets)
-  mycases=[]
-  mysites=[]
-  for c in range(0,ncases):
-    mycases.append(options.mycase)
-    mysites.append(options.site)  
-  mytitles = mycompsets
+#if (len(mycases) > 1):
+#  ncases = len(mycases)
+#  mysites=[]
+#  for c in range(0,ncases):
+#    mysites.append(options.site)
+#    #if (len(mycompsets) == 1):
+#    mycompsets.append(options.compset)
+#  mytitles = mycases
+#elif (len(mysites) > 1):
+#  ncases = len(mysites)
+#  mycases=[]
+#  mycompsets=[]
+#  for c in range(0,ncases):
+#    mycases.append(options.mycase)
+#    mycompsets.append(options.compset)
+#  mytitles = mysites
+#elif (len(mycompsets) > 1):
+#  ncases = len(mycompsets)
+#  mycases=[]
+#  mysites=[]
+#  for c in range(0,ncases):
+#    mycases.append(options.mycase)
+#    mysites.append(options.site)  
+#  mytitles = mycompsets
+#else:
+#  mytitles=[]
+#  mytitles.append(mysites[0])
+#
+#if (options.titles != ''):
+#  mytitles = options.titles.split(',')
+
+mysites1 = numpy.char.add(mysites,'_')
+mysites2 = mysites1
+if (len(mycompsets) > 1):
+  for c in range(1,len(mycompsets)):
+    mysites2 = numpy.concatenate((mysites2,mysites1))
+mycompsets1 = numpy.repeat(mycompsets, len(mysites) )
+runnames = numpy.char.add(mysites2,mycompsets1)
+mysites1 = mysites2
+
+if (len(mycases) == 0):
+  if (mycases[0] != ''):
+    mycases1 = numpy.char.add(mycases,'_') 
+    mycases2 = mycases1
+    for c in range(1,len(runnames)):
+      mycases2 = numpy.concatenate((mycases2,mycases1))
+    runnames = numpy.concatenate((mycases2,runnames))
+    mycases1 = mycases2
+  else:
+    mycases1 = mycases
+    for c in range(1,len(runnames)):
+      mycases1 = numpy.concatenate((mycases1,mycases))
+
 else:
-  mytitles=[]
-  mytitles.append(mysites[0])
+  runnames1 = runnames 
+  mysites3  = mysites2
+  mycompsets2 = mycompsets1
+  #print(mycases)
+  for c in range(1,len(mycases)):
+    runnames1   = numpy.concatenate((runnames1,runnames))
+    mysites3    = numpy.concatenate((mysites3,mysites2))
+    mycompsets2 = numpy.concatenate((mycompsets2,mycompsets1))
+  mysites1  = mysites3
+  mycompsets1 = mycompsets2
+  mycases1 = mycases
+  #print(mycases)
+  for c in range(0,len(mycases1)):
+    if (mycases1[c] != ''):
+      mycases1[c] = mycases1[c]+'_'
+      #print(mycases)
+  mycases1 = numpy.repeat(mycases1, len(runnames) )
+  runnames = numpy.char.add(mycases1,runnames1) 
+  #print(mycases)
+
+mycases = options.mycase.split(',') # APW: IDK why but this is necessary as the above code is adding _ to mycases
+ncases = len(runnames)
 
 if (options.titles != ''):
   mytitles = options.titles.split(',')
+else:
+  mytitles = runnames
+
+print('')
+print('')
+print('Simulations that will be plotted:')
+print(runnames)
+print('')
+print(mycases1)
+print('')
+print(mysites1)
+print('')
+print(mycompsets1)
+print('')
+#sys.exit(0)
 
 obs     = options.myobs
 myobsdir = '/lustre/or-hydra/cades-ccsi/scratch/dmricciuto/fluxnet'
@@ -189,12 +258,15 @@ err_toplot  = numpy.zeros([ncases, nvar, 2000000], numpy.float)+numpy.NaN
 snum        = numpy.zeros([ncases], numpy.int)
 
 for c in range(0,ncases):
-    if (mycases[c] == ''):
-        mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'/run/'
-    else:
-        mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+mycompsets[c]+'/run/'
+    mydir = cesmdir+'/'+runnames[c]+'/run/'
+#    if (mycases[c] == ''):
+#        mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'/run/'
+#    else:
+#        mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+mycompsets[c]+'/run/'
+    print('')
     print('Processing '+mydir)
-
+    #if (os.path.exists(mydir)):
+    #else:
     #query lnd_in file for output file information
     if ((options.myhist_mfilt == -999 or options.myhist_nhtfrq == -999)):
         #print('Obtaining output resolution information from lnd_in')
@@ -362,8 +434,9 @@ for c in range(0,ncases):
                 yst=str(10000+y)[1:5]
                 for m in range(0,12):
                     mst=str(101+m)[1:3]
-                    myfile = os.path.abspath(mydir+'/'+mycases[c]+'_'+mysites[c]+'_'+mycompsets[c]+ \
-                                             ".clm2."+hst+"."+yst+"-"+mst+".nc")
+                    #myfile = os.path.abspath(mydir+'/'+mycases[c]+'_'+mysites[c]+'_'+mycompsets[c]+ \
+                    #                         ".clm2."+hst+"."+yst+"-"+mst+".nc")
+                    myfile = os.path.abspath(mydir+'/'+runnames[c]+".clm2."+hst+"."+yst+"-"+mst+".nc")
                     #get units/long names from first file
                     if (os.path.exists(myfile)):
                         if (y == ystart and m == 0 and c == 0):
@@ -418,36 +491,47 @@ for c in range(0,ncases):
                 starti = 1
             for n in range(0,nc):
                 if ((options.spinup)and n== 0):
-                    if (mycases[c] == ''):
-                        if (options.ad_Pinit):
-                            mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'_ad_spinup/run/'
-                        else:
-                            mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c].replace('CNP','CN')+ \
-	                          '_ad_spinup/run/'
+#                    if (mycases[c] == ''):
+#                        if (options.ad_Pinit):
+#                            mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'_ad_spinup/run/'
+#                        else:
+#                            mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c].replace('CNP','CN')+ \
+#	                          '_ad_spinup/run/'
+#                    else:
+#                        if (options.ad_Pinit):
+#                            mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
+#                                    mycompsets[c]+'_ad_spinup/run/'
+#                            thiscompset = mycompsets[c]+'_ad_spinup'
+#                        else:
+#                            mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
+#                                    mycompsets[c].replace('CNP','CN')+'_ad_spinup/run/'
+#                            thiscompset = mycompsets[c].replace('CNP','CN')+'_ad_spinup'
+                    if (options.ad_Pinit):
+                        mydir = cesmdir+'/'+mycases1[c]+mysites1[c]+mycompsets1[c]+'_ad_spinup/run/'
+                        thiscompset = mycompsets1[c]+'_ad_spinup'
                     else:
-                        if (options.ad_Pinit):
-                            mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
-                                    mycompsets[c]+'_ad_spinup/run/'
-                            thiscompset = mycompsets[c]+'_ad_spinup'
-                        else:
-                            mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
-                                    mycompsets[c].replace('CNP','CN')+'_ad_spinup/run/'
-                            thiscompset = mycompsets[c].replace('CNP','CN')+'_ad_spinup'
+                        mydir = cesmdir+'/'+mycases1[c]+mysites1[c]+ \
+                                mycompsets1[c].replace('CNP','CN')+'_ad_spinup/run/'
+                        thiscompset = mycompsets1[c].replace('CNP','CN')+'_ad_spinup'
                 else:
-                    if (mycases[c] == ''):
-                        mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'/run/'
-                    else:
-                        mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
-                                mycompsets[c]+'/run/'
-                    thiscompset = mycompsets[c]
+#                    if (mycases[c] == ''):
+#                        mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'/run/'
+#                    else:
+#                        mydir = cesmdir+'/'+mycases[c]+'_'+mysites[c]+'_'+ \
+#                                mycompsets[c]+'/run/'
+#                    thiscompset = mycompsets[c]
+                    mydir = cesmdir+'/'+mycases1[c]+mysites1[c]+mycompsets1[c]+'/run/'
+                    thiscompset = mycompsets1[c]
                 for y in range(starti,nfiles+1):   #skip first file in spinup
                     yst=str(10000+ystart+(y*nypf))[1:5]
-                    if (mycases[c].strip() == ''):
-                        myfile = os.path.abspath(mydir+'/'+mycases[c]+'_'+thiscompset+".clm2."+hst+ \
-                                                 "."+yst+"-01-01-00000.nc")
-                    else:
-                        myfile = os.path.abspath(mydir+'/'+mycases[c]+"_"+mysites[c]+'_'+thiscompset+ \
-                                                 ".clm2."+hst+"."+yst+"-01-01-00000.nc")
+#                    if (mycases[c].strip() == ''):
+#                        myfile = os.path.abspath(mydir+'/'+mycases[c]+'_'+thiscompset+".clm2."+hst+ \
+#                                                 "."+yst+"-01-01-00000.nc")
+#                    else:
+#                        myfile = os.path.abspath(mydir+'/'+mycases[c]+"_"+mysites[c]+'_'+thiscompset+ \
+#                                                 ".clm2."+hst+"."+yst+"-01-01-00000.nc")
+                    myfile = os.path.abspath(mydir+'/'+mycases1[c]+mysites1[c]+thiscompset+ \
+                                             ".clm2."+hst+"."+yst+"-01-01-00000.nc")
                     if (os.path.exists(myfile)):
                         if (n == 0):
                             ylast = y
@@ -658,7 +742,8 @@ for v in range(0,len(myvars)):
                 myvar[:,c] = obs_toplot[c,v,0:snum[c]]*scalefac   #changed for gridcell
             if (v == 0):
                 myname = outdata.variables['site_name']
-                myname[c,0:6] = str(mysites[c])[0:6]   #changed for gridcell
+                #myname[c,0:6] = str(mysites[c])[0:6]   #changed for gridcell
+                myname[c,0:6] = str(mysites1[c])[0:6]   #changed for gridcell
                 mylat = outdata.variables['lat']
                 mylat[c] = mylat_vals[c]
                 mylon = outdata.variables['lon']
