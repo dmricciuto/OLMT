@@ -34,7 +34,7 @@ parser.add_option("--csmdir", dest="mycsmdir", default='', \
                   help = 'Base CESM directory (default = ..)')
 parser.add_option("--cases", dest="mycase", default='', \
                   help = "name of case id prefixs to plot (comma delmited)")
-parser.add_option("--compset", dest="compset", default="I20TRCLM45CN", \
+parser.add_option("--compset", dest="compset", default="I20TRELMCN", \
                   help = "Compset to plot")
 parser.add_option("--titles", dest="titles", default='', \
                   help = "titles of case to plot (for legend)")
@@ -202,12 +202,12 @@ print('')
 print('Simulations that will be plotted:')
 print(runnames)
 print('')
-print(mycases1)
-print('')
-print(mysites1)
-print('')
-print(mycompsets1)
-print('')
+#print(mycases1)
+#print('')
+#print(mysites1)
+#print('')
+#print(mycompsets1)
+#print('')
 #sys.exit(0)
 
 obs     = options.myobs

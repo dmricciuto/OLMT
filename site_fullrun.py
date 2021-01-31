@@ -561,14 +561,17 @@ for row in AFdatareader:
             nutrients = 'CN'
         else: 
             nutrients = 'CNP'
+
         if (options.centbgc):
             decomp_model = 'CNT'
         else:
             decomp_model = 'CTC'
+
         if (options.eca):
             mycompset = nutrients+'ECA'+decomp_model
         elif (options.fates):
-            mycompset = 'CLM45ED'
+            #mycompset = 'CLM45ED'
+            mycompset = 'ELMFATES'
         else:
             mycompset = nutrients+'RD'+decomp_model+'BC'
 
@@ -577,10 +580,12 @@ for row in AFdatareader:
         else:
             mycompset_adsp = mycompset
         if (options.crop):
-            mycompset = 'CLM45CNCROP'
+            #mycompset = 'CLM45CNCROP'
+            mycompset = 'ELMCNCROP'
             mycompset_adsp = mycompset   
         if (options.fates):
-            mycompset = 'CLM45ED'
+#            mycompset = 'CLM45ED'
+            mycompset = 'ELMFATES'
             mycompset_adsp = mycompset
         myexe = 'e3sm.exe'
         if ('clm5' in options.csmdir):
@@ -690,7 +695,8 @@ for row in AFdatareader:
                    +' --hist_nhtfrq '+str(options.hist_nhtfrq_spinup)
         if (options.cpl_bypass):
             if (options.sp):
-              cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
+              #cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
+              cmd_fnsp = cmd_fnsp+' --compset ICBELMBC'
             else:
               if (options.crop or options.fates):
                 cmd_fnsp = cmd_fnsp+' --compset ICB'+mycompset
@@ -946,14 +952,18 @@ for row in AFdatareader:
             if (options.cpl_bypass):
                 modelst = 'ICB1850'+mycompset
                 if (options.sp):
-                  modelst = 'ICBCLM45BC'
+                  #modelst = 'ICBCLM45BC'
+                  modelst = 'ICBELMBC'
                 if (options.crop):
-                  modelst = 'ICBCLM45CNCROP'
+                  #modelst = 'ICBCLM45CNCROP'
+                  modelst = 'ICBELMCNCROP'
                 if (options.fates):
-                  modelst = 'ICBCLM45ED'
+#                  modelst = 'ICBCLM45ED'
+                  modelst = 'ICBELMFATES'
             else:
                 if (options.fates):
-                    modelst = 'I1850CLM45ED'
+                    #modelst = 'I1850CLM45ED'
+                    modelst = 'I1850ELMFATES'
 
             basecase = site
             if (mycaseid != ''):

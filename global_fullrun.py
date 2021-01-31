@@ -550,7 +550,8 @@ mymodel_fnsp = compset_type+'1850'+mymodel+'BC'
 mymodel_adsp = mymodel_fnsp.replace('CNP','CN')
 mymodel_trns = mymodel_fnsp.replace('1850','20TR')
 if (options.sp):
-    mymodel_fnsp = compset_type+'CLM45BC'
+    #mymodel_fnsp = compset_type+'CLM45BC'
+    mymodel_fnsp = compset_type+'ELMBC'
     options.noad = True
     options.notrans = True
 
@@ -687,7 +688,8 @@ if (options.mc_ensemble <= 0):
     elif ('20TR' in c):
         model_startdate=1850
         run_n_total = int(translen)
-    elif ('ICBCLM45' in c):
+    #elif ('ICBCLM45' in c):
+    elif ('ICBELM' in c):
         if (int(options.run_startyear) > 0):
           model_startdate = int(options.run_startyear)
           run_n_total = int(fsplen)

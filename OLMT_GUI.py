@@ -492,9 +492,11 @@ class Frame(wx.Frame):
         else:
             nucom = nutrient+'RD'+decomp+'BC'
         if (myspmode):
-            compset="ICLM45"
+            #compset="ICLM45"
+            compset="IELM"
             if (mycpl_bypass):
-                compset="ICLM45CB"
+                #compset="ICLM45CB"
+                compset="IELMCB"
         else:
             compset = prefix+cdate+nucom
         myvar=''
@@ -669,9 +671,11 @@ class Frame(wx.Frame):
         else:
             nucom = nutrient+'RD'+decomp+'BC'
         if (myspmode):
-            compset="ICLM45"
+            #compset="ICLM45"
+            compset="IELM"
             if (mycpl_bypass):
-                compset="ICLM45CB"
+                #compset="ICLM45CB"
+                compset="IELMCB"
         else:
             compset = prefix+cdate+nucom
        
