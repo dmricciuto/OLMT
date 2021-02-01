@@ -436,7 +436,8 @@ for c in range(0,ncases):
                     mst=str(101+m)[1:3]
                     #myfile = os.path.abspath(mydir+'/'+mycases[c]+'_'+mysites[c]+'_'+mycompsets[c]+ \
                     #                         ".clm2."+hst+"."+yst+"-"+mst+".nc")
-                    myfile = os.path.abspath(mydir+'/'+runnames[c]+".clm2."+hst+"."+yst+"-"+mst+".nc")
+                    #myfile = os.path.abspath(mydir+'/'+runnames[c]+".clm2."+hst+"."+yst+"-"+mst+".nc")
+                    myfile = os.path.abspath(mydir+'/'+runnames[c]+".elm."+hst+"."+yst+"-"+mst+".nc")
                     #get units/long names from first file
                     if (os.path.exists(myfile)):
                         if (y == ystart and m == 0 and c == 0):
@@ -530,8 +531,10 @@ for c in range(0,ncases):
 #                    else:
 #                        myfile = os.path.abspath(mydir+'/'+mycases[c]+"_"+mysites[c]+'_'+thiscompset+ \
 #                                                 ".clm2."+hst+"."+yst+"-01-01-00000.nc")
+#                    myfile = os.path.abspath(mydir+'/'+mycases1[c]+mysites1[c]+thiscompset+ \
+#                                             ".clm2."+hst+"."+yst+"-01-01-00000.nc")
                     myfile = os.path.abspath(mydir+'/'+mycases1[c]+mysites1[c]+thiscompset+ \
-                                             ".clm2."+hst+"."+yst+"-01-01-00000.nc")
+                                             ".elm."+hst+"."+yst+"-01-01-00000.nc")
                     if (os.path.exists(myfile)):
                         if (n == 0):
                             ylast = y
