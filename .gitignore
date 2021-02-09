@@ -8,3 +8,5 @@ srcmods*
 run.*
 *.pyc
 *.run.o*
+slurm-*.out
+
