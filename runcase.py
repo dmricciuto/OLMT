@@ -21,6 +21,9 @@ from optparse import OptionParser
 
 parser = OptionParser()
 
+# general OLMT options
+
+
 parser.add_option("--caseidprefix", dest="mycaseid", default="", \
                   help="Unique identifier to include as a prefix to the case name")
 parser.add_option("--caseroot", dest="caseroot", default='', \

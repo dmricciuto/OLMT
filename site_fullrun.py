@@ -101,7 +101,9 @@ parser.add_option("--gswp3", dest="gswp3", default=False, action="store_true", \
 parser.add_option("--princeton", dest="princeton", default=False, action="store_true", \
                   help = 'Use Princeton meteorology')
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
-                  help = 'CLM timestep (hours)')
+                  help = 'co2 data filename')
+parser.add_option("--eco2_file", dest="eco2_file", default="", \
+                  help = 'elevated co2 data filename, will spawn a second transient simulation using this file for co2')
 parser.add_option("--add_co2", dest="addco2", default=0.0, \
                   help = 'CO2 (ppmv) to add to atmospheric forcing')
 parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
@@ -414,8 +416,9 @@ for row in AFdatareader:
         ncycle   = endyear-startyear+1   #number of years in met cycle
         ny_ad = options.ny_ad
         ny_fin = options.nyears_final_spinup
+
+        #AD spinup and final spinup lengths must be multiples of met data cyle.
         if (int(options.ny_ad) % ncycle != 0):
-          #AD spinup and final spinup lengths must be multiples of met data cyle.
           ny_ad = str(int(ny_ad) + ncycle - (int(ny_ad) % ncycle))
         if (int(options.nyears_final_spinup) % ncycle !=0 and options.noad == False):
           ny_fin = str(int(ny_fin) + ncycle - (int(ny_fin) % ncycle))
@@ -427,6 +430,11 @@ for row in AFdatareader:
                 print(endyear_trans, site_endyear)
                 translen = min(site_endyear,endyear_trans)-1850+1
 
+        fsplen = int(ny_fin)
+ 
+        #get align_year
+        year_align = (endyear-1850+1) % ncycle
+
         #use site parameter file if it exists
         if (options.siteparms):
             if (os.path.exists(PTCLMfiledir+'/parms_'+site)):
@@ -435,10 +443,8 @@ for row in AFdatareader:
             else:
                 options.parm_file = ''
 
-        fsplen = int(ny_fin)
- 
-        #get align_year
-        year_align = (endyear-1850+1) % ncycle
+
+#---------------- build base command for all calls to runcase.py -----------------------------
 
         #print year_align, fsplen
         basecmd = 'python runcase.py --site '+site+' --ccsm_input '+ \
@@ -552,7 +558,7 @@ for row in AFdatareader:
         if (options.domainfile != ''):
           basecmd = basecmd+' --domainfile '+options.domainfile 
 
-#---------------- build commands for runCLM.py -----------------------------
+#---------------- build commands for runcase.py -----------------------------
 
         #ECA or CTC
         if (options.c_only):
@@ -733,7 +739,9 @@ for row in AFdatareader:
         if (not options.nofire):
             #Turn wildfire off in transient simulations (disturbances are known)
             cmd_trns = cmd_trns + ' --nofire'
-        #transient phase 2 (CRU-NCEP only, without coupler bypass)
+
+        #transient phase 2 
+        #(CRU-NCEP only, without coupler bypass)
         if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
             basecase=basecase.replace('1850','20TR')+'_phase1'
             thistranslen = site_endyear - 1921 + 1
@@ -744,6 +752,20 @@ for row in AFdatareader:
                 options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
                 ' --compset I20TR'+mycompset+' --nopointdata'
             print(cmd_trns2)
+
+        # experimental manipulation, without coupler bypass
+        elif ((options.eco2_file != '') and not options.cpl_bypass):
+            basecase=basecase.replace('1850','20TR')
+            basecmd=basecmd.replace(options.co2_file,options.eco2_file)
+            thistranslen = ncycle 
+            cmd_trns2 = basecmd+' --trans2 --finidat_case '+basecase+ \
+                ' --finidat_year '+str(startyear)+' --run_units nyears --branch ' \
+                +' --run_n '+str(thistranslen)+' --align_year 1921'+ \
+                ' --hist_nhtfrq '+options.hist_nhtfrq+' --hist_mfilt '+ \
+                options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
+                ' --compset I20TR'+mycompset+' --nopointdata'
+            print(cmd_trns2)
+           
 
 #---------------------------------------------------------------------------------
 
