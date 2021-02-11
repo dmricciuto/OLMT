@@ -202,12 +202,12 @@ print('')
 print('Simulations that will be plotted:')
 print(runnames)
 print('')
-print(mycases1)
-print('')
-print(mysites1)
-print('')
-print(mycompsets1)
-print('')
+#print(mycases1)
+#print('')
+#print(mysites1)
+#print('')
+#print(mycompsets1)
+#print('')
 #sys.exit(0)
 
 obs     = options.myobs
@@ -786,8 +786,10 @@ for v in range(0,len(myvars)):
         plt.ylabel(myvars[v]+' ('+var_units[v]+')')
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        if (v % options.nperpage == options.nperpage-1):
-          ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),prop={'size': 10})
+        #if (v % options.nperpage == options.nperpage-1):
+        #  ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),prop={'size': 10})
+        if (v % options.nperpage == 0):
+          ax.legend(loc='upper left', bbox_to_anchor=(0, 1.3), prop={'size': 8}, ncol=2)
         plt.title(var_long_names[v]) #+' at '+mysites[0])
         if (options.ylog):
             plt.yscale('log')
