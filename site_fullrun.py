@@ -103,7 +103,7 @@ parser.add_option("--princeton", dest="princeton", default=False, action="store_
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'co2 data filename')
 parser.add_option("--eco2_file", dest="eco2_file", default="", \
-                  help = 'elevated co2 data filename, will spawn a second transient simulation using this file for co2')
+                  help = 'elevated co2 data filename, will spawn three transient simulations, using this file for an elevated co2 sim')
 parser.add_option("--add_co2", dest="addco2", default=0.0, \
                   help = 'CO2 (ppmv) to add to atmospheric forcing')
 parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
@@ -424,7 +424,9 @@ for row in AFdatareader:
           ny_fin = str(int(ny_fin) + ncycle - (int(ny_fin) % ncycle))
 
         if (options.nyears_transient == -1):
-            translen = endyear-1850+1        #length of transient run
+            translen = endyear-1850+1            # length of transient run
+            if (options.eco2_file != ''):
+                translen = translen - ncycle     # if experiment sim, stop first transient at exp start yr - 1
             if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
                 options.princeton or options.cruncepv8)):
                 print(endyear_trans, site_endyear)
@@ -727,7 +729,10 @@ for row in AFdatareader:
             else:
               cmd_trns = cmd_trns+' --compset ICB20TR'+mycompset
         else:
-            cmd_trns = cmd_trns+' --compset I20TR'+mycompset
+            if (options.fates):
+              cmd_trns = cmd_trns+' --istrans --compset I'+mycompset
+            else:
+              cmd_trns = cmd_trns+' --compset I20TR'+mycompset
         if (options.spinup_vars):
             cmd_trns = cmd_trns + ' --spinup_vars'
         if (options.trans_varlist != ''):
@@ -751,21 +756,31 @@ for row in AFdatareader:
                 ' --hist_nhtfrq '+options.hist_nhtfrq+' --hist_mfilt '+ \
                 options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
                 ' --compset I20TR'+mycompset+' --nopointdata'
-            print(cmd_trns2)
+            #print(cmd_trns2)
 
         # experimental manipulation, without coupler bypass
+        # APW: check align_year is correct, 
+        # APW: do we want different outputs? Maybe the full set here and a reduced set for the initial transient?
         elif ((options.eco2_file != '') and not options.cpl_bypass):
-            basecase=basecase.replace('1850','20TR')
-            basecmd=basecmd.replace(options.co2_file,options.eco2_file)
-            thistranslen = ncycle 
-            cmd_trns2 = basecmd+' --trans2 --finidat_case '+basecase+ \
+            basecase=basecase.replace('1850','')+'_trans'
+
+            # ambient CO2 run 
+            cmd_trns2 = basecmd+' --transtag aCO2 --istrans --finidat_case '+basecase+ \
                 ' --finidat_year '+str(startyear)+' --run_units nyears --branch ' \
-                +' --run_n '+str(thistranslen)+' --align_year 1921'+ \
+                +' --run_n '+str(ncycle)+' --align_year '+str(startyear)+ \
                 ' --hist_nhtfrq '+options.hist_nhtfrq+' --hist_mfilt '+ \
                 options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
-                ' --compset I20TR'+mycompset+' --nopointdata'
-            print(cmd_trns2)
-           
+                ' --compset I'+mycompset+' --nopointdata'
+          
+            # elevated CO2 run 
+            basecmd_eco2=basecmd.replace(options.co2_file,options.eco2_file)
+            cmd_trns3 = basecmd+' --transtag eCO2 --istrans --finidat_case '+basecase+ \
+                ' --finidat_year '+str(startyear)+' --run_units nyears --branch ' \
+                +' --run_n '+str(ncycle)+' --align_year '+str(startyear)+ \
+                ' --hist_nhtfrq '+options.hist_nhtfrq+' --hist_mfilt '+ \
+                options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
+                ' --compset I'+mycompset+' --nopointdata'
+          
 
 #---------------------------------------------------------------------------------
 
@@ -783,7 +798,7 @@ for row in AFdatareader:
 
         #If not the first site, create point data here
         if ((sitenum > 0) and not options.nopointdata):
-                print('Creating point data for '+site)
+                print('\n\nCreating point data for '+site+'\n')
                 ptcmd = 'python makepointdata.py '+ \
                         ' --site '+site+' --sitegroup '+options.sitegroup+ \
                         ' --ccsm_input '+ccsm_input+' --model '+mymodel
@@ -791,6 +806,7 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --nopftdyn'
                 if (int(options.mypft) >= 0):
                     ptcmd = ptcmd+' --pft '+str(options.mypft)
+                print(ptcmd)
                 result = os.system(ptcmd)
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)
@@ -798,16 +814,17 @@ for row in AFdatareader:
 
         #Build Cases
         if (options.noad == False):
-            print('\nSetting up ad_spinup case\n')
+            print('\n\nSetting up ad_spinup case\n')
             if (sitenum == 0):
                 ad_case_firstsite = ad_case
-                result = os.system(cmd_adsp)
                 print(cmd_adsp+'\n')
+                result = os.system(cmd_adsp)
             else:
                 ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                         ad_case_firstsite+' --site_orig '+firstsite +\
                         ' --site_new '+site+' --nyears '+str(ny_ad)+' --spin_cycle ' \
                         +str(endyear-startyear+1)
+                print(ptcmd)
                 result = os.system(ptcmd)
             if (result > 0):
                 print('Site_fullrun:  Error in runcase.py for ad_spinup ')
@@ -815,7 +832,7 @@ for row in AFdatareader:
         else:
           ad_case_firstsite = ad_case
 
-        print('\nSetting up final spinup case\n')
+        print('\n\nSetting up final spinup case\n')
         if (sitenum == 0):
             fin_case_firstsite = ad_case_firstsite.replace('_ad_spinup','')
             if (nutrients == 'CNP' and not options.ad_Pinit):
@@ -827,35 +844,58 @@ for row in AFdatareader:
                     fin_case_firstsite+' --site_orig '+firstsite +\
                     ' --site_new '+site+' --nyears '+str(ny_fin)+' --finidat_year ' \
                     +str(int(ny_ad)+1)+' --spin_cycle '+str(endyear-startyear+1)
+            print(ptcmd)
             result = os.system(ptcmd)
             if (result > 0):
                 print('Site_fullrun:  Error in runcase.py final spinup')
                 sys.exit(1)
 
         if (options.notrans == False):
-            print('\nSetting up transient case\n')
+            print('\n\nSetting up transient case\n')
             if (sitenum == 0):
                 if (options.crop or options.fates):
                   tr_case_firstsite = fin_case_firstsite+'_trans'
                 else:
                   tr_case_firstsite = fin_case_firstsite.replace('1850','20TR')
+                print(cmd_trns)
                 result = os.system(cmd_trns)
             else:
                  ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                         tr_case_firstsite+' --site_orig '+firstsite +\
                         ' --site_new '+site+' --finidat_year '+str(int(ny_fin)+1)+ \
                         ' --nyears '+str(translen)
+                 print(ptcmd)
                  result = os.system(ptcmd)
-            if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
-                 print('\nSetting up transient case phase 2\n')
-                 result = os.system(cmd_trns2)
-
             if (result > 0):
                 print('Site_fullrun:  Error in runcase.py for transient')
                 sys.exit(1)
 
+            if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
+                print('\n\nSetting up transient case phase 2\n')
+                print(cmd_trns2)
+                result = os.system(cmd_trns2)
+                if (result > 0):
+                    print('Site_fullrun:  Error in runcase.py for transient 2')
+                    sys.exit(1)
+
+
+            # experiment simulations
+            if ((options.eco2_file != '') and not options.cpl_bypass):
+                print('\n\nSetting up experiment transient case 2\n')
+                result = os.system(cmd_trns2)
+                print(cmd_trns2)
+                if (result > 0):
+                    print('Site_fullrun:  Error in runcase.py for transient 2')
+                    sys.exit(1)
+                print('\nSetting up experiemnt transient case 3\n')
+                print(cmd_trns3)
+                result = os.system(cmd_trns3)
+                if (result > 0):
+                    print('Site_fullrun:  Error in runcase.py for transient 3')
+                    sys.exit(1)
+
                  
-        #Create .pbs scripts
+        # Create .pbs etc scripts for each case
         case_list = []
         if (options.noad == False):
             case_list.append('ad_spinup')
@@ -866,11 +906,15 @@ for row in AFdatareader:
             case_list.append('spinup_diags')
         if (options.notrans == False):
             case_list.append('transient')
+            if (options.eco2_file):
+                case_list.append('trans_aco2')
+                case_list.append('trans_eco2')
             if (options.diags):
                 case_list.append('trans_diags')
-        
+        #print(case_list)
+        #sys.exit('temp stop pre submit script copy & edit')
+
         for c in case_list:
-            
             mysubmit_type = 'qsub'
             groupnum = int(sitenum/npernode)
             if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
@@ -980,11 +1024,17 @@ for row in AFdatareader:
             basecase = site
             if (mycaseid != ''):
                 basecase = mycaseid+'_'+site
+
             if (sitenum == 0 and 'ad_spinup' in c):
+            #if ('ad_spinup' in c):
                 if (options.ad_Pinit):
                     output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_ad_spinup/\n")
                 else:
                     output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/\n")
+                #if (sitenum == 0):
+                #    output.write("./case.submit --no-batch &\n")
+                #else:
+                #    output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
                 output.write("./case.submit --no-batch &\n")
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
@@ -992,6 +1042,7 @@ for row in AFdatareader:
                 else:
                     output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/run\n")
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
+
             if ('iniadjust' in c):
                 output.write("cd "+os.path.abspath(".")+'\n')
                 if (options.centbgc):
@@ -1002,6 +1053,7 @@ for row in AFdatareader:
                     output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ad_case+' --restart_year '+ \
                                  str(int(ny_ad)+1)+'\n')
+
             if ('spinup_diags' in c):
                  if (options.cpl_bypass):
                      mycompsetcb = 'ICB1850'+mycompset
@@ -1020,24 +1072,53 @@ for row in AFdatareader:
                  output.write(plotcmd+' --vars TLAI,NPP,GPP,TOTVEGC,TOTSOMC\n') 
                  if (options.machine == 'cades'):
                      output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
+
             if (sitenum == 0 and 'fn_spinup' in c):
                 output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"\n")
                 output.write('./case.submit --no-batch &\n')
             elif ('fn_spinup' in c):
                 output.write("cd "+runroot+'/'+basecase+"_"+modelst+"/run\n")
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
+
             if (sitenum == 0 and 'transient' in c):
-                if (options.crop or options.fates):
+                if (options.crop):
                   output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_trans\n")
+                elif (options.fates):
+                  output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans\n")
                 else:
                   output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"\n")
                 output.write('./case.submit --no-batch &\n')
             elif ('transient' in c):
-                if (options.crop or options.fates):
+                if (options.crop):
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst+"_trans/run\n")
+                elif (options.fates):
+                  output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans/run\n")
                 else:
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"/run\n")
+
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
+
+            elif ('trans_' in c and c != 'trans_diags'):
+                if (sitenum == 0):
+                    simroot=caseroot
+                    line2='./case.submit --no-batch &\n'
+                else: 
+                    simroot=runroot
+                    line2=runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n'
+
+                if (options.crop):
+                  output.write("cd "+simroot+'/'+basecase+"_"+modelst+"_"+c+"/run\n")
+                elif (options.fates):
+                  #output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"/run\n")
+                  output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"\n")
+                else:
+                  output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+c.replace('trans_','')+"/run\n")
+                output.write(line2) 
+#                if (sitenum == 0):
+#                    output.write('./case.submit --no-batch &\n')
+#                else: 
+#                    output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
+
             if ('trans_diags' in c):
                  if (options.cpl_bypass):
                      if (options.crop or options.fates):
@@ -1076,7 +1157,12 @@ for row in AFdatareader:
             output.write('sleep 1\n')
             output.close()
 
-        #if ensemble simulations requested, submit jobs created by pointclm.py in correct order
+
+# submit jobs created by runcase.py 
+#======================================================#
+
+        #sys.exit('temp stop pre-submit')
+        #if ensemble simulations requested, submit jobs created by runcase.py in correct order
         if (options.ensemble_file != ''):
             cases=[]
             #build list of cases for fullrun

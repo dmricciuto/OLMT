@@ -22,66 +22,102 @@ from optparse import OptionParser
 parser = OptionParser()
 
 # general OLMT options
-
-
 parser.add_option("--caseidprefix", dest="mycaseid", default="", \
                   help="Unique identifier to include as a prefix to the case name")
 parser.add_option("--caseroot", dest="caseroot", default='', \
                   help = "case root directory (default = ./, i.e., under scripts/)")
-parser.add_option("--constraints", dest="constraints", default="", \
-                  help="Directory containing model constraints")
-parser.add_option("--dailyrunoff", dest="dailyrunoff", default=False, \
-                 action="store_true", help="Write daily output for hydrology")
-parser.add_option("--diags", dest="diags", default=False, \
-                 action="store_true", help="Write special outputs for diagnostics")
-parser.add_option("--debugq", dest="debug", default=False, \
-                 action="store_true", help='Use debug queue')
 parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
+parser.add_option("--model_root", dest="csmdir", default='', \
+                  help = "base model directory")
+parser.add_option("--ccsm_input", dest="ccsm_input", default='', \
+                  help = "input data directory for CESM (required)")
 parser.add_option('--project', dest='project',default='', \
                  help='Set project')
 parser.add_option("--exeroot", dest="exeroot", default="", \
 	         help="Location of executable")
-parser.add_option("--istrans", dest="istrans", default=False, action="store_true",\
-                 help="Force compset to act like transient")
-parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
-                  help = 'latitude range for regional run')
-parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
-                  help = 'longitude range for regional run')
-parser.add_option("--humhol", dest="humhol", default=False, \
-                  help = 'Use hummock/hollow microtopography', action="store_true")
-parser.add_option("--mask", dest="mymask", default='', \
-                  help = 'Mask file to use (regional only)')
+parser.add_option("--constraints", dest="constraints", default="", \
+                  help="Directory containing model constraints")
 parser.add_option("--metdata_dir", dest="metdata_dir", default='', \
                   help = 'Directory containing cpl_bypass met data (site only)')
-parser.add_option("--model", dest="mymodel", default='', \
-                  help = 'Model to use (ELM,CLM5)')
-parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
-                  help = "File containing met data (cpl_bypass only)")
-parser.add_option("--namelist_file",  dest="namelist_file", default='', \
-                  help="File containing custom namelist options for user_nl_clm")
-parser.add_option("--ilambvars", dest="ilambvars", default=False, \
-                 action="store_true", help="Write special outputs for diagnostics")
-parser.add_option("--dailyvars", dest="dailyvars", default=False, \
-                 action="store_true", help="Write daily ouptut variables")
-parser.add_option("--res", dest="res", default="CLM_USRDAT", \
-                      help='Resoultion for global simulation')
-parser.add_option("--point_list", dest="point_list", default='', \
-                  help = 'File containing list of points to run')
 parser.add_option("--pft", dest="mypft", default=-1, \
                   help = 'Use this PFT for all gridcells')
-parser.add_option("--site_forcing", dest="site_forcing", default='', \
-                  help = '6-character FLUXNET code for forcing data')
-parser.add_option("--site", dest="site", default='', \
-                  help = '6-character FLUXNET code to run (required)')
-parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
-                  help = "site group to use (default AmeriFlux)")
+parser.add_option("--parm_file", dest="parm_file", default='',
+                  help = 'file for parameter modifications')
+parser.add_option("--parm_vals", dest="parm_vals", default="", \
+                  help = 'User specified parameter values')
+parser.add_option("--parm_file_P", dest="parm_file_P", default='',
+                  help = 'file for P parameter modifications')
+
+
+# general model build options
+parser.add_option("--machine", dest="machine", default = '', \
+                  help = "machine to\n")
+parser.add_option("--compiler", dest="compiler", default='', \
+	          help = "compiler to use (pgi, gnu)")
+parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
+                      help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
+parser.add_option("--diags", dest="diags", default=False, \
+                 action="store_true", help="Write special outputs for diagnostics")
+parser.add_option("--debugq", dest="debug", default=False, \
+                 action="store_true", help='Use debug queue')
+parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
+                  help = 'Copy sourcemods from this location')
+
+# CASE options
 parser.add_option("--coldstart", dest="coldstart", default=False, \
                   help = "set cold start (mutually exclusive w/finidat)", \
                   action="store_true")
 parser.add_option("--compset", dest="compset", default='I1850CNPRDCTCBC', \
                   help = "component set to use (required)\n"
                          "Currently supports ONLY *CLM45(CN) compsets")
+
+
+
+
+
+parser.add_option("--istrans", dest="istrans", default=False, action="store_true",\
+                 help="Force compset to act like transient")
+parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
+                  help = 'latitude range for regional run')
+parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
+                  help = 'longitude range for regional run')
+
+parser.add_option("--humhol", dest="humhol", default=False, \
+                  help = 'Use hummock/hollow microtopography', action="store_true")
+
+parser.add_option("--mask", dest="mymask", default='', \
+                  help = 'Mask file to use (regional only)')
+
+parser.add_option("--model", dest="mymodel", default='', \
+                  help = 'Model to use (ELM,CLM5)')
+
+parser.add_option("--namelist_file",  dest="namelist_file", default='', \
+                  help="File containing custom namelist options for user_nl_clm")
+
+parser.add_option("--ilambvars", dest="ilambvars", default=False, \
+                 action="store_true", help="Write special outputs for diagnostics")
+parser.add_option("--dailyvars", dest="dailyvars", default=False, \
+                 action="store_true", help="Write daily ouptut variables")
+
+parser.add_option("--res", dest="res", default="CLM_USRDAT", \
+                      help='Resoultion for global simulation')
+parser.add_option("--point_list", dest="point_list", default='', \
+                  help = 'File containing list of points to run')
+
+
+# model input options
+parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
+                  help = "site group to use (default AmeriFlux)")
+parser.add_option("--site", dest="site", default='', \
+                  help = '6-character FLUXNET code to run (required)')
+parser.add_option("--site_forcing", dest="site_forcing", default='', \
+                  help = '6-character FLUXNET code for forcing data')
+parser.add_option("--metdir", dest="metdir", default="none", \
+                  help = 'subdirectory for met data forcing')
+
+
+# metdata
 parser.add_option("--cruncep", dest="cruncep", default=False, \
                   help = "use cru-ncep data", action="store_true")
 parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
@@ -98,22 +134,28 @@ parser.add_option("--livneh", dest="livneh", default=False, \
                   action="store_true", help = "Livneh correction to CRU precip (CONUS only)")
 parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = "Daymet correction to GSWP3 precip (CONUS only)")
-parser.add_option("--machine", dest="machine", default = '', \
-                  help = "machine to\n")
-parser.add_option("--compiler", dest="compiler", default='', \
-	          help = "compiler to use (pgi, gnu)")
-parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
-                      help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
+parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
+                  help = "File containing met data (cpl_bypass only)")
+parser.add_option("--add_temperature", dest="addt", default=0.0, \
+                  help = 'Temperature to add to atmospheric forcing')
+parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
+                  help = 'CLM timestep (hours)')
+parser.add_option("--add_co2", dest="addco2", default=0.0, \
+                  help = 'CO2 (ppmv) to add to atmospheric forcing')
+parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin addding temperature')
+parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin addding CO2')
+
+# surface data
+
+
 parser.add_option("--ad_spinup", action="store_true", \
                   dest="ad_spinup", default=False, \
                   help = 'Run accelerated decomposition spinup')
 parser.add_option("--exit_spinup", action="store_true", \
                   dest="exit_spinup", default=False, \
                   help = 'Run exit spinup (CLM 4.0 only)')
-parser.add_option("--model_root", dest="csmdir", default='', \
-                  help = "base model directory")
-parser.add_option("--ccsm_input", dest="ccsm_input", default='', \
-                  help = "input data directory for CESM (required)")
 parser.add_option("--finidat_case", dest="finidat_case", default='', \
                   help = "case containing initial data file to use" \
                   +" (should be in your run directory)")
@@ -134,20 +176,17 @@ parser.add_option("--run_startyear", dest="run_startyear",default=-1, \
 parser.add_option("--rmold", dest="rmold", default=False, action="store_true", \
                   help = 'Remove old case directory with same name' \
                   +" before proceeding")
-parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
-                  help = 'Copy sourcemods from this location')
-parser.add_option("--parm_file", dest="parm_file", default='',
-                  help = 'file for parameter modifications')
-parser.add_option("--parm_vals", dest="parm_vals", default="", \
-                  help = 'User specified parameter values')
-parser.add_option("--parm_file_P", dest="parm_file_P", default='',
-                  help = 'file for P parameter modifications')
+
+# model output options
+parser.add_option("--dailyrunoff", dest="dailyrunoff", default=False, \
+                 action="store_true", help="Write daily output for hydrology")
 parser.add_option("--hist_mfilt", dest="hist_mfilt", default=-1, \
                   help = 'number of output timesteps per file')
 parser.add_option("--hist_nhtfrq", dest="hist_nhtfrq", default=-999, \
                   help = 'output file timestep')
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
                   help = 'Output only selected variables in h0 file (comma delimited)')
+
 #parser.add_option("--queue", dest="queue", default='essg08q', \
 #                  help = 'PBS submission queue')
 parser.add_option("--clean_config", dest="clean_config", default=False, \
@@ -171,12 +210,9 @@ parser.add_option("--ng", dest="ng", default=64, \
                   help = 'number of groups to run in ensmble mode')
 parser.add_option("--tstep", dest="tstep", default=0.5, \
                   help = 'CLM timestep (hours)')
-parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
-                  help = 'CLM timestep (hours)')
+
 parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
                   help = 'number of years to run ad_spinup')
-parser.add_option("--metdir", dest="metdir", default="none", \
-                  help = 'subdirectory for met data forcing')
 parser.add_option("--nopointdata", action="store_true", \
                   dest="nopointdata", help="Do NOT make point data (use data already created)", \
                   default=False)
@@ -219,7 +255,9 @@ parser.add_option("--surfdata_grid", dest="surfdata_grid", default=False, \
 parser.add_option("--include_nonveg", dest="include_nonveg", default=False, \
                   help = 'Include non-vegetated columns/Landunits in surface data')
 parser.add_option("--trans2", dest="trans2", default=False, action="store_true", \
-                  help = 'Tranisnent phase 2 (1901-2010) - CRUNCEP only')
+                  help = 'Transient phase 2 (1901-2010) - CRUNCEP only')
+parser.add_option("--transtag", dest="transtag", default="", \
+                  help = 'Transient experiment runs, generally any tag to append to a casename')
 parser.add_option("--spinup_vars", dest="spinup_vars", default=False, \
                   help = 'Limit output vars in spinup runs', action="store_true")
 parser.add_option("--trans_varlist", dest = "trans_varlist", default='', help = "Transient outputs")
@@ -245,14 +283,6 @@ parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
                   help = 'Which version of fates_nutrient to use (RD or ECA)')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
-parser.add_option("--add_temperature", dest="addt", default=0.0, \
-                  help = 'Temperature to add to atmospheric forcing')
-parser.add_option("--add_co2", dest="addco2", default=0.0, \
-                  help = 'CO2 (ppmv) to add to atmospheric forcing')
-parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
-                  help = 'Date (YYYYMMDD) to begin addding temperature')
-parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
-                  help = 'Date (YYYYMMDD) to begin addding CO2')
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
@@ -472,6 +502,8 @@ if (options.exit_spinup):
     casename = casename+'_exit_spinup'
 if (options.istrans and not "20TR" in compset):
     casename = casename+'_trans'
+if (options.transtag != ""): 
+    casename = casename+'_'+options.transtag
 
 PTCLMfiledir = options.ccsm_input+'/lnd/clm2/PTCLM'
 

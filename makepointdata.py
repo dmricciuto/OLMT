@@ -489,6 +489,7 @@ for n in range(0,n_grids):
                         organic[k][0][0] = 130.0
                     elif (k == 8):
                         organic[k][0][0] = 65.0
+            # APW: this assumes that PFT labels do not change in the PFT file, consider reading from param file
             pft_names=['Bare ground','ENF Temperate','ENF Boreal','DNF Boreal','EBF Tropical', \
                        'EBF Temperate', 'DBF Tropical', 'DBF Temperate', 'DBF Boreal', 'EB Shrub' \
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
