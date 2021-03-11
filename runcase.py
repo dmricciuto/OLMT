@@ -37,6 +37,8 @@ parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
 parser.add_option('--project', dest='project',default='', \
                  help='Set project')
+parser.add_option("--buildroot", dest="bldroot", default="", \
+                 help="Directory where the bld would be created")
 parser.add_option("--exeroot", dest="exeroot", default="", \
 	         help="Location of executable")
 parser.add_option("--istrans", dest="istrans", default=False, action="store_true",\
@@ -61,7 +63,7 @@ parser.add_option("--ilambvars", dest="ilambvars", default=False, \
                  action="store_true", help="Write special outputs for diagnostics")
 parser.add_option("--dailyvars", dest="dailyvars", default=False, \
                  action="store_true", help="Write daily ouptut variables")
-parser.add_option("--res", dest="res", default="CLM_USRDAT", \
+parser.add_option("--res", dest="res", default="ELM_USRDAT", \
                       help='Resoultion for global simulation')
 parser.add_option("--point_list", dest="point_list", default='', \
                   help = 'File containing list of points to run')
@@ -269,6 +271,8 @@ parser.add_option("--lai", dest="lai", default=-999, \
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
+
+mylsm='ELM'
 
 #Set default model root
 if (options.csmdir == ''):
@@ -494,14 +498,19 @@ if (os.path.exists(casedir)):
 print("CASE directory is: "+casedir)
 
 #Construct case build and run directory
-if (options.exeroot == '' or (os.path.exists(options.exeroot) == False)):
-    exeroot = runroot+'/'+casename+'/bld'
-    #if ('titan' in options.machine or 'eos' in options.machine):
-    #    exeroot = os.path.abspath(os.environ['HOME']+ \
-   # 	    '/acme_scratch/pointclm/'+casename+'/bld')
+if (options.exeroot == ''):
+    if (options.bldroot != ''):
+      exeroot = options.bldroot+'/'+casename+'/bld'
+    else:
+      exeroot = runroot+'/'+casename+'/bld'
 else:
-    options.no_build=True
-    exeroot=options.exeroot
+    if (os.path.exists(options.exeroot) == False):
+      print('Error: '+options.exeroot+' not found')
+      sys.exit(1)
+    else:
+      options.no_build=True
+      exeroot=options.exeroot
+
 print("CASE exeroot is: "+exeroot)
 rundir=runroot+'/'+casename+'/run'
 print("CASE rundir is: "+rundir)
@@ -814,10 +823,10 @@ os.system('./xmlchange DIN_LOC_ROOT_CLMFORC='+options.ccsm_input+'/atm/datm7/')
 
 #define mask and resoultion
 if (isglobal == False):
-    os.system('./xmlchange CLM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
+    os.system('./xmlchange '+mylsm+'_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
 if (options.ad_spinup):
     if (options.mymodel == 'ELM'):
-        os.system("./xmlchange --append CLM_BLDNML_OPTS='-bgc_spinup on'")
+        os.system("./xmlchange --append "+mylsm+"_BLDNML_OPTS='-bgc_spinup on'")
     elif (options.mymodel == 'CLM5'):
         os.system('./xmlchange CLM_ACCELERATED_SPINUP=on')
         os.system('./xmlchange CLM_FORCE_COLDSTART=on')
@@ -871,7 +880,7 @@ else:
     #adds capability to run with transient CO2
 if ('20TR' in compset or options.istrans):
     os.system('./xmlchange CCSM_BGC=CO2A')
-    os.system('./xmlchange CLM_CO2_TYPE=diagnostic')
+    os.system('./xmlchange '+mylsm+'_CO2_TYPE=diagnostic')
     if (options.run_startyear == -1):
         os.system('./xmlchange RUN_STARTDATE=1850-01-01')
     
@@ -915,14 +924,14 @@ if (options.clean_config):
 #clm namelist modifications
 for i in range(1,int(options.ninst)+1):
     if (int(options.ninst) == 1):
-        output = open("user_nl_clm",'w')
+        output = open("user_nl_"+mylsm.lower(),'w')
     else:
         if (i < 10):
-            output = open("user_nl_clm_000"+str(i),'w')
+            output = open("user_nl_"+mylsm.lower()+"_000"+str(i),'w')
         elif (i < 100):
-            output = open("user_nl_clm_00"+str(i),'w')
+            output = open("user_nl_"+mylsm.lower()+"_00"+str(i),'w')
         elif (i < 1000):
-            output = open("user_nl_clm_0"+str(i),'w')
+            output = open("user_nl_"+mylsm.lower()+"_0"+str(i),'w')
     output.write('&clm_inparm\n')
 
     if (options.namelist_file != ''):
@@ -1206,13 +1215,14 @@ for i in range(1,int(options.ninst)+1):
             output.write(" use_c14_bombspike = .true.\n")
             output.write(" atm_c14_filename = '"+options.ccsm_input+"/atm/datm7/CO2/" + \
                          "atm_delta_C14_data_1850-2007_monthly_25082011.nc'\n")
+        output.write(" nyears_ad_carbon_only = 0\n")
         if ('ECA' in compset):
             output.write(" nyears_ad_carbon_only = 0\n")
-            output.write(" spinup_mortality_factor = 1\n")
+            #output.write(" spinup_mortality_factor = 1\n")
         elif (options.c_only):
             output.write(" nyears_ad_carbon_only = 9999\n")
             output.write(" spinup_mortality_factor = 10\n")
-        else:
+        else:  #RD and fates-nutrient (currently requires code mod)
             output.write(" nyears_ad_carbon_only = 25\n")
             output.write(" spinup_mortality_factor = 10\n")
         if ('ECA' in options.fates_nutrient):
@@ -1326,10 +1336,10 @@ else:
 #Land CPPDEF modifications
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    os.system("./xmlchange -id "+mylsm+"CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
 
 #Global CPPDEF modifications
 infile  = open("./Macros.make")
@@ -1500,6 +1510,9 @@ if (options.no_submit == False and int(options.mc_ensemble) < 0 and options.ense
         os.system("qsub qsub.csh")
     else:
         os.system("./case.submit")
+else:
+    #build again to make sure all custom options come through
+    os.system("./case.build")
 
 
 

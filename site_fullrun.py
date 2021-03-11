@@ -17,6 +17,8 @@ parser.add_option("--caseroot", dest="caseroot", default='', \
                   help = "case root directory, where submission scripts live (default = ./, i.e., under scripts/)")
 parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
+parser.add_option("--buildroot", dest="bldroot", default="", \
+                  help="Directory where the bld would be created")
 parser.add_option("--exeroot", dest="exeroot", default="", \
                   help="Location of executable")
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
@@ -176,6 +178,8 @@ parser.add_option("--cn_only", dest="cn_only", default=False, action ="store_tru
                   help='Carbon/Nitrogen only (saturated P)') 
 parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
                   help = 'Copy sourcemods from this location')
+#parser.add_option("--nyears_ad_c_only", dest="nyears_ad_c_only", default='25', \
+#                  help = 'Number of year to run c_only in ad_spinup')
 
 # model output options
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
@@ -596,17 +600,6 @@ for row in AFdatareader:
         else:
             cmd_adsp = cmd_adsp+' --hist_mfilt '+str(options.hist_mfilt_spinup) \
                    +' --hist_nhtfrq '+str(options.hist_nhtfrq_spinup)
-        if (sitenum == 0):
-            if (options.exeroot != ''):
-                if (os.path.isfile(options.exeroot+'/'+myexe) == False):
-                    print('Error:  '+options.exeroot+' does not exist or does '+ \
-                          'not contain an executable. Exiting')
-                    sys.exit(1)
-                else:
-                    ad_exeroot = options.exeroot
-                    cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
-        else:
-            cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
 
         if (options.cpl_bypass):
             if (options.crop or options.fates):
@@ -631,8 +624,23 @@ for row in AFdatareader:
             cmd_adsp = cmd_adsp+' --spinup_vars'
         if (mycaseid != ''):
             ad_case = mycaseid+'_'+ad_case
-        if (sitenum == 0 and options.exeroot == ''):
-            ad_exeroot = os.path.abspath(runroot+'/'+ad_case+'/bld')
+        if (sitenum == 0):
+            if (options.exeroot != ''):
+                if (os.path.isfile(options.exeroot+'/'+myexe)):
+                    ad_exeroot = os.path.abspath(exeroot)
+                    cmd_adsp = cmd_adsp+'--exeroot '+ad_exeroot+' --no_build'
+                else:
+                    print('Error: '+options.exeroot+' does not exist or does '+ \
+                          'not contain an executable. Exiting')
+                    sys.exit(1)
+            elif (options.bldroot != ''):
+                ad_exeroot=os.path.abspath(options.bldroot+'/'+ad_case+'/bld')
+                cmd_adsp = cmd_adsp+' --buildroot '+options.bldroot
+            else:
+                ad_exeroot=os.path.abspath(runroot+'/'+ad_case+'/bld')
+        else:
+            cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
+
 
         #final spinup
         if mycaseid !='':
