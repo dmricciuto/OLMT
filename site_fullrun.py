@@ -57,18 +57,6 @@ parser.add_option("--clean_build", action="store_true", default=False, \
                   help="Perform a clean build")
 parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, action="store_true", \
                   help = "Bypass coupler")
-parser.add_option("--diags", dest="diags", default=False, \
-                 action="store_true", help="Write special outputs for diagnostics")
-parser.add_option("--hist_mfilt_trans", dest="hist_mfilt", default="365", \
-                  help = 'number of output timesteps per file (transient only)')
-parser.add_option("--hist_mfilt_spinup", dest="hist_mfilt_spinup", default="-999", \
-                  help = 'number of output timesteps per file (transient only)')
-parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-999", \
-                  help = 'output file timestep (transient only)')
-parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="-24", \
-                  help = 'output file timestep (transient only)')
-parser.add_option("--humhol", dest="humhol", default=False, \
-                  help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--machine", dest="machine", default = '', \
@@ -294,7 +282,7 @@ if (options.ccsm_input != ''):
 elif (options.machine == 'titan' or options.machine == 'eos'):
     ccsm_input = '/lustre/atlas/world-shared/cli900/cesm/inputdata'
 elif (options.machine == 'cades'):
-    ccsm_input = '/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/'
+    ccsm_input = '/nfs/data/ccsi/proj-shared/E3SM/inputdata'
 elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
 elif ('anvil' in options.machine):

@@ -694,9 +694,9 @@ if (options.parm_file != ''):
     pftfile = tmpdir+'/clm_params.nc'
     if ('/' not in options.parm_file):
        #assume in pointclm directory
-       input  = open(PTCLMdir+'/'+options.parm_file)
+    	input  = open(PTCLMdir+'/'+options.parm_file)
     else:   #assume full path given
-       input   = open(os.path.abspath(options.parm_file))
+    	input   = open(os.path.abspath(options.parm_file))
     for s in input:
         if s[0:1] != '#':
             values = s.split()
@@ -1619,7 +1619,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
               output_run.write('#SBATCH -A ccsi\n')
               output_run.write('#SBATCH -p batch\n')
               output_run.write('#SBATCH --mem=64G\n')
-	      output_run.write('#SBATCH --ntasks-per-node 32\n')
+              output_run.write('#SBATCH --ntasks-per-node 32\n')
         output_run.write("\n")
         if (options.machine == 'eos'):
             output_run.write('source $MODULESHOME/init/csh\n')

@@ -429,7 +429,7 @@ for n in range(0,n_grids):
                 if row[0] == options.site:
                     for thispft in range(0,5):
                         mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
-                 else:
+                else:
                        mypft_frac=[100.0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
             if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
