@@ -71,7 +71,6 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
->>>>>>> adding marsh options
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
 parser.add_option("--np", dest="np", default=1, \
@@ -244,19 +243,19 @@ def submit(fname, submit_type='qsub', job_depend=''):
 if (options.csmdir == ''):
    if (os.path.exists('../E3SM')):
        options.csmdir = os.path.abspath('../E3SM')
-       print('Model root not specified.  Defaulting to '+options.csmdir)
+       print ('Model root not specified.  Defaulting to '+options.csmdir)
    else:
-       print('Error:  Model root not specified.  Please set using --model_root')
+       print ('Error:  Model root not specified.  Please set using --model_root')
        sys.exit(1)
 elif (not os.path.exists(options.csmdir)):
-     print('Error:  Model root '+options.csmdir+' does not exist.')
+     print ('Error:  Model root '+options.csmdir+' does not exist.')
      sys.exit(1)
 
 #get machine info if not specified
 npernode=32
 if (options.machine == ''):
    hostname = socket.gethostname()
-   print('Machine not specified.  Using hostname '+hostname+' to determine machine')
+   print ('Machine not specified.  Using hostname '+hostname+' to determine machine')
    if ('or-condo' in hostname):
        options.machine = 'cades'
        npernode=32
@@ -267,7 +266,7 @@ if (options.machine == ''):
        options.machine = 'edison'
        npernode = 24
    elif ('cori' in hostname):
-       print('Cori machine not specified.  Setting to cori-haswell')
+       print ('Cori machine not specified.  Setting to cori-haswell')
        options.machine = 'cori-haswell'
        npernode=32
    elif ('titan' in hostname):
@@ -277,7 +276,7 @@ if (options.machine == ''):
        options.machine = 'eos'
        npernode=32
    elif ('blues' in hostname or 'blogin' in hostname):
-       print('Hostname = '+hostname+' and machine not specified.  Assuming anvil')
+       print ('Hostname = '+hostname+' and machine not specified.  Assuming anvil')
        options.machine = 'anvil' 
        npernode=36
    elif ('compy' in hostname):
@@ -287,7 +286,7 @@ if (options.machine == ''):
        options.machine = 'ubuntu'
        npernode = 8
    else:
-       print('ERROR in site_fullrun.py:  Machine not specified.  Aborting')
+       print ('ERROR in site_fullrun.py:  Machine not specified.  Aborting')
        sys.exit(1)
 
 if (options.ccsm_input != ''):
@@ -336,7 +335,7 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
     if (options.machine == 'titan' or options.machine == 'eos'):
         myinput = open('/ccs/home/'+myuser+'/.cesm_proj','r')
         for s in myinput:
-    	    myproject=s[:-1]
+            myproject=s[:-1]
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
     elif (options.machine == 'cades'):
         runroot='/lustre/or-hydra/cades-ccsi/scratch/'+myuser
@@ -435,11 +434,11 @@ for row in AFdatareader:
           ny_fin = str(int(ny_fin) + ncycle - (int(ny_fin) % ncycle))
 
         if (options.nyears_transient == -1):
-            translen = endyear-1850+1        #length of transient run
-            if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
-                options.princeton or options.cruncepv8)):
-                print(endyear_trans, site_endyear)
-                translen = min(site_endyear,endyear_trans)-1850+1
+          translen = endyear-1850+1        #length of transient run
+        if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
+                   options.princeton or options.cruncepv8)):
+            print(endyear_trans, site_endyear)
+        translen = min(site_endyear,endyear_trans)-1850+1
 
         #use site parameter file if it exists
         if (options.siteparms):
@@ -614,7 +613,7 @@ for row in AFdatareader:
         if (sitenum == 0):
             if (options.exeroot != ''):
                 if (os.path.isfile(options.exeroot+'/'+myexe) == False):
-                    print('Error:  '+options.exeroot+' does not exist or does '+ \
+                    print ('Error:  '+options.exeroot+' does not exist or does '+ \
                           'not contain an executable. Exiting')
                     sys.exit(1)
                 else:
@@ -680,7 +679,6 @@ for row in AFdatareader:
                 cmd_fnsp = cmd_fnsp+' --exeroot '+ad_exeroot+' --no_build'
             if (options.sp):
                 cmd_fnsp = cmd_fnsp+' --run_startyear '+str(options.run_startyear)
-<<<<<<< HEAD
             if (options.exeroot != ''):
               if (os.path.isfile(options.exeroot+'/'+myexe) == False):
                   print('Error:  '+options.exeroot+' does not exist or does '+ \
@@ -689,8 +687,6 @@ for row in AFdatareader:
               else:
                 ad_exeroot=options.exeroot
                 cmd_fnsp = cmd_fnsp+' --no_build --exeroot '+ad_exeroot
-=======
->>>>>>> adding marsh options
         else:
             cmd_fnsp = basecmd+' --finidat_case '+ad_case+ \
                        ' --finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
@@ -719,7 +715,7 @@ for row in AFdatareader:
             #    cmd_fnsp = cmd_fnsp+' --compset I'+mycompset
 
         if (options.spinup_vars):
-                cmd_fnsp = cmd_fnsp+' --spinup_vars'
+            cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans):	
                 cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans and options.constraints == ''):	
@@ -778,7 +774,7 @@ for row in AFdatareader:
 
         #If not the first site, create point data here
         if ((sitenum > 0) and not options.nopointdata):
-                print('Creating point data for '+site)
+                print ('Creating point data for '+site)
                 ptcmd = 'python makepointdata.py '+ \
                         ' --site '+site+' --sitegroup '+options.sitegroup+ \
                         ' --ccsm_input '+ccsm_input+' --model '+mymodel
@@ -788,7 +784,7 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --pft '+str(options.mypft)
                 result = os.system(ptcmd)
                 if (result > 0):
-                    print('Site_fullrun:  Error creating point data for '+site)
+                    print ('Site_fullrun:  Error creating point data for '+site)
                     sys.exit(1)
 
         #Build Cases
@@ -805,7 +801,7 @@ for row in AFdatareader:
                         +str(endyear-startyear+1)
                 result = os.system(ptcmd)
             if (result > 0):
-                print('Site_fullrun:  Error in runcase.py for ad_spinup ')
+                print ('Site_fullrun:  Error in runcase.py for ad_spinup ')
                 sys.exit(1)
         else:
           ad_case_firstsite = ad_case
@@ -824,7 +820,7 @@ for row in AFdatareader:
                     +str(int(ny_ad)+1)+' --spin_cycle '+str(endyear-startyear+1)
             result = os.system(ptcmd)
             if (result > 0):
-                print('Site_fullrun:  Error in runcase.py final spinup')
+                print ('Site_fullrun:  Error in runcase.py final spinup')
                 sys.exit(1)
 
         if (options.notrans == False):
@@ -846,7 +842,7 @@ for row in AFdatareader:
                  result = os.system(cmd_trns2)
 
             if (result > 0):
-                print('Site_fullrun:  Error in runcase.py for transient')
+                print ('Site_fullrun:  Error in runcase.py for transient')
                 sys.exit(1)
 
                  
@@ -878,7 +874,7 @@ for row in AFdatareader:
                 elif (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/.case.run')):
                     input = open(caseroot+'/'+ad_case_firstsite+'/.case.run')
                 else:
-                    print(caseroot+'/'+ad_case_firstsite+'/case.run file not found.  Aborting')
+                    print (caseroot+'/'+ad_case_firstsite+'/case.run file not found.  Aborting')
                     sys.exit(1)
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:

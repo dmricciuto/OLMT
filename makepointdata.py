@@ -73,7 +73,7 @@ if ('hcru' in options.res):
         surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_24pfts_simyr2000_c150227.nc'
     else:
         if (mysimyr == 2000):
-            surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr2000_c160307.nc'
+            surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr2000_c160307.nc' #TAO from 160307 to 180216
         else:
             #CMIP6 stype (Hurtt v2)
             surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr1850_c180216.nc'

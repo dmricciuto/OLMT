@@ -1619,7 +1619,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
               output_run.write('#SBATCH -A ccsi\n')
               output_run.write('#SBATCH -p batch\n')
               output_run.write('#SBATCH --mem=64G\n')
-              output_run.write('#SBATCH --ntasks-per-node 32\n')
+	      output_run.write('#SBATCH --ntasks-per-node 32\n')
         output_run.write("\n")
         if (options.machine == 'eos'):
             output_run.write('source $MODULESHOME/init/csh\n')
