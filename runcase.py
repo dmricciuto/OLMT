@@ -946,8 +946,10 @@ result = os.system('./xmlchange EXEROOT='+exeroot)
 result = os.system('./xmlchange PIO_VERSION=2')
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
-    if(options.compiler == 'pgi' or options.compiler == 'PGI'):
+    if(options.compiler == 'pgi' or options.compiler == 'PGI' or options.machine == 'cades'):
         # pgi compiler for PIO2 has issue of 'USE_CXX == TRUE' in Macro.cmake or Macro.make 
+        # bsulman: Doesn't work for me with gnu either.
+        # bsulman: Might be a problem with compiler xml file which says CXX compiler is "gpp" when it should be "g++" on cades
         result = os.system('./xmlchange PIO_VERSION=1')
 #if (options.debug):
 #    result = os.system('./xmlchange DEBUG=TRUE')
