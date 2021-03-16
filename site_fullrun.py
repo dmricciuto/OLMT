@@ -210,8 +210,6 @@ parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-9
                   help = 'output file timestep (spinup only)')
 
 #datasets for user-defined PFTs (by F-M Yuan, NGEE-Arctic)
-parser.add_option("--domainfile", dest="domainfile", default="", \
-                  help = 'full path of Domain file to use')
 parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
