@@ -631,6 +631,10 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --nodomain '
     if(options.surffile !=''):
         ptcmd = ptcmd + ' --nosurfdata '
+    if(options.marsh):
+        ptcmd = ptcmd + ' --marsh'
+    if(options.humhol):
+        ptcmd = ptcmd + ' --humhol'
 
     if (options.machine == 'eos' or options.machine == 'titan'):
         os.system('rm temp/*.nc')
