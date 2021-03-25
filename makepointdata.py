@@ -681,7 +681,11 @@ for n in range(0,n_grids):
                        'EBF Temperate', 'DBF Tropical', 'DBF Temperate', 'DBF Boreal', 'EB Shrub' \
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
-            if (options.mypft >= 0):
+            if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
+                print('Setting PFT area in tidal column to zero')
+                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+                mypft_frac[0]=100.0
+            if (options.mypft >= 0 and not (options.marsh and n==1)):
               print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
               pct_pft[:,0,0] = 0.0
               pct_pft[int(options.mypft),0,0] = 100.0
@@ -706,6 +710,8 @@ for n in range(0,n_grids):
                     #monthly_sai[t][p][j][i] = monthly_sai[t][p][0][0]
                     #monthly_height_top[t][p][j][i] = monthly_height_top[t][p][0][0]
                     #monthly_height_bot[t][p][j][i] = monthly_height_bot[t][p][0][0]
+
+
 
         ierr = nffun.putvar(surffile_new, 'LANDFRAC_PFT', landfrac_pft)
         ierr = nffun.putvar(surffile_new, 'PFTDATA_MASK', pftdata_mask)
