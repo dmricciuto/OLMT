@@ -59,8 +59,6 @@ parser.add_option("--clean_build", action="store_true", default=False, \
                   help="Perform a clean build")
 parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, action="store_true", \
                   help = "Bypass coupler")
-parser.add_option("--marsh", dest="marsh", default=False, \
-                  help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
 parser.add_option("--np", dest="np", default=1, \
@@ -529,13 +527,10 @@ for row in AFdatareader:
             basecmd = basecmd+' --humhol'
         if (options.marsh):
             basecmd = basecmd+' --marsh'
-<<<<<<< HEAD
-=======
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
         if (float(options.lai) >= 0):
             basecmd = basecmd+' --lai '+str(options.lai)
->>>>>>> bsulman/coastal_main
         if (options.nopftdyn):
             basecmd = basecmd+' --nopftdyn'
         if (options.no_dynroot):
@@ -784,11 +779,6 @@ for row in AFdatareader:
             #    cmd_fnsp = cmd_fnsp+' --compset I'+mycompset
 
         if (options.spinup_vars):
-<<<<<<< HEAD
-            cmd_fnsp = cmd_fnsp+' --spinup_vars'
-        if (options.ensemble_file != '' and options.notrans):	
-=======
->>>>>>> bsulman/coastal_main
                 cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans and options.constraints == ''):	
                 cmd_fnsp = cmd_fnsp + ' --postproc_file '+options.postproc_file
