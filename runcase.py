@@ -49,6 +49,8 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
+                    help = 'NOAA tide components file')
 parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 parser.add_option("--metdata_dir", dest="metdata_dir", default='', \
@@ -67,6 +69,10 @@ parser.add_option("--res", dest="res", default="CLM_USRDAT", \
                       help='Resoultion for global simulation')
 parser.add_option("--point_list", dest="point_list", default='', \
                   help = 'File containing list of points to run')
+parser.add_option("--point_area_kmxkm", dest="point_area_kmxkm", default=None, \
+                  help = 'user-specific area in kmxkm of each point in point list (unstructured')
+parser.add_option("--point_area_degxdeg", dest="point_area_degxdeg", default=None, \
+                  help = 'user-specific area in degreeXdegree of each point in point list (unstructured')
 parser.add_option("--pft", dest="mypft", default=-1, \
                   help = 'Use this PFT for all gridcells')
 parser.add_option("--site_forcing", dest="site_forcing", default='', \
@@ -97,6 +103,8 @@ parser.add_option("--livneh", dest="livneh", default=False, \
                   action="store_true", help = "Livneh correction to CRU precip (CONUS only)")
 parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = "Daymet correction to GSWP3 precip (CONUS only)")
+parser.add_option("--daymet4", dest="daymet4", default=False, \
+                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 forcing with user-provided domain and surface data)")
 parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to\n")
 parser.add_option("--compiler", dest="compiler", default='', \
@@ -179,6 +187,10 @@ parser.add_option("--metdir", dest="metdir", default="none", \
 parser.add_option("--nopointdata", action="store_true", \
                   dest="nopointdata", help="Do NOT make point data (use data already created)", \
                   default=False)
+parser.add_option("--makepointdata_only", action="store_true", \
+                  dest="makepointdata_only", \
+                  help="make point data for later use ONLY, i.e. no model config/build/submit)", \
+                  default=False)
 #parser.add_option("--cleanlogs",dest="cleanlogs", help=\
 #                   "Removes temporary and log files that are created",\
 #                   default=False,action="store_true")
@@ -203,8 +215,12 @@ parser.add_option("--1850_clim", dest="const_clim", default=False, \
                   help = 'Use constant 1850 N deposition', action="store_true")
 parser.add_option("--1850_ndep", dest="ndep1850", default=False, \
                   help = 'Use constant 1850 N deposition', action="store_true")
+parser.add_option("--ndep_rcp85", dest="ndeprcp85", default=False, \
+                  help = 'Use RCP8.5 N deposition', action="store_true")
 parser.add_option("--1850_aero", dest="aero1850", default=False, \
                   help = 'Use constant 1850 aerosol deposition', action="store_true")
+parser.add_option("--aero_rcp85", dest="aerorcp85", default=False, \
+                  help = 'Use RCP8.5 aerosol deposition', action="store_true")
 parser.add_option("--1850_co2", dest="co21850", default=False, \
                   help = 'Use constant 1850 CO2 concentration', action="store_true")
 parser.add_option("--C13", dest="C13", default=False, \
@@ -246,6 +262,8 @@ parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
                   help = 'Which version of fates_nutrient to use (RD or ECA)')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
+parser.add_option("--var_soilthickness", dest="var_soilthickness", default=False, \
+                  help = 'Use variable soil thickness from surface data', action="store_true")
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
                   help = 'Temperature to add to atmospheric forcing')
 parser.add_option("--add_co2", dest="addco2", default=0.0, \
@@ -270,9 +288,31 @@ parser.add_option("--walltime", dest="walltime", default=6, \
                   help = "desired walltime for each job (hours)")
 parser.add_option("--lai", dest="lai", default=-999, \
                   help = 'Set constant LAI (SP mode only)')
+parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
+                  help = "user-defined max. patch PFT number, default is 17")
+parser.add_option("--landusefile", dest="pftdynfile", default='', \
+                  help='user-defined dynamic PFT file')
+parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
+#if LND model name changed from 'CLM' to 'ELM'
+parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
+                  help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
+# If only make point(s) data, reset relevant options.
+if (options.makepointdata_only):
+    options.no_config   = True
+    options.no_build    = True
+    options.no_submit   = True
+    options.nopointdata = False
+    options.domainfile  = ""
+    options.surffile = ""
+    options.pftdynfile=""
+    options.nopftdyn = False
+elif(options.domainfile!="" and options.surffile!="" and \
+    (options.nopftdyn or options.pftdynfile!="")):
+    options.nopointdata = True
+    
 
 #Set default model root
 if (options.csmdir == ''):
@@ -309,6 +349,9 @@ elif ('anvil' in options.machine):
     ppn=36
 elif ('compy' in options.machine):
     ppn=40
+elif ('cades' in options.machine):
+    ppn=32
+ppn=min(ppn, int(options.np))
 
 PTCLMdir = os.getcwd()
 
@@ -319,7 +362,7 @@ PTCLMdir = os.getcwd()
 if (options.mymodel == ''):
   if ('clm5' in options.csmdir): 
       options.mymodel = 'CLM5'
-  elif ('E3SM' in options.csmdir or 'ACME' in options.csmdir):
+  elif ('E3SM' in options.csmdir or 'e3sm' in options.csmdir or 'ACME' in options.csmdir):
       options.mymodel = 'ELM'
   else:
       print('Error:  Model not specified')
@@ -348,6 +391,28 @@ if (options.ccsm_input == '' or (os.path.exists(options.ccsm_input) \
     sys.exit(1)
 else:
     options.ccsm_input = os.path.abspath(options.ccsm_input)
+
+#----------------------------------------------------------------------------------
+# check for a specific forcing data, GSWP3-Daymet4, to offline ELM
+# This is high-resolution dataset, usually together with user-defined domain and surface data
+if (options.daymet4):
+    if (not options.gswp3): options.gswp3 = True
+    if (options.metdir=='none'):
+        print('Error:  must provide user-defined " --metdir " for " --daymet4"')
+        sys.exit(1)
+    if (options.domainfile==''):
+        print('Error:  must provide user-defined " --domainfile " for " --daymet4"')
+        sys.exit(1)
+    if (options.surffile==''):
+        print('Error:  must provide user-defined " --surffile " for " --daymet4"')
+        sys.exit(1)
+    if (options.istrans  or '20TR' in options.compset):
+        if(options.pftdynfile=='' and not options.nopftdyn):
+            print('Error:  must provide user-defined " --pftdynfile " for " --daymet4"')
+            sys.exit(1)
+#----------------------------------------------------------------------------------
+
+
 
 compset = options.compset
 isglobal = False
@@ -445,6 +510,11 @@ if (options.finidat_case != ''):
     finidat = runroot+'/'+options.finidat_case+'/run/'+ \
               options.finidat_case+'.clm2.r.'+finidat_yst[1:]+ \
               '-01-01-00000.nc'
+    if (options.lndnamechanged):
+        finidat = runroot+'/'+options.finidat_case+'/run/'+ \
+              options.finidat_case+'.elm.r.'+finidat_yst[1:]+ \
+              '-01-01-00000.nc'
+       
 
 if (options.finidat != ''):
     finidat = options.finidat
@@ -456,8 +526,10 @@ casename    = options.site+"_"+compset
 if (options.mycaseid != ""):
     casename = options.mycaseid+'_'+casename
 
+if (options.metdir!='none'):# obviously user-provided met forcing is not reanalysis type
+    use_reanalysis = False
 #CRU-NCEP 2 transient phases
-if ('CRU' in compset or options.cruncep or options.gswp3 or \
+elif ('CRU' in compset or options.cruncep or options.gswp3 or \
             options.crujra or options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
@@ -546,11 +618,27 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --crop'
     if (isglobal):
         ptcmd = ptcmd + ' --res '+options.res
+        
+        # if using global dataset to extract for running at a list of grid-points
         if (options.point_list != ''):
             ptcmd = ptcmd+' --point_list '+options.point_list
+            # changing resolution of extracted grid point area
+            if(options.point_area_kmxkm!=None):# area in a square measured by kmxkm
+                ptcmd = ptcmd+' --point_area_kmxkm '+options.point_area_kmxkm
+            elif(options.point_area_degxdeg!=None):# area in a square measured by degreexdegree
+                ptcmd = ptcmd+' --point_area_degxdeg '+options.point_area_degxdeg
 
     else:
-        ptcmd = ptcmd + ' --site '+options.site+' --sitegroup '+options.sitegroup       
+        ptcmd = ptcmd + ' --site '+options.site+' --sitegroup '+options.sitegroup
+
+    if(options.domainfile != ''):
+        ptcmd = ptcmd + ' --nodomain '
+    if(options.surffile !=''):
+        ptcmd = ptcmd + ' --nosurfdata '
+    if(options.marsh):
+        ptcmd = ptcmd + ' --marsh'
+    if(options.humhol):
+        ptcmd = ptcmd + ' --humhol'
 
     if (options.machine == 'eos' or options.machine == 'titan'):
         os.system('rm temp/*.nc')
@@ -593,6 +681,25 @@ if (options.nopointdata == False):
         if (result > 0):
             print ('PointCLM:  Error creating point data.  Aborting')
             sys.exit(1)
+
+    if(options.makepointdata_only):
+        print ('PointCLM:  Successfully creating point data ONLY, i.e. no further config/build/run CLM/ELM')
+        print ('PointCLM:  Files are in ./temp/*.nc, which you may save/rename properly for later use')
+        sys.exit(0)
+
+if(options.domainfile != ''):
+    print('\n -----INFO: using user-provided DOMAIN')
+    print('domain file: '+ options.domainfile)
+if(options.surffile !=''):
+    print('\n -----INFO: using user-provided SURFDATA')
+    print('surface data file: '+ options.surffile)
+if(options.pftdynfile !='' or options.nopftdyn):
+    print('\n -----INFO: using user-provided 20th landuse data file')
+    print('20th landuse data file: '+ options.pftdynfile+"'\n")
+if(options.metdir != 'none'):
+    print('\n -----INFO: using user-provided forcing data')
+    print('Under directory: '+ options.metdir)
+
 
 #get site year information
 sitedatadir = os.path.abspath(PTCLMfiledir)
@@ -656,38 +763,62 @@ else:
 
 os.system('mkdir -p '+tmpdir)
 if (options.mod_parm_file != ''):
+    print('nccopy -3 '+options.mod_parm_file+' '+tmpdir+'/clm_params.nc')
     os.system('nccopy -3 '+options.mod_parm_file+' '+tmpdir+'/clm_params.nc')
 else:
     print(parm_file)
+    print('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' '+tmpdir+'/clm_params.nc')
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
-    if ('compy' in options.machine or 'ubuntu' in options.machine):
+    if ('compy' in options.machine or 'ubuntu' in options.machine \
+          or 'mymac' in options.machine):
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-    if (options.humhol):
+    if (options.humhol or options.marsh):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
       print('humhol_ht = 0.15m')
-      print('hum_frac  = 0.64')
       print('humhol_dist = 1.0m')
       print('qflx_h2osfc_surfrate = 1.0e-7')
       print('setting rsub_top_globalmax = 1.2e-5')
       print('Making br_mr a PFT-specific parameter')
-      #flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      if options.marsh:
+        os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+        print('hum_frac  = 0.50')
+      else:
+        os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+        print('hum_frac  = 0.64')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "h2osoi_offset = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
       os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
+    if (options.marsh and options.tide_components_file != ''):
+        print('Adding tidal cycle components from file %s'%options.tide_components_file)
+        print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
+        print('Tide datum (tide_baseline parameter) needs to be specified separately. Default is 800 mm')
+        import pandas
+        tidecomps=pandas.read_csv(options.tide_components_file)
+        for comp in range(len(tidecomps)):
+            os.system(myncap+' -O -s "tide_coeff_amp_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Amplitude'].iloc[comp]*1000)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+            os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,360*3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+            os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+            os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    elif options.marsh:
+        print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    #flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
     ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
+
+    # BSulman: These Nfix constants can break the model if they don't have the right length.
+    #os.system(myncap+' -O -s "Nfix_NPP_c1 = br_mr*+1.8" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "Nfix_NPP_c2 = br_mr*0.003" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "nfix_timeconst = br_mr*10.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
 
 os.system('chmod u+w ' +tmpdir+'/clm_params.nc')
 if (options.parm_file != ''):
@@ -776,11 +907,12 @@ if (options.project != ''):
 if (options.compiler != ''):
    cmd = cmd+' --compiler '+options.compiler
 cmd = cmd+' > create_newcase.log'
+print(cmd)
 result = os.system(cmd)
 
 if (os.path.isdir(casedir)):
-    print(casename+' created.  See create_newcase.log for details')
-    os.system('mv create_newcase.log '+casename)
+    print(casedir+' created.  See create_newcase.log for details')
+    os.system('mv create_newcase.log '+casedir+'/')
 else:
     print('Error:  runcase.py Failed to create case.  See create_newcase.log for details')
     sys.exit(1)
@@ -796,6 +928,11 @@ else:
   result = os.system('./xmlchange PIO_VERSION=2')
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
+    if(options.compiler == 'pgi' or options.compiler == 'PGI' or options.machine == 'cades'):
+        # pgi compiler for PIO2 has issue of 'USE_CXX == TRUE' in Macro.cmake or Macro.make 
+        # bsulman: Doesn't work for me with gnu either.
+        # bsulman: Might be a problem with compiler xml file which says CXX compiler is "gpp" when it should be "g++" on cades
+        result = os.system('./xmlchange PIO_VERSION=1')
 #if (options.debug):
 #    result = os.system('./xmlchange DEBUG=TRUE')
 
@@ -818,7 +955,10 @@ os.system('./xmlchange DIN_LOC_ROOT_CLMFORC='+options.ccsm_input+'/atm/datm7/')
 
 #define mask and resoultion
 if (isglobal == False):
-    os.system('./xmlchange CLM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
+    if (options.res != 'CLM_USRDAT'):
+        os.system('./xmlchange ELM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
+    else:
+        os.system('./xmlchange CLM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
 if (options.ad_spinup):
     if (options.mymodel == 'ELM'):
         os.system("./xmlchange --append CLM_BLDNML_OPTS='-bgc_spinup on'")
@@ -904,6 +1044,18 @@ if (options.rest_n > 0):
   print('Setting REST_N to '+str(options.rest_n))
   os.system('./xmlchange REST_N='+str(options.rest_n))
 
+# user-defined PFT numbers (default is 17)
+if (options.maxpatch_pft != 17):
+  print('resetting maxpatch_pft to '+str(options.maxpatch_pft))
+  xval = subprocess.check_output('./xmlquery --value CLM_BLDNML_OPTS', cwd=casedir, shell=True)
+  xval = '-maxpft '+str(options.maxpatch_pft)+' '+xval
+  os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
+
+# for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
+if('mac' in options.machine or 'cades' in options.machine): 
+    os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
+
+
 #--------------------------CESM setup ----------------------------------------
 
 if (options.clean_config):
@@ -981,6 +1133,8 @@ for i in range(1,int(options.ninst)+1):
                     'CPOOL_TO_DEADCROOTC_STORAGE', 'CPOOL_TO_LIVECROOTC_STORAGE', \
                     'FROOTC_STORAGE', 'LEAFC_STORAGE', 'LEAFC_XFER', 'FROOTC_XFER', 'LIVESTEMC_XFER', \
                     'DEADSTEMC_XFER', 'LIVECROOTC_XFER', 'DEADCROOTC_XFER', 'TLAI', 'CPOOL_TO_LIVESTEMC']
+    if options.var_list_pft != '':
+        var_list_pft = options.var_list_pft.split(',')
     var_list_spinup = ['PPOOL', 'EFLX_LH_TOT', 'RETRANSN', 'PCO2', 'PBOT', 'NDEP_TO_SMINN', 'OCDEP', \
                        'BCDEP', 'COL_FIRE_CLOSS', 'HDM', 'LNFM', 'NEE', 'GPP', 'FPSN', 'AR', 'HR', \
                        'MR', 'GR', 'ER', 'NPP', 'TLAI', 'SOIL3C', 'TOTSOMC', 'TOTSOMC_1m', 'LEAFC', \
@@ -1148,11 +1302,16 @@ for i in range(1,int(options.ninst)+1):
       output.write(" fsurdat = '"+rundir+"/surfdata.nc'\n")
     else:
       output.write(" fsurdat = '"+options.surffile+"'\n")      
-        
+    
+    if (options.var_soilthickness):
+        output.write(" use_var_soil_thick = .TRUE.\n") 
+
     #pft dynamics file for transient run
     if ('20TR' in compset or options.istrans):
         if (options.nopftdyn):
             output.write(" flanduse_timeseries = ' '\n") 
+        elif(options.pftdynfile !=''):
+            output.write(" flanduse_timeseries = '"+options.pftdynfile+"'\n")
         else:
             output.write(" flanduse_timeseries = '"+rundir+"/surfdata.pftdyn.nc'\n")
         if (options.mymodel == 'ELM'):
@@ -1172,6 +1331,9 @@ for i in range(1,int(options.ninst)+1):
         if (options.ndep1850 == True):
           output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
             "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1850-1850_1.9x2.5_c100428.nc'\n")
+        elif options.ndeprcp85:
+          output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
+            "/lnd/clm2/ndepdata/fndep_clm_rcp8.5_simyr1849-2106_1.9x2.5_c100428.nc'\n")
         else:
           output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
             "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1849-2106_1.9x2.5_c100428.nc'\n")
@@ -1279,6 +1441,12 @@ for i in range(1,int(options.ninst)+1):
                 output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                           +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full'\n")
 #                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
+        elif options.metdir != 'none':
+            if (options.daymet4 and options.gswp3):
+                output.write(" metdata_type = 'gswp3_daymet4'\n")
+            else:
+                output.write(" metdata_type = 'gswp3v1_daymet'\n") # This needs to be updated for other types
+            output.write(" metdata_bypass = '%s'\n"%options.metdir)
         else:
             if (options.site_forcing == ''):
               options.site_forcing=options.site
@@ -1301,6 +1469,9 @@ for i in range(1,int(options.ninst)+1):
         if (options.aero1850):
           output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
                          +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1850-1850_1.9x2.5_c100402.nc'\n")
+        elif (options.aerorcp85):
+          output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
+                         +"trop_mozart_aero/aero/aerosoldep_rcp8.5_monthly_1849-2104_1.9x2.5_c100201.nc'\n")
         else:
           output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
                          +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1849-2104_1.9x2.5_c100402.nc'\n")
@@ -1313,6 +1484,8 @@ for i in range(1,int(options.ninst)+1):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
     output.close()
+# LND model name changed from 'CLM' to 'ELM'
+if (options.lndnamechanged): os.system('mv ./user_nl_clm ./user_nl_elm')
 
 #configure case
 #if (isglobal):
@@ -1334,7 +1507,6 @@ if (options.humhol):
 if (options.marsh):
     print("Turning on MARSH modification\n")
     os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
-
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
     os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
@@ -1353,7 +1525,7 @@ infile.close()
 outfile.close()
 os.system('mv Macros.make.tmp Macros.make')
 
-if (options.mymodel == 'ELM'):
+if (options.mymodel == 'ELM' and os.path.isfile("./Macros.cmake")):
   infile  = open("./Macros.cmake")
   outfile = open("./Macros.cmake.tmp",'a')
 
@@ -1475,7 +1647,6 @@ if (not cpl_bypass and not isglobal):
                 temp = s.replace('CLM1PT_data', 'TEMPSTRING')
                 s    = temp.replace(str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site, 'CLM1PT_data')
                 temp  =s.replace('TEMPSTRING', str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site)
-                #s    = temp.replace('atm//CLM1PT_data','atm/datm7/CLM1PT_data')
                 myoutput.write(temp)
             elif ('ED' in compset and 'FLDS' in s):
                 print('Not including FLDS in atm stream file')
@@ -1485,9 +1656,12 @@ if (not cpl_bypass and not isglobal):
         myoutput.close()
 
 #copy site data to run directory
-os.system('cp '+PTCLMdir+'/temp/domain.nc '+PTCLMdir+'/temp/surfdata.nc  '+ \
-              PTCLMdir+'/temp/*param*.nc '+runroot+'/'+casename+'/run/')
-if ((options.istrans or '20TR' in compset) and options.nopftdyn == False):
+os.system('cp '+PTCLMdir+'/temp/*param*.nc '+runroot+'/'+casename+'/run/')
+if (options.domainfile == ''):
+    os.system('cp '+PTCLMdir+'/temp/domain.nc '+runroot+'/'+casename+'/run/')
+if (options.surffile == ''):
+    os.system('cp '+PTCLMdir+'/temp/surfdata.nc '+runroot+'/'+casename+'/run/')
+if ('20TR' in compset and options.nopftdyn == False and options.pftdynfile ==''):
     os.system('cp '+PTCLMdir+'/temp/surfdata.pftdyn.nc '+runroot+'/'+casename+'/run/')
 
 #submit job if requested

@@ -16,6 +16,9 @@ parser.add_option('--BGC', dest='bgc', default=False, action="store_true", \
                     help='Flag to set for BGC compsets')
 parser.add_option('--harvest', dest='harvest', default=False, action="store_true", \
                     help='Add a 95% above ground harvest')
+#if LND model name changed from 'CLM' to 'ELM'
+parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
+                  help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
 
 (options,args)=parser.parse_args()
 
@@ -26,6 +29,9 @@ casename = options.casename
 if (options.restart_year == ''):
         #if restart_year not provided, take the last existing restart file
         restart_file = glob.glob(options.rundir+'/'+casename+'.clm2.r.*.nc')
+        if (options.lndnamechanged):
+            restart_file = glob.glob(options.rundir+'/'+casename+'.elm.r.*.nc')
+
         if (len(restart_file) > 1):
             restart_file_last = restart_file[-1]
         else:
@@ -41,6 +47,11 @@ fname_restart = options.rundir+'/'+casename+'.clm2.r.'+str(10000+year)[1:]+ \
     '-01-01-00000.nc'
 fname_hist    = options.rundir+'/'+casename+'.clm2.h1.'+str(10000+year)[1:]+ \
     '-01-01-00000.nc'
+if (options.lndnamechanged):
+    fname_restart = options.rundir+'/'+casename+'.elm.r.'+str(10000+year)[1:]+ \
+        '-01-01-00000.nc'
+    fname_hist    = options.rundir+'/'+casename+'.elm.h1.'+str(10000+year)[1:]+ \
+        '-01-01-00000.nc'
 
 #save original restart file
 if (os.path.isfile(fname_restart+'.orig')):

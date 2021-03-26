@@ -41,6 +41,10 @@ parser.add_option("--hist_nhtfrq_trans", dest="hist_nhtfrq", default="0", \
                   help = 'output file timestep (transient only)')
 parser.add_option("--point_list", dest="point_list", default='', \
                   help = 'File containing list of points to run')
+parser.add_option("--point_area_kmxkm", dest="point_area_kmxkm", default=None, \
+                  help = 'user-specific area in kmxkm of each point in point list (unstructured')
+parser.add_option("--point_area_degxdeg", dest="point_area_degxdeg", default=None, \
+                  help = 'user-specific area in degreeXdegree of each point in point list (unstructured')
 parser.add_option("--lat_bounds", dest="lat_bounds", default='-90,90', \
                   help = 'latitude range for regional run')
 parser.add_option("--lon_bounds", dest="lon_bounds", default='-180,180', \
@@ -65,6 +69,10 @@ parser.add_option("--notrans", action="store_true", dest="notrans", default=Fals
                   help='Do not perform transient simulation (spinup only)')
 parser.add_option("--nopointdata", action="store_true", dest="nopointdata", \
                   default=False, help="do not generate point data")
+parser.add_option("--makepointdata_only", action="store_true", \
+                  dest="makepointdata_only", \
+                  help="make point data for later use ONLY, i.e. no model build/run)", \
+                  default=False)
 parser.add_option("--nyears_final_spinup", dest="nyears_final_spinup", default='200', \
                   help="base no. of years for final spinup")
 parser.add_option("--parm_list", dest="parm_list", default='parm_list', \
@@ -85,6 +93,8 @@ parser.add_option("--surffile", dest="surffile", default='', \
                   help = 'Use specified surface data file')
 parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'Domain file to use')
+parser.add_option("--landusefile", dest="pftdynfile", default='', \
+                  help='user-defined dynamic PFT file')
 parser.add_option("--parm_file", dest="parm_file", default="", \
                   help = 'parameter file to use')
 parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
@@ -149,6 +159,8 @@ parser.add_option("--livneh", dest="livneh", default=False, \
                   action="store_true", help = "Livneh correction to CRU precip (CONUS only)")
 parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = "Daymet correction to GSWP3 precip (CONUS only)")
+parser.add_option("--daymet4", dest="daymet4", default=False, \
+                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 forcing with user-provided domain and surface data)")
 parser.add_option("--cpl_bypass", dest = "cpl_bypass", default=False, \
                   help = "Bypass coupler", action="store_true")
 parser.add_option("--spinup_vars", dest = "spinup_vars", default=False, \
@@ -166,6 +178,11 @@ parser.add_option("--mod_parm_file_P", dest="mod_parm_file_P", default='', \
                   help = "adding the path to the modified parameter file")
 parser.add_option("--walltime", dest="walltime", default=24, \
                   help = "desired walltime for each job (hours)")
+parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
+                    help='Do not submit jobs')
+#if LND model name changed from 'CLM' to 'ELM'
+parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
+                  help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
 
 (options, args) = parser.parse_args()
 
@@ -258,6 +275,12 @@ elif ('anvil' in options.machine):
 elif ('compy' in options.machine):
     ccsm_input = '/compyfs/inputdata'
 
+if (options.makepointdata_only): # don't configure/build/run model
+    options.noad = False
+    options.nofn = True
+    options.notrans = True
+    options.nopointdata = False
+    
 print(options.machine)
 #default compilers
 if (options.compiler == ''):
@@ -376,6 +399,9 @@ if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton o
     if (options.daymet):
         startyear = 1980
         endyear = 2010
+    if (options.daymet4):
+        startyear = 1980
+        endyear = 2014
     if (options.crujra):
         site_endyear = 2017
 
@@ -432,6 +458,11 @@ basecmd = 'python runcase.py --surfdata_grid --ccsm_input '+ \
     +options.machine+' --res '+options.res+' --model_root '+csmdir
 if (options.point_list != ''):
     basecmd = basecmd+' --point_list '+options.point_list
+    # changing resolution of extracted grid point area
+    if(options.point_area_kmxkm!=None):# area in a square measured by kmxkm
+        basecmd = basecmd+' --point_area_kmxkm '+options.point_area_kmxkm
+    elif(options.point_area_degxdeg!=None):# area in a square measured by degreexdegree
+        basecmd = basecmd+' --point_area_degxdeg '+options.point_area_degxdeg
     lat_bounds = [-999,-999]
     lon_bounds = [-999,-999]
 if (srcmods != ''):
@@ -441,6 +472,8 @@ if (mycaseid != ''):
     basecmd = basecmd+' --caseidprefix '+mycaseid
 if (options.nopointdata):
     basecmd = basecmd+' --nopointdata'
+if (options.makepointdata_only):
+    basecmd = basecmd+' --makepointdata_only'
 if (options.project != ''):
     basecmd = basecmd+' --project '+options.project
 if (options.parm_vals != ''):
@@ -496,6 +529,9 @@ if (options.livneh):
     basecmd = basecmd+' --livneh'
 if (options.daymet):
     basecmd = basecmd+' --daymet'
+if (options.daymet4): # gswp3 v2 spatially-downscaled by daymet v4, usually together with user-defined domain and surface data
+    basecmd = basecmd+' --daymet4'
+    if (not options.gswp3): basecmd = basecmd+' --gswp3'
 if (options.cplhist):
     basecmd = basecmd+' --cplhist'
 if (options.mymask != ''):
@@ -514,6 +550,11 @@ if (options.surffile != ''):
     basecmd = basecmd+' --surffile '+options.surffile
 if (options.domainfile != ''):
     basecmd = basecmd+' --domainfile '+options.domainfile
+if (options.pftdynfile != ''):
+    basecmd = basecmd + ' --landusefile '+options.pftdynfile
+if (options.lndnamechanged): #indicating LND name changed from 'CLM' to 'ELM'
+    basecmd = basecmd + ' --lndnamechanged '
+
 basecmd = basecmd + ' --np '+str(options.np)
 basecmd = basecmd + ' --tstep '+str(options.tstep)
 basecmd = basecmd + ' --co2_file '+options.co2_file
@@ -651,16 +692,20 @@ os.system('mkdir -p temp')
 #build cases
 if (options.noad == False):
     print('\nSetting up ad_spinup case\n')
-    os.system(cmd_adsp)
+    ierror = os.system(cmd_adsp)
+    if ierror != 0: sys.exit(-1)
 if (options.nofn == False):
     print('\nSetting up final spinup case\n')
-    os.system(cmd_fnsp)
+    ierror = os.system(cmd_fnsp)
+    if ierror != 0: sys.exit(-1)
 if (options.notrans == False):
     print('\nSetting up transient case\n')
-    os.system(cmd_trns)
+    ierror = os.system(cmd_trns)
+    if ierror != 0: sys.exit(-1)
 if ((options.cruncep or options.gswp3 or options.cruncepv8) and not options.cpl_bypass):
     print('\nSetting up transient case phase 2\n')
-    os.system(cmd_trns2)
+    ierror = os.system(cmd_trns2)
+    if ierror != 0: sys.exit(-1)
         
 
 cases=[]
@@ -817,12 +862,17 @@ if (options.mc_ensemble <= 0):
                 output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
                              str(int(ny_ad)+1)+' --BGC\n')
+            elif (options.lndnamechanged):
+                output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
+                             '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
+                             str(int(ny_ad)+1)+' --lndnamechanged\n')
             else:
                 output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ad_case+' --restart_year '+ \
                                  str(int(ny_ad)+1)+'\n')
         output.close()
 
-        job_depend_run = submit('temp/global_'+c+'_'+str(n)+'.pbs',job_depend=job_depend_run, \
+        if not options.no_submit:
+            job_depend_run = submit('temp/global_'+c+'_'+str(n)+'.pbs',job_depend=job_depend_run, \
                                     submit_type=mysubmit_type)
         

@@ -21,6 +21,8 @@ parser.add_option("--exeroot", dest="exeroot", default="", \
                   help="Location of executable")
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
+parser.add_option("--batch_build", action="store_true", default=False, \
+                  help="Do build as part of submitted batch script")
 parser.add_option("--constraints", dest="constraints", default="", \
                   help="Directory containing model constraints")
 parser.add_option("--compare_cases", dest="compare", default='', \
@@ -148,12 +150,18 @@ parser.add_option("--crop", action="store_true", default=False, \
                   help="Perform a crop model simulation")
 parser.add_option("--humhol", dest="humhol", default=False, action="store_true", \
                   help = 'Use hummock/hollow microtopography')
+parser.add_option("--marsh", dest="marsh", default=False, \
+                  help = 'Use marsh hydrology/elevation', action="store_true")
+parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
+                    help = 'NOAA tide components file')
 parser.add_option("--nofire", dest="nofire", default=False, action="store_true", \
                   help='Turn off fire algorithms')
 parser.add_option("--C13", dest="C13", default=False, action="store_true", \
                   help = 'Switch to turn on C13')
 parser.add_option("--C14", dest="C14", default=False, action="store_true", \
                   help = 'Use C14 as C13 (no decay)')
+parser.add_option("--aero_rcp85",dest="aerorcp85", action="store_true", default=False,help="Use RCP8.5 aerosols")
+parser.add_option("--ndep_rcp85",dest="ndeprcp85", action="store_true", default=False,help="Use RCP8.5 N dep")
 parser.add_option("--harvmod", action="store_true", dest='harvmod', default=False, \
                   help="turn on harvest modification:  All harvest at first timestep")
 parser.add_option("--bulk_denitrif", dest="bulk_denitrif", default=False, action="store_true", \
@@ -178,6 +186,14 @@ parser.add_option("--cn_only", dest="cn_only", default=False, action ="store_tru
                   help='Carbon/Nitrogen only (saturated P)') 
 parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
                   help = 'Copy sourcemods from this location')
+parser.add_option("--daymet", dest="daymet", default=False, \
+                  action="store_true", help = 'Use Daymet corrected meteorology')
+parser.add_option("--daymet4", dest="daymet4", default=False, \
+                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 forcing with user-provided domain and surface data)")
+parser.add_option("--dailyvars", dest="dailyvars", default=False, \
+                 action="store_true", help="Write daily ouptut variables")
+parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False, \
+                  help = 'Use variable soil depth from surface data file',action='store_true')
 
 # model output options
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
@@ -197,8 +213,30 @@ parser.add_option("--hist_mfilt_spinup", dest="hist_mfilt_spinup", default="-999
 parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-999", \
                   help = 'output file timestep (spinup only)')
 
+#datasets for user-defined PFTs (by F-M Yuan, NGEE-Arctic)
+parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
+                  help = "user-defined max. patch PFT number, default is 17")
+parser.add_option("--landusefile", dest="pftdynfile", default='', \
+                  help='user-defined dynamic PFT file')
+parser.add_option("--res", dest="res", default="CLM_USRDAT", \
+                      help='Resoultion for global/user-defined simulation')
+#if LND model name changed from 'CLM' to 'ELM'
+parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
+                  help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
+
+parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
+                    help='Do not submit jobs')
+parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
+parser.add_option("--dryrun",dest="dryrun",default=False,action="store_true",help="Do not execute commands")
 (options, args) = parser.parse_args()
 
+def runcmd(cmd,echo=True):
+    if echo:
+        print(cmd)
+    if not options.dryrun:
+        return os.system(cmd)
+    else:
+        return 0
 
 
 #----------------------------------------------------------
@@ -208,21 +246,21 @@ def submit(fname, submit_type='qsub', job_depend=''):
     if ('sbatch' in submit_type):
         job_depend_flag = ' --dependency=afterok:'
     if (job_depend != '' and submit_type != ''):
-        os.system(submit_type+job_depend_flag+job_depend+' '+fname+' > temp/jobinfo')
+        runcmd(submit_type+job_depend_flag+job_depend+' '+fname+' > temp/jobinfo')
     else:
       if (submit_type == ''):
-        os.system('chmod a+x '+fname)
-        os.system('./'+fname+' > temp/jobinfo')
+        runcmd('chmod a+x '+fname)
+        runcmd('./'+fname+' > temp/jobinfo')
       else:
-        os.system(submit_type+' '+fname+' > temp/jobinfo')
-    if (submit_type != ''):
+        runcmd(submit_type+' '+fname+' > temp/jobinfo')
+    if (submit_type != '' and not options.dryrun):
       myinput = open('temp/jobinfo')
       for s in myinput:
           thisjob = re.search('[0-9]+', s).group(0)
       myinput.close()
     else:
-      thisjob=0 
-    os.system('rm temp/jobinfo')
+      thisjob="0"
+      runcmd('rm temp/jobinfo')
     return thisjob
 
 
@@ -384,8 +422,12 @@ if (int(options.mc_ensemble) != -1):
     options.ensemble_file = 'mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt'
 
 mysites = options.site.split(',')
-if (not 'all' in mysites):
-  npernode = len(mysites)
+nnode=1
+if(options.np>1): #in case of a single site in name but with multiple unstructured gridcells
+    npernode=min(int(npernode),int(options.np))
+    nnode=-(int(options.np)//-int(npernode))
+elif (not 'all' in mysites):
+    npernode = len(mysites)
 for row in AFdatareader:
     if (row[0] in mysites) or ('all' in mysites and row[0] !='site_code' \
                                       and row[0] != ''):
@@ -487,6 +529,13 @@ for row in AFdatareader:
             basecmd = basecmd+' --humhol'
         if (options.marsh):
             basecmd = basecmd+' --marsh'
+<<<<<<< HEAD
+=======
+        if (options.tide_components_file != ''):
+            basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
+        if (float(options.lai) >= 0):
+            basecmd = basecmd+' --lai '+str(options.lai)
+>>>>>>> bsulman/coastal_main
         if (options.nopftdyn):
             basecmd = basecmd+' --nopftdyn'
         if (options.no_dynroot):
@@ -511,6 +560,11 @@ for row in AFdatareader:
             basecmd = basecmd+' --gswp3'
         if (options.princeton):
             basecmd = basecmd+' --princeton'
+        if (options.daymet):
+            basecmd = basecmd+' --daymet'
+        if (options.daymet4): # gswp3 v2 spatially-downscaled by daymet v4, usually together with user-defined domain and surface data
+            basecmd = basecmd+' --daymet4'
+            if (not options.gswp3): basecmd = basecmd+' --gswp3'
         if (options.fates_paramfile != ''):
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
         if (options.fates_nutrient != ''):
@@ -538,6 +592,10 @@ for row in AFdatareader:
         basecmd = basecmd + ' --np '+str(options.np)
         basecmd = basecmd + ' --tstep '+str(options.tstep)
         basecmd = basecmd + ' --co2_file '+options.co2_file
+        if (options.aerorcp85):
+            basecmd = basecmd + ' --aero_rcp85'
+        if (options.ndeprcp85):
+            basecmd = basecmd + ' --ndep_rcp85'
         if (options.compiler != ''):
             basecmd = basecmd + ' --compiler '+options.compiler
         basecmd = basecmd + ' --mpilib '+options.mpilib
@@ -548,6 +606,25 @@ for row in AFdatareader:
           basecmd = basecmd+' --constraints '+options.constraints
         if (options.hist_vars != ''):
           basecmd = basecmd+' --hist_vars '+options.hist_vars
+
+        if (options.surffile != ''):
+            basecmd = basecmd + ' --surffile '+options.surffile
+        if (options.domainfile != ''):
+            basecmd = basecmd + ' --domainfile '+options.domainfile
+        if (options.maxpatch_pft!=17):
+            basecmd = basecmd + ' --maxpatch_pft '+options.maxpatch_pft
+        if (options.pftdynfile != ''):
+            basecmd = basecmd + ' --landusefile '+options.pftdynfile
+        if (options.res != 'CLM_USRDAT'):
+            basecmd = basecmd + ' --res '+options.res
+        if (options.lndnamechanged): #indicating LND name changed from 'CLM' to 'ELM'
+            basecmd = basecmd + ' --lndnamechanged '
+
+        if (options.var_soilthickness):
+            basecmd = basecmd + ' --var_soilthickness'
+        if (options.var_list_pft != ''):
+            basecmd = basecmd + ' --var_list_pft '+options.var_list_pft
+
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
         if (options.domainfile != ''):
@@ -607,6 +684,8 @@ for row in AFdatareader:
                 else:
                     ad_exeroot = options.exeroot
                     cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
+            elif options.batch_build:
+                cmd_adsp = cmd_adsp+' --no_build'
         else:
             cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
 
@@ -675,6 +754,8 @@ for row in AFdatareader:
               else:
                 ad_exeroot=options.exeroot
                 cmd_fnsp = cmd_fnsp+' --no_build --exeroot '+ad_exeroot
+            elif options.batch_build:
+                cmd_fnsp = cmd_fnsp+' --no_build'
         else:
             cmd_fnsp = basecmd+' --finidat_case '+ad_case+ \
                        ' --finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
@@ -703,8 +784,11 @@ for row in AFdatareader:
             #    cmd_fnsp = cmd_fnsp+' --compset I'+mycompset
 
         if (options.spinup_vars):
+<<<<<<< HEAD
             cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans):	
+=======
+>>>>>>> bsulman/coastal_main
                 cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans and options.constraints == ''):	
                 cmd_fnsp = cmd_fnsp + ' --postproc_file '+options.postproc_file
@@ -727,6 +811,8 @@ for row in AFdatareader:
             cmd_trns = cmd_trns + ' --spinup_vars'
         if (options.trans_varlist != ''):
             cmd_trns = cmd_trns + ' --trans_varlist '+options.trans_varlist
+        if (options.dailyvars):
+            cmd_trns = cmd_trns + ' --dailyvars'
         if (options.ensemble_file != ''):  #Transient post-processing
             cmd_trns = cmd_trns + ' --postproc_file '+options.postproc_file
         if (options.diags):
@@ -753,8 +839,8 @@ for row in AFdatareader:
         basecase = site
         if (mycaseid != ''):
                 basecase = mycaseid+'_'+site
-        os.system('mkdir -p temp')
-        os.system('mkdir -p scripts/'+myscriptsdir)
+        runcmd('mkdir -p temp')
+        runcmd('mkdir -p scripts/'+myscriptsdir)
 
         mymodel = 'ELM'
         if ('clm5' in csmdir):
@@ -770,7 +856,11 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --nopftdyn'
                 if (int(options.mypft) >= 0):
                     ptcmd = ptcmd+' --pft '+str(options.mypft)
-                result = os.system(ptcmd)
+                if (options.humhol):
+                    ptcmd = ptcmd+' --humhol'
+                if (options.marsh):
+                    ptcmd = ptcmd+' --marsh'
+                result = runcmd(ptcmd)
                 if (result > 0):
                     print ('Site_fullrun:  Error creating point data for '+site)
                     sys.exit(1)
@@ -780,14 +870,14 @@ for row in AFdatareader:
             print('\nSetting up ad_spinup case\n')
             if (sitenum == 0):
                 ad_case_firstsite = ad_case
-                result = os.system(cmd_adsp)
-                print(cmd_adsp+'\n')
+                result = runcmd(cmd_adsp)
             else:
                 ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                         ad_case_firstsite+' --site_orig '+firstsite +\
                         ' --site_new '+site+' --nyears '+str(ny_ad)+' --spin_cycle ' \
                         +str(endyear-startyear+1)
-                result = os.system(ptcmd)
+                if(options.lndnamechanged): ptcmd = ptcmd+' --lndnamechanged'
+                result = runcmd(ptcmd)
             if (result > 0):
                 print ('Site_fullrun:  Error in runcase.py for ad_spinup ')
                 sys.exit(1)
@@ -799,14 +889,14 @@ for row in AFdatareader:
             fin_case_firstsite = ad_case_firstsite.replace('_ad_spinup','')
             if (nutrients == 'CNP' and not options.ad_Pinit):
                 fin_case_firstsite = fin_case_firstsite.replace('1850CN','1850CNP')
-            print(cmd_fnsp+'\n')
-            result = os.system(cmd_fnsp)
+            result = runcmd(cmd_fnsp)
         else:
             ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                     fin_case_firstsite+' --site_orig '+firstsite +\
                     ' --site_new '+site+' --nyears '+str(ny_fin)+' --finidat_year ' \
                     +str(int(ny_ad)+1)+' --spin_cycle '+str(endyear-startyear+1)
-            result = os.system(ptcmd)
+            if(options.lndnamechanged): ptcmd = ptcmd+' --lndnamechanged'
+            result = runcmd(ptcmd)
             if (result > 0):
                 print ('Site_fullrun:  Error in runcase.py final spinup')
                 sys.exit(1)
@@ -818,16 +908,17 @@ for row in AFdatareader:
                   tr_case_firstsite = fin_case_firstsite+'_trans'
                 else:
                   tr_case_firstsite = fin_case_firstsite.replace('1850','20TR')
-                result = os.system(cmd_trns)
+                result = runcmd(cmd_trns)
             else:
                  ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                         tr_case_firstsite+' --site_orig '+firstsite +\
                         ' --site_new '+site+' --finidat_year '+str(int(ny_fin)+1)+ \
                         ' --nyears '+str(translen)
-                 result = os.system(ptcmd)
+                 if(options.lndnamechanged): ptcmd = ptcmd+' --lndnamechanged'
+                 result = runcmd(ptcmd)
             if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
                  print('\nSetting up transient case phase 2\n')
-                 result = os.system(cmd_trns2)
+                 result = runcmd(cmd_trns2)
 
             if (result > 0):
                 print ('Site_fullrun:  Error in runcase.py for transient')
@@ -855,6 +946,8 @@ for row in AFdatareader:
             if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
+                mysubmit_type = ''
+            if ('mac' in options.machine):
                 mysubmit_type = ''
             if ((sitenum % npernode) == 0):
                 if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
@@ -902,9 +995,9 @@ for row in AFdatareader:
                             #if ('diags' in c or 'iniadjust' in c):
                             #    output.write("#PBS -l nodes=1:ppn=1\n")
                             #else:
-                            output.write("#PBS -l nodes=1:ppn="+str(npernode)+"\n")
+                            output.write("#PBS -l nodes="+str(int(nnode))+":ppn="+str(int(npernode))+"\n")
                         else:
-                            output.write("#PBS -l nodes=1\n")
+                            output.write("#PBS -l nodes="+str(int(nnode))+"\n")
                     elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
                         output.write(s.replace(firstsite,site))
                 input.close()
@@ -964,6 +1057,9 @@ for row in AFdatareader:
                     output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_ad_spinup/\n")
                 else:
                     output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/\n")
+                if options.batch_build and options.exeroot == '':
+                    output.write('./xmlchange BUILD_COMPLETE=FALSE\n')
+                    output.write("./case.build || exit 1\n")
                 output.write("./case.submit --no-batch &\n")
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
@@ -977,6 +1073,10 @@ for row in AFdatareader:
                     output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
                                  str(int(ny_ad)+1)+' --BGC\n')
+                elif (options.lndnamechanged):
+                    output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
+                                 '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
+                                 str(int(ny_ad)+1)+' --lndnamechanged\n')
                 else:
                     output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ad_case+' --restart_year '+ \
@@ -1094,11 +1194,12 @@ if (options.ensemble_file == ''):
             if ('trans_diags' in thiscase and options.machine == 'cades'):
                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             output.close()
-            if (mysubmit_type == ''):
-                os.system('chmod u+x ./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
-                os.system('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
-            else:
-                job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
+            if not options.no_submit:
+                if (mysubmit_type == ''):
+                    os.system('chmod u+x ./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
+                    os.system('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs')
+                else:
+                    job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
                                     job_depend_run, submit_type=mysubmit_type)
 
 
