@@ -618,7 +618,8 @@ for row in AFdatareader:
             cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
 
         if (options.cpl_bypass):
-            if (options.crop or options.fates):
+            #if (options.crop or options.fates):
+            if (options.crop):
               cmd_adsp = cmd_adsp+' --compset ICB'+mycompset_adsp
               ad_case = site+'_ICB'+mycompset_adsp
             else:
@@ -643,11 +644,13 @@ for row in AFdatareader:
         if (sitenum == 0 and options.exeroot == ''):
             ad_exeroot = os.path.abspath(runroot+'/'+ad_case+'/bld')
 
+
         #final spinup
         if mycaseid !='':
             basecase=mycaseid+'_'+site
             if (options.cpl_bypass):
-                if (options.crop or options.fates):
+                #if (options.crop or options.fates):
+                if (options.crop):
                   basecase = basecase+'_ICB'+mycompset
                 else:
                   basecase = basecase+'_ICB1850'+mycompset
@@ -657,7 +660,8 @@ for row in AFdatareader:
                 #    basecase = basecase+'_I'+mycompset
         else:
             if (options.cpl_bypass):
-                if (options.crop or options.fates):
+                #if (options.crop or options.fates):
+                if (options.crop):
                   basecase = site+'_ICB'+mycompset
                 else:
                   basecase=site+'_ICB1850'+mycompset
@@ -700,7 +704,8 @@ for row in AFdatareader:
             if (options.sp):
               cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
             else:
-              if (options.crop or options.fates):
+              #if (options.crop or options.fates):
+              if (options.crop):
                 cmd_fnsp = cmd_fnsp+' --compset ICB'+mycompset
               else:
                 cmd_fnsp = cmd_fnsp+' --compset ICB1850'+mycompset
@@ -716,6 +721,7 @@ for row in AFdatareader:
         if (options.ensemble_file != '' and options.notrans and options.constraints == ''):	
                 cmd_fnsp = cmd_fnsp + ' --postproc_file '+options.postproc_file
 
+
         #transient
         cmd_trns = basecmd+' --finidat_case '+basecase+ \
             ' --finidat_year '+str(fsplen+1)+' --run_units nyears' \
@@ -729,10 +735,10 @@ for row in AFdatareader:
             else:
               cmd_trns = cmd_trns+' --compset ICB20TR'+mycompset
         else:
-            if (options.fates):
-              cmd_trns = cmd_trns+' --istrans --compset I'+mycompset
-            else:
-              cmd_trns = cmd_trns+' --compset I20TR'+mycompset
+#            if (options.fates):
+#              cmd_trns = cmd_trns+' --istrans --compset I'+mycompset
+#            else:
+            cmd_trns = cmd_trns+' --compset I20TR'+mycompset
         if (options.spinup_vars):
             cmd_trns = cmd_trns + ' --spinup_vars'
         if (options.trans_varlist != ''):
@@ -744,6 +750,7 @@ for row in AFdatareader:
         if (not options.nofire):
             #Turn wildfire off in transient simulations (disturbances are known)
             cmd_trns = cmd_trns + ' --nofire'
+
 
         #transient phase 2 
         #(CRU-NCEP only, without coupler bypass)
@@ -758,28 +765,33 @@ for row in AFdatareader:
                 ' --compset I20TR'+mycompset+' --nopointdata'
             #print(cmd_trns2)
 
+
         # experimental manipulation, without coupler bypass
         # APW: check align_year is correct, 
         # APW: do we want different outputs? Maybe the full set here and a reduced set for the initial transient?
+        #elif ((options.eco2_file != '') and not options.cpl_bypass):
+        #    basecase=basecase.replace('1850','')+'_trans'
         elif ((options.eco2_file != '') and not options.cpl_bypass):
-            basecase=basecase.replace('1850','')+'_trans'
+            basecase=basecase.replace('1850','20TR')
 
             # ambient CO2 run 
-            cmd_trns2 = basecmd+' --transtag aCO2 --istrans --finidat_case '+basecase+ \
+            #cmd_trns2 = basecmd+' --transtag aCO2 --istrans --finidat_case '+basecase+ \
+            cmd_trns2 = basecmd+' --transtag aCO2 --finidat_case '+basecase+ \
                 ' --finidat_year '+str(startyear)+' --run_units nyears --branch ' \
                 +' --run_n '+str(ncycle)+' --align_year '+str(startyear)+ \
                 ' --hist_nhtfrq '+options.hist_nhtfrq+' --hist_mfilt '+ \
                 options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
-                ' --compset I'+mycompset+' --nopointdata'
+                ' --compset I20TR'+mycompset+' --nopointdata'
           
             # elevated CO2 run 
             basecmd_eco2=basecmd.replace(options.co2_file,options.eco2_file)
-            cmd_trns3 = basecmd+' --transtag eCO2 --istrans --finidat_case '+basecase+ \
+            #cmd_trns3 = basecmd+' --transtag eCO2 --istrans --finidat_case '+basecase+ \
+            cmd_trns3 = basecmd+' --transtag eCO2 --finidat_case '+basecase+ \
                 ' --finidat_year '+str(startyear)+' --run_units nyears --branch ' \
                 +' --run_n '+str(ncycle)+' --align_year '+str(startyear)+ \
                 ' --hist_nhtfrq '+options.hist_nhtfrq+' --hist_mfilt '+ \
                 options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
-                ' --compset I'+mycompset+' --nopointdata'
+                ' --compset I20TR'+mycompset+' --nopointdata'
           
 
 #---------------------------------------------------------------------------------
@@ -853,7 +865,8 @@ for row in AFdatareader:
         if (options.notrans == False):
             print('\n\nSetting up transient case\n')
             if (sitenum == 0):
-                if (options.crop or options.fates):
+                #if (options.crop or options.fates):
+                if (options.crop):
                   tr_case_firstsite = fin_case_firstsite+'_trans'
                 else:
                   tr_case_firstsite = fin_case_firstsite.replace('1850','20TR')
@@ -887,7 +900,7 @@ for row in AFdatareader:
                 if (result > 0):
                     print('Site_fullrun:  Error in runcase.py for transient 2')
                     sys.exit(1)
-                print('\nSetting up experiemnt transient case 3\n')
+                print('\n\nSetting up experiemnt transient case 3\n')
                 print(cmd_trns3)
                 result = os.system(cmd_trns3)
                 if (result > 0):
@@ -1015,11 +1028,11 @@ for row in AFdatareader:
                   modelst = 'ICBCLM45BC'
                 if (options.crop):
                   modelst = 'ICBCLM45CNCROP'
-                if (options.fates):
-                  modelst = 'ICBCLM45ED'
-            else:
-                if (options.fates):
-                    modelst = 'I1850CLM45ED'
+#                if (options.fates):
+#                  modelst = 'ICB1850CLM45ED'
+#            else:
+#                if (options.fates):
+#                    modelst = 'I1850CLM45ED'
 
             basecase = site
             if (mycaseid != ''):
@@ -1083,16 +1096,16 @@ for row in AFdatareader:
             if (sitenum == 0 and 'transient' in c):
                 if (options.crop):
                   output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_trans\n")
-                elif (options.fates):
-                  output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans\n")
+#                elif (options.fates):
+#                  output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans\n")
                 else:
                   output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"\n")
                 output.write('./case.submit --no-batch &\n')
             elif ('transient' in c):
                 if (options.crop):
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst+"_trans/run\n")
-                elif (options.fates):
-                  output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans/run\n")
+#                elif (options.fates):
+#                  output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans/run\n")
                 else:
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"/run\n")
 
@@ -1108,9 +1121,9 @@ for row in AFdatareader:
 
                 if (options.crop):
                   output.write("cd "+simroot+'/'+basecase+"_"+modelst+"_"+c+"/run\n")
-                elif (options.fates):
-                  #output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"/run\n")
-                  output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"\n")
+#                elif (options.fates):
+#                  #output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"/run\n")
+#                  output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"\n")
                 else:
                   output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+c.replace('trans_','')+"/run\n")
                 output.write(line2) 
@@ -1173,14 +1186,16 @@ for row in AFdatareader:
                     cases.append(basecase+'_'+modelst.replace('CNP','CN')+'_ad_spinup')
             cases.append(basecase+'_'+modelst)
             if (options.notrans == False):
-                if (options.crop or options.fates):
+                #if (options.crop or options.fates):
+                if (options.crop):
                   cases.append(basecase+'_'+modelst+'_trans')
                 else:
                   cases.append(basecase+'_'+modelst.replace('1850','20TR'))
             job_depend_run=''    
             if (len(cases) > 1 and options.constraints != ''):
               cases=[]    #QPSO will run all cases
-              if (options.crop or options.fates):
+              #if (options.crop or options.fates):
+              if (options.crop):
                 cases.append(basecase+'_'+modelst+'_trans')
               else:
                 cases.append(basecase+'_'+modelst.replace('1850','20TR'))
