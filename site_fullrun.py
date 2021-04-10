@@ -75,6 +75,8 @@ parser.add_option("--ad_Pinit", dest="ad_Pinit", default=False, action="store_tr
                   help="Initialize AD spinup with P pools and use CNP mode")
 parser.add_option("--noad", action="store_true", dest="noad", default=False, \
                   help='Do not perform ad spinup simulation')
+parser.add_option("--nofnsp", action="store_true", dest="nofnsp", default=False, \
+                  help='Do not perform final spinup simulation')
 parser.add_option("--notrans", action="store_true", dest="notrans", default=False, \
                   help='Do not perform transient simulation (spinup only)')
 
@@ -420,7 +422,9 @@ for row in AFdatareader:
         #AD spinup and final spinup lengths must be multiples of met data cyle.
         if (int(options.ny_ad) % ncycle != 0):
           ny_ad = str(int(ny_ad) + ncycle - (int(ny_ad) % ncycle))
-        if (int(options.nyears_final_spinup) % ncycle !=0 and options.noad == False):
+        # APW TCOFD
+        #if (int(options.nyears_final_spinup) % ncycle !=0 and options.noad == False):
+        if (int(options.nyears_final_spinup) % ncycle !=0):
           ny_fin = str(int(ny_fin) + ncycle - (int(ny_fin) % ncycle))
 
         if (options.nyears_transient == -1):
@@ -777,7 +781,7 @@ for row in AFdatareader:
             # ambient CO2 run 
             #cmd_trns2 = basecmd+' --transtag aCO2 --istrans --finidat_case '+basecase+ \
             cmd_trns2 = basecmd+' --transtag aCO2 --finidat_case '+basecase+ \
-                ' --finidat_year '+str(startyear)+' --run_units nyears --branch ' \
+                ' --finidat_year '+str(startyear)+' --run_startyear '+str(startyear)+' --run_units nyears ' \
                 +' --run_n '+str(ncycle)+' --align_year '+str(startyear)+ \
                 ' --hist_nhtfrq '+options.hist_nhtfrq+' --hist_mfilt '+ \
                 options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
@@ -786,8 +790,8 @@ for row in AFdatareader:
             # elevated CO2 run 
             basecmd_eco2=basecmd.replace(options.co2_file,options.eco2_file)
             #cmd_trns3 = basecmd+' --transtag eCO2 --istrans --finidat_case '+basecase+ \
-            cmd_trns3 = basecmd+' --transtag eCO2 --finidat_case '+basecase+ \
-                ' --finidat_year '+str(startyear)+' --run_units nyears --branch ' \
+            cmd_trns3 = basecmd_eco2+' --transtag eCO2 --finidat_case '+basecase+ \
+                ' --finidat_year '+str(startyear)+' --run_startyear '+str(startyear)+' --run_units nyears ' \
                 +' --run_n '+str(ncycle)+' --align_year '+str(startyear)+ \
                 ' --hist_nhtfrq '+options.hist_nhtfrq+' --hist_mfilt '+ \
                 options.hist_mfilt+' --no_build'+' --exeroot '+ad_exeroot + \
@@ -842,25 +846,32 @@ for row in AFdatareader:
                 print('Site_fullrun:  Error in runcase.py for ad_spinup ')
                 sys.exit(1)
         else:
-          ad_case_firstsite = ad_case
+            ad_case_firstsite = ad_case
 
-        print('\n\nSetting up final spinup case\n')
-        if (sitenum == 0):
+
+        if (options.nofnsp == False):
+            print('\n\nSetting up final spinup case\n')
+            if (sitenum == 0):
+                fin_case_firstsite = ad_case_firstsite.replace('_ad_spinup','')
+                if (nutrients == 'CNP' and not options.ad_Pinit):
+                    fin_case_firstsite = fin_case_firstsite.replace('1850CN','1850CNP')
+                print(cmd_fnsp+'\n')
+                result = os.system(cmd_fnsp)
+            else:
+                ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
+                        fin_case_firstsite+' --site_orig '+firstsite +\
+                        ' --site_new '+site+' --nyears '+str(ny_fin)+' --finidat_year ' \
+                        +str(int(ny_ad)+1)+' --spin_cycle '+str(endyear-startyear+1)
+                print(ptcmd)
+                result = os.system(ptcmd)
+                if (result > 0):
+                    print('Site_fullrun:  Error in runcase.py final spinup')
+                    sys.exit(1)
+        else:
             fin_case_firstsite = ad_case_firstsite.replace('_ad_spinup','')
             if (nutrients == 'CNP' and not options.ad_Pinit):
                 fin_case_firstsite = fin_case_firstsite.replace('1850CN','1850CNP')
-            print(cmd_fnsp+'\n')
-            result = os.system(cmd_fnsp)
-        else:
-            ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
-                    fin_case_firstsite+' --site_orig '+firstsite +\
-                    ' --site_new '+site+' --nyears '+str(ny_fin)+' --finidat_year ' \
-                    +str(int(ny_ad)+1)+' --spin_cycle '+str(endyear-startyear+1)
-            print(ptcmd)
-            result = os.system(ptcmd)
-            if (result > 0):
-                print('Site_fullrun:  Error in runcase.py final spinup')
-                sys.exit(1)
+
 
         if (options.notrans == False):
             print('\n\nSetting up transient case\n')
@@ -900,7 +911,7 @@ for row in AFdatareader:
                 if (result > 0):
                     print('Site_fullrun:  Error in runcase.py for transient 2')
                     sys.exit(1)
-                print('\n\nSetting up experiemnt transient case 3\n')
+                print('\n\nSetting up experiment transient case 3\n')
                 print(cmd_trns3)
                 result = os.system(cmd_trns3)
                 if (result > 0):
@@ -914,17 +925,20 @@ for row in AFdatareader:
             case_list.append('ad_spinup')
             if (not options.fates):
               case_list.append('iniadjust')
-        case_list.append('fn_spinup')
+        if (options.nofnsp == False):
+            case_list.append('fn_spinup')
         if (options.diags):
             case_list.append('spinup_diags')
         if (options.notrans == False):
+            # APW TCOFD
             case_list.append('transient')
             if (options.eco2_file):
-                case_list.append('trans_aco2')
-                case_list.append('trans_eco2')
+                case_list.append('trans_aCO2')
+                case_list.append('trans_eCO2')
             if (options.diags):
                 case_list.append('trans_diags')
-        #print(case_list)
+        print('\n\nAliases of cases to be submitted:\n')
+        print(case_list)
         #sys.exit('temp stop pre submit script copy & edit')
 
         for c in case_list:
@@ -1114,19 +1128,21 @@ for row in AFdatareader:
             elif ('trans_' in c and c != 'trans_diags'):
                 if (sitenum == 0):
                     simroot=caseroot
-                    line2='./case.submit --no-batch &\n'
+                    simsuffix=''
+                    simsubmit='./case.submit --no-batch &\n'
                 else: 
                     simroot=runroot
-                    line2=runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n'
+                    simsuffix='/run'
+                    simsubmit=runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n'
 
                 if (options.crop):
-                  output.write("cd "+simroot+'/'+basecase+"_"+modelst+"_"+c+"/run\n")
+                  output.write("cd "+simroot+'/'+basecase+"_"+modelst+"_"+c+simsuffix+"\n")
 #                elif (options.fates):
 #                  #output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"/run\n")
 #                  output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"\n")
                 else:
-                  output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+c.replace('trans_','')+"/run\n")
-                output.write(line2) 
+                  output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+c.replace('trans','')+simsuffix+"\n")
+                output.write(simsubmit) 
 #                if (sitenum == 0):
 #                    output.write('./case.submit --no-batch &\n')
 #                else: 
@@ -1184,13 +1200,17 @@ for row in AFdatareader:
                     cases.append(basecase+'_'+modelst+'_ad_spinup')
                  else:
                     cases.append(basecase+'_'+modelst.replace('CNP','CN')+'_ad_spinup')
-            cases.append(basecase+'_'+modelst)
+
+            if (options.nofnsp == False):
+                 cases.append(basecase+'_'+modelst)
+
             if (options.notrans == False):
                 #if (options.crop or options.fates):
                 if (options.crop):
                   cases.append(basecase+'_'+modelst+'_trans')
                 else:
                   cases.append(basecase+'_'+modelst.replace('1850','20TR'))
+
             job_depend_run=''    
             if (len(cases) > 1 and options.constraints != ''):
               cases=[]    #QPSO will run all cases
@@ -1206,7 +1226,7 @@ for row in AFdatareader:
         #    job_fullrun = submit('temp/site_fullrun.pbs', submit_type=mysubmit_type)
         sitenum = sitenum+1
 
-#Submit PBS scripts for multi-site simulations on 1 node
+# Submit PBS scripts for multi-site simulations on 1 node
 if (options.ensemble_file == ''):
     for g in range(0,int(groupnum)+1):
         job_depend_run=''
