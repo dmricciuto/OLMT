@@ -566,41 +566,57 @@ for row in AFdatareader:
 
 #---------------- build commands for runcase.py -----------------------------
 
-        #ECA or CTC
+        # define compsets
+        # C, CN, CNP
         if (options.c_only):
             nutrients = 'C'
         elif (options.cn_only):
             nutrients = 'CN'
         else: 
             nutrients = 'CNP'
+        
+        # CENTURY or CTC
         if (options.centbgc):
             decomp_model = 'CNT'
         else:
             decomp_model = 'CTC'
+
+        # ECA or RD 
         if (options.eca):
             mycompset = nutrients+'ECA'+decomp_model
+        # APW: seems redundant given if statement below 
         elif (options.fates):
             mycompset = 'CLM45ED'
         else:
             mycompset = nutrients+'RD'+decomp_model+'BC'
 
+        # add P during initial spinup
         if (not options.ad_Pinit):
             mycompset_adsp = mycompset.replace('CNP','CN')
         else:
             mycompset_adsp = mycompset
+        
+        # crop model 
         if (options.crop):
             mycompset = 'CLM45CNCROP'
             mycompset_adsp = mycompset   
+        
+        # FATES model 
         if (options.fates):
             mycompset = 'CLM45ED'
             mycompset_adsp = mycompset
+        
+        # model executable E3SM / CESM 
         myexe = 'e3sm.exe'
         if ('clm5' in options.csmdir):
             mycompset = 'Clm50BgcGs'
             mycompset_adsp = 'Clm50BgcGs'
             myexe = 'cesm.exe'
 
-        #AD spinup
+
+        # develop calls to runcase.py
+
+        # AD spinup
         cmd_adsp = basecmd+' --ad_spinup --nyears_ad_spinup '+ \
             str(ny_ad)+' --align_year '+str(year_align+1)
         if (int(options.hist_mfilt_spinup) == -999):
@@ -622,7 +638,6 @@ for row in AFdatareader:
             cmd_adsp = cmd_adsp+' --exeroot '+ad_exeroot+' --no_build'
 
         if (options.cpl_bypass):
-            #if (options.crop or options.fates):
             if (options.crop):
               cmd_adsp = cmd_adsp+' --compset ICB'+mycompset_adsp
               ad_case = site+'_ICB'+mycompset_adsp
@@ -634,9 +649,7 @@ for row in AFdatareader:
         else:
             cmd_adsp = cmd_adsp+' --compset I1850'+mycompset_adsp
             ad_case = site+'_I1850'+mycompset_adsp
-            #if (options.fates):
-            #    cmd_adsp = cmd_adsp+' --compset I'+mycompset_adsp
-            #    ad_case = site+'_I'+mycompset_adsp
+
         if (options.noad == False):
             ad_case = ad_case+'_ad_spinup'
         if (options.makemet):
@@ -649,32 +662,27 @@ for row in AFdatareader:
             ad_exeroot = os.path.abspath(runroot+'/'+ad_case+'/bld')
 
 
-        #final spinup
+        # final spinup
         if mycaseid !='':
             basecase=mycaseid+'_'+site
             if (options.cpl_bypass):
-                #if (options.crop or options.fates):
                 if (options.crop):
                   basecase = basecase+'_ICB'+mycompset
                 else:
                   basecase = basecase+'_ICB1850'+mycompset
             else: 
                 basecase = basecase+'_I1850'+mycompset
-                #if (options.fates):
-                #    basecase = basecase+'_I'+mycompset
         else:
             if (options.cpl_bypass):
-                #if (options.crop or options.fates):
                 if (options.crop):
                   basecase = site+'_ICB'+mycompset
                 else:
                   basecase=site+'_ICB1850'+mycompset
             else:
                 basecase=site+'_I1850'+mycompset
-                #if (options.fates):
-                #    basecase = basecase+'_I'+mycompset
             if (options.sp):
                 basecase=site+'_ICBCLM45BC'
+
         if (options.noad):
             cmd_fnsp = basecmd+' --run_units nyears --run_n '+str(fsplen)+' --align_year '+ \
                        str(year_align+1)+' --coldstart'
@@ -695,6 +703,7 @@ for row in AFdatareader:
                        ' --finidat_year '+str(int(ny_ad)+1)+' --run_units nyears --run_n '+ \
                        str(fsplen)+' --align_year '+str(year_align+1)+' --no_build' + \
                        ' --exeroot '+ad_exeroot+' --nopointdata'
+
         if (int(options.hist_mfilt_spinup) == -999):
             if (options.sp):
               cmd_fnsp = cmd_fnsp+' --hist_mfilt 365 --hist_nhtfrq -24'
@@ -704,19 +713,17 @@ for row in AFdatareader:
         else:
             cmd_fnsp = cmd_fnsp+' --hist_mfilt '+str(options.hist_mfilt_spinup) \
                    +' --hist_nhtfrq '+str(options.hist_nhtfrq_spinup)
+
         if (options.cpl_bypass):
             if (options.sp):
               cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
             else:
-              #if (options.crop or options.fates):
               if (options.crop):
                 cmd_fnsp = cmd_fnsp+' --compset ICB'+mycompset
               else:
                 cmd_fnsp = cmd_fnsp+' --compset ICB1850'+mycompset
         else:
             cmd_fnsp = cmd_fnsp+' --compset I1850'+mycompset
-            #if (options.fates):
-            #    cmd_fnsp = cmd_fnsp+' --compset I'+mycompset
 
         if (options.spinup_vars):
                 cmd_fnsp = cmd_fnsp+' --spinup_vars'
@@ -733,16 +740,15 @@ for row in AFdatareader:
             str(year_align+1850)+' --hist_nhtfrq '+ \
             options.hist_nhtfrq+' --hist_mfilt '+options.hist_mfilt+' --no_build' + \
             ' --exeroot '+ad_exeroot+' --nopointdata'
+        
         if (options.cpl_bypass):
             if (options.crop or options.fates):
               cmd_trns = cmd_trns+' --istrans --compset ICB'+mycompset
             else:
               cmd_trns = cmd_trns+' --compset ICB20TR'+mycompset
         else:
-#            if (options.fates):
-#              cmd_trns = cmd_trns+' --istrans --compset I'+mycompset
-#            else:
             cmd_trns = cmd_trns+' --compset I20TR'+mycompset
+        
         if (options.spinup_vars):
             cmd_trns = cmd_trns + ' --spinup_vars'
         if (options.trans_varlist != ''):
@@ -770,16 +776,13 @@ for row in AFdatareader:
             #print(cmd_trns2)
 
 
-        # experimental manipulation, without coupler bypass
+        # experimental manipulation transients, without coupler bypass
         # APW: check align_year is correct, 
         # APW: do we want different outputs? Maybe the full set here and a reduced set for the initial transient?
-        #elif ((options.eco2_file != '') and not options.cpl_bypass):
-        #    basecase=basecase.replace('1850','')+'_trans'
         elif ((options.eco2_file != '') and not options.cpl_bypass):
             basecase=basecase.replace('1850','20TR')
 
             # ambient CO2 run 
-            #cmd_trns2 = basecmd+' --transtag aCO2 --istrans --finidat_case '+basecase+ \
             cmd_trns2 = basecmd+' --transtag aCO2 --finidat_case '+basecase+ \
                 ' --finidat_year '+str(startyear)+' --run_startyear '+str(startyear)+' --run_units nyears ' \
                 +' --run_n '+str(ncycle)+' --align_year '+str(startyear)+ \
@@ -789,7 +792,6 @@ for row in AFdatareader:
           
             # elevated CO2 run 
             basecmd_eco2=basecmd.replace(options.co2_file,options.eco2_file)
-            #cmd_trns3 = basecmd+' --transtag eCO2 --istrans --finidat_case '+basecase+ \
             cmd_trns3 = basecmd_eco2+' --transtag eCO2 --finidat_case '+basecase+ \
                 ' --finidat_year '+str(startyear)+' --run_startyear '+str(startyear)+' --run_units nyears ' \
                 +' --run_n '+str(ncycle)+' --align_year '+str(startyear)+ \
@@ -876,7 +878,6 @@ for row in AFdatareader:
         if (options.notrans == False):
             print('\n\nSetting up transient case\n')
             if (sitenum == 0):
-                #if (options.crop or options.fates):
                 if (options.crop):
                   tr_case_firstsite = fin_case_firstsite+'_trans'
                 else:
@@ -920,6 +921,7 @@ for row in AFdatareader:
 
                  
         # Create .pbs etc scripts for each case
+        # build vector of case aliases 
         case_list = []
         if (options.noad == False):
             case_list.append('ad_spinup')
@@ -930,7 +932,6 @@ for row in AFdatareader:
         if (options.diags):
             case_list.append('spinup_diags')
         if (options.notrans == False):
-            # APW TCOFD
             case_list.append('transient')
             if (options.eco2_file):
                 case_list.append('trans_aCO2')
@@ -1034,7 +1035,8 @@ for row in AFdatareader:
                     output.write('module load python/2.7.12\n')
             else:
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','a')   
-                
+               
+            # build full spin compset for writing to submit scripts
             modelst = 'I1850'+mycompset
             if (options.cpl_bypass):
                 modelst = 'ICB1850'+mycompset
@@ -1042,26 +1044,16 @@ for row in AFdatareader:
                   modelst = 'ICBCLM45BC'
                 if (options.crop):
                   modelst = 'ICBCLM45CNCROP'
-#                if (options.fates):
-#                  modelst = 'ICB1850CLM45ED'
-#            else:
-#                if (options.fates):
-#                    modelst = 'I1850CLM45ED'
 
             basecase = site
             if (mycaseid != ''):
                 basecase = mycaseid+'_'+site
 
             if (sitenum == 0 and 'ad_spinup' in c):
-            #if ('ad_spinup' in c):
                 if (options.ad_Pinit):
                     output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_ad_spinup/\n")
                 else:
                     output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/\n")
-                #if (sitenum == 0):
-                #    output.write("./case.submit --no-batch &\n")
-                #else:
-                #    output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
                 output.write("./case.submit --no-batch &\n")
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
@@ -1122,9 +1114,9 @@ for row in AFdatareader:
 #                  output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans/run\n")
                 else:
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"/run\n")
-
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
 
+            # APW: possible alternative structure for these if statements, could help simplfy
             elif ('trans_' in c and c != 'trans_diags'):
                 if (sitenum == 0):
                     simroot=caseroot
@@ -1134,19 +1126,11 @@ for row in AFdatareader:
                     simroot=runroot
                     simsuffix='/run'
                     simsubmit=runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n'
-
                 if (options.crop):
                   output.write("cd "+simroot+'/'+basecase+"_"+modelst+"_"+c+simsuffix+"\n")
-#                elif (options.fates):
-#                  #output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"/run\n")
-#                  output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','')+"_"+c+"\n")
                 else:
                   output.write("cd "+simroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+c.replace('trans','')+simsuffix+"\n")
                 output.write(simsubmit) 
-#                if (sitenum == 0):
-#                    output.write('./case.submit --no-batch &\n')
-#                else: 
-#                    output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
 
             if ('trans_diags' in c):
                  if (options.cpl_bypass):
@@ -1187,10 +1171,10 @@ for row in AFdatareader:
             output.close()
 
 
+#sys.exit('temp stop pre-submit')
 # submit jobs created by runcase.py 
 #======================================================#
 
-        #sys.exit('temp stop pre-submit')
         #if ensemble simulations requested, submit jobs created by runcase.py in correct order
         if (options.ensemble_file != ''):
             cases=[]
@@ -1226,7 +1210,8 @@ for row in AFdatareader:
         #    job_fullrun = submit('temp/site_fullrun.pbs', submit_type=mysubmit_type)
         sitenum = sitenum+1
 
-# Submit PBS scripts for multi-site simulations on 1 node
+
+# Submit PBS scripts for single/multi-site simulations on 1 node
 if (options.ensemble_file == ''):
     for g in range(0,int(groupnum)+1):
         job_depend_run=''
