@@ -23,13 +23,11 @@ def getvar(fname, varname, npf, index, scale_factor):
         nffile = netcdf.NetCDFFile(fname,"r")
         var = nffile.variables[varname]
         varvals = var.getValue()[0:npf,index] * scale_factor
-        nffile.close()
+        #nffile.close()
     return varvals
 
 
 parser = OptionParser()
-parser.add_option("--ad_Pinit", dest="ad_Pinit", default=False, action="store_true",\
-                  help="Initialize AD spinup with P pools and use CNP mode")
 parser.add_option("--csmdir", dest="mycsmdir", default='', \
                   help = 'Base CESM directory (default = ..)')
 parser.add_option("--cases", dest="mycase", default='', \
@@ -38,17 +36,19 @@ parser.add_option("--compset", dest="compset", default="I20TRCLM45CN", \
                   help = "Compset to plot")
 parser.add_option("--titles", dest="titles", default='', \
                   help = "titles of case to plot (for legend)")
-parser.add_option("--obs", action="store_true", default=False, \
-                  help = "plot observations", dest="myobs")
 parser.add_option("--sites", dest="site", default="none", \
                   help = 'site (to plot observations)')
-parser.add_option("--timezone", dest="timezone", default=0, \
-                  help = 'time zone (relative to UTC')
+parser.add_option("--obs", action="store_true", default=False, \
+                  help = "plot observations", dest="myobs")
 parser.add_option("--varfile", dest="myvarfile", default='varfile', \
                   help = 'file containing list of variables to plot')
 parser.add_option("--vars", dest="myvar", default='', \
                   help="variable to plot (overrides varfile, " \
                   +"sends plot to screen")
+
+# output timing
+parser.add_option("--timezone", dest="timezone", default=0, \
+                  help = 'time zone (relative to UTC')
 parser.add_option("--avpd", dest="myavpd", default=1, \
                   help = 'averaging period in # of output timesteps' \
                   +' (default = 1)')
@@ -82,8 +82,12 @@ parser.add_option("--h4", dest="h4", default=False, \
                   action="store_true", help = 'Use h4 history files')
 parser.add_option("--index", dest="index", help = 'index (site or pft)', \
                    default=0)
+
+# plot configuration
 parser.add_option("--spinup", dest="spinup", help = 'plot Ad and final spinup', \
                    default=False, action="store_true")
+parser.add_option("--ad_Pinit", dest="ad_Pinit", default=False, action="store_true",\
+                  help="AD spinup initialized with P pools (CN) but other cases use CNP mode")
 parser.add_option("--scale_factor", dest="scale_factor", help = 'scale factor', \
                    default=-999)
 parser.add_option("--ylog", dest="ylog", help="log scale for Y axis", \
@@ -490,7 +494,7 @@ for c in range(0,ncases):
             if (npf == 1):
                 starti = 1
             for n in range(0,nc):
-                if ((options.spinup)and n== 0):
+                if ((options.spinup) and n== 0):
 #                    if (mycases[c] == ''):
 #                        if (options.ad_Pinit):
 #                            mydir = cesmdir+'/'+mysites[c]+'_'+mycompsets[c]+'_ad_spinup/run/'
@@ -701,7 +705,7 @@ for v in range(0,len(myvars)):
                 ftype_suffix=['model','obs']
                 os.system('mkdir -p ./plots/'+mycases[0]+'/'+analysis_type)
                 for ftype in range(0,2):
-                    outdata = netcdf.netcdf_file('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+ftype_suffix[ftype]+".nc","w",mmap=False)
+                    outdata = netcdf.netcdf_file('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","w",mmap=False)
                     outdata.createDimension('time',snum[c])
                     #outdata.createDimension('lat',ncases)
                     #outdata.createDimension('lon',ncases)
@@ -723,7 +727,7 @@ for v in range(0,len(myvars)):
                     myname[:,:] = ' '   #changed for gridcell
                     outdata.close()
         for ftype in range(0,2):
-            outdata = netcdf.netcdf_file('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+ftype_suffix[ftype]+".nc","a",mmap=False)
+            outdata = netcdf.netcdf_file('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","a",mmap=False)
             if (c == 0):
                 #myvar = outdata.createVariable(myvars[v],'f',('time','lat','lon'))
                 myvar = outdata.createVariable(myvars[v],'f',('time','gridcell'))
@@ -796,9 +800,9 @@ for v in range(0,len(myvars)):
 
         os.system('mkdir -p ./plots/'+mycases[0]+'/'+analysis_type)
         if (options.nperpage == 1):
-          fig_filename = './plots/'+mycases[0]+'/'+analysis_type+'/'+mysites[0]+'_'+myvars[v]+'_'+analysis_type
+          fig_filename = './plots/'+mycases[0]+'/'+analysis_type+'/'+mysites[0]+'_'+mycompsets[0]+'_'+myvars[v]+'_'+analysis_type
         else:
-          fig_filename = './plots/'+mycases[0]+'/'+analysis_type+'/'+mysites[0]+'_fig'+str(fignum)+'_'+analysis_type
+          fig_filename = './plots/'+mycases[0]+'/'+analysis_type+'/'+mysites[0]+'_'+mycompsets[0]+'_fig'+str(fignum)+'_'+analysis_type
         if (options.pdf):
             fig.savefig(fig_filename+'.pdf')
         if (options.png):
