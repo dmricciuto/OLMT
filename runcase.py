@@ -1191,6 +1191,7 @@ for i in range(1,int(options.ninst)+1):
             output.write(' check_finidat_year_consistency = .false.\n')
     #pft-physiology file
     output.write(" paramfile = '"+rundir+"/clm_params.nc'\n")
+
     if ('ED' in compset and options.fates_paramfile != ''):
       output.write(" fates_paramfile = '"+options.fates_paramfile+"'\n")
     if ('ED' in compset and options.fates_hydro):
@@ -1254,6 +1255,7 @@ for i in range(1,int(options.ninst)+1):
             output.write(" nu_com = 'ECA'\n")
         elif ('RD' in options.fates_nutrient):
             output.write(" nu_com = 'RD'\n")
+
     if (cpl_bypass):
         if (use_reanalysis):
             if (options.cruncepv8):
@@ -1312,6 +1314,7 @@ for i in range(1,int(options.ninst)+1):
                 output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                           +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full'\n")
 #                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
+        # not reanalysis
         else:
             if (options.site_forcing == ''):
               options.site_forcing=options.site
@@ -1337,13 +1340,16 @@ for i in range(1,int(options.ninst)+1):
         else:
           output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
                          +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1849-2104_1.9x2.5_c100402.nc'\n")
+
     if (options.addt != 0):
       output.write(" add_temperature = "+str(options.addt)+"\n")
       output.write(" startdate_add_temperature = '"+str(options.sd_addt)+"'\n")
+
     if (options.addco2 != 0):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
     output.close()
+
 
 #configure case
 #if (isglobal):
