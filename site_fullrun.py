@@ -204,8 +204,6 @@ parser.add_option("--hist_nhtfrq_spinup", dest="hist_nhtfrq_spinup", default="-9
                   help = 'output file timestep (spinup only)')
 
 #datasets for user-defined PFTs (by F-M Yuan, NGEE-Arctic)
-parser.add_option("--domainfile", dest="domainfile", default="", \
-                  help = 'full path of Domain file to use')
 parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
@@ -218,7 +216,16 @@ parser.add_option("--res", dest="res", default="CLM_USRDAT", \
 #if LND model name changed from 'CLM' to 'ELM'
 parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
                   help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
-
+#options for coupling with PFLOTRAN
+parser.add_option("--clmpf_source_dir", dest="clmpf_source_dir", default='', \
+                  help = 'pflotran-elm-interface source directory, blanked by default, otherwise build ELM with PFLOTRAN coupled')
+parser.add_option("--clmpf_mode", dest="clmpf_mode", default=False, \
+                  help = 'option to run CLM with pflotran coupled codes, off by default. NOTE that ELM must be built with pflotran-elm-interface', \
+                   action="store_true")
+parser.add_option("--clmpf_inputdir", dest="clmpf_inputdir", default='', \
+                  help = 'pflotran input directory, by default it under lnd input directory. ONLY required if clmpf_mode ON')
+parser.add_option("--clmpf_prefix", dest="clmpf_prefix", default='', \
+                  help = 'pflotran.in customized, by default it "pflotran_clm" (.in ommitted) under lnd input directory. ONLY required if clmpf_mode ON')
 parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
                     help='Do not submit jobs')
 
@@ -410,7 +417,7 @@ if (int(options.mc_ensemble) != -1):
 
 mysites = options.site.split(',')
 nnode=1
-if(options.np>1): #in case of a single site in name but with multiple unstructured gridcells
+if(int(options.np)>1): #in case of a single site in name but with multiple unstructured gridcells
     npernode=min(int(npernode),int(options.np))
     nnode=-(int(options.np)//-int(npernode))
 elif (not 'all' in mysites):
@@ -597,6 +604,14 @@ for row in AFdatareader:
             basecmd = basecmd + ' --res '+options.res
         if (options.lndnamechanged): #indicating LND name changed from 'CLM' to 'ELM'
             basecmd = basecmd + ' --lndnamechanged '
+        if (options.clmpf_source_dir !=''):   # for coupling pflotran with elm
+            basecmd = basecmd + ' --clmpf_source_dir '+options.clmpf_source_dir
+        if (options.clmpf_mode):              # for coupling pflotran with elm
+            basecmd = basecmd + ' --clmpf_mode '
+            if (options.clmpf_inputdir!=''): 
+                basecmd = basecmd + ' --clmpf_inputdir '+options.clmpf_inputdir             
+            if (options.clmpf_prefix!=''): 
+                basecmd = basecmd + ' --clmpf_prefix '+options.clmpf_prefix
 
         if (options.var_soilthickness):
             basecmd = basecmd + ' --var_soilthickness'
@@ -605,8 +620,6 @@ for row in AFdatareader:
 
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
-        if (options.domainfile != ''):
-          basecmd = basecmd+' --domainfile '+options.domainfile 
 
 #---------------- build commands for runCLM.py -----------------------------
 
@@ -848,7 +861,6 @@ for row in AFdatareader:
                         ad_case_firstsite+' --site_orig '+firstsite +\
                         ' --site_new '+site+' --nyears '+str(ny_ad)+' --spin_cycle ' \
                         +str(endyear-startyear+1)
-                if(options.lndnamechanged): ptcmd = ptcmd+' --lndnamechanged'
                 result = os.system(ptcmd)
             if (result > 0):
                 print('Site_fullrun:  Error in runcase.py for ad_spinup ')
@@ -868,7 +880,6 @@ for row in AFdatareader:
                     fin_case_firstsite+' --site_orig '+firstsite +\
                     ' --site_new '+site+' --nyears '+str(ny_fin)+' --finidat_year ' \
                     +str(int(ny_ad)+1)+' --spin_cycle '+str(endyear-startyear+1)
-            if(options.lndnamechanged): ptcmd = ptcmd+' --lndnamechanged'
             result = os.system(ptcmd)
             if (result > 0):
                 print('Site_fullrun:  Error in runcase.py final spinup')
@@ -887,7 +898,6 @@ for row in AFdatareader:
                         tr_case_firstsite+' --site_orig '+firstsite +\
                         ' --site_new '+site+' --finidat_year '+str(int(ny_fin)+1)+ \
                         ' --nyears '+str(translen)
-                 if(options.lndnamechanged): ptcmd = ptcmd+' --lndnamechanged'
                  result = os.system(ptcmd)
             if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
                  print('\nSetting up transient case phase 2\n')
@@ -1046,10 +1056,6 @@ for row in AFdatareader:
                     output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
                                  str(int(ny_ad)+1)+' --BGC\n')
-                elif (options.lndnamechanged):
-                    output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
-                                 '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
-                                 str(int(ny_ad)+1)+' --lndnamechanged\n')
                 else:
                     output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ad_case+' --restart_year '+ \
