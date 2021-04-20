@@ -871,15 +871,29 @@ if (options.parm_file != ''):
     for s in input:
         if s[0:1] != '#':
             values = s.split()
-            thisvar = nffun.getvar(pftfile, values[0])
-            if (len(values) == 2):
-                thisvar[...] = float(values[1])
-            elif (len(values) == 3):
-                if (float(values[1]) > 0):
-                    thisvar[int(values[1])] = float(values[2])
-                else:
-                  thisvar[...] = float(values[2])
-            ierr = nffun.putvar(pftfile, values[0], thisvar)
+            try:
+                thisvar = nffun.getvar(pftfile, values[0])
+                if (len(values) == 2):
+                    thisvar[...] = float(values[1])
+                elif (len(values) == 3):
+                    if (float(values[1]) > 0):
+                        thisvar[int(values[1])] = float(values[2])
+                    else:
+                        thisvar[...] = float(values[2])
+                ierr = nffun.putvar(pftfile, values[0], thisvar)
+            except ValueError:
+                print('Parameter %s not found in clm_params.nc. Adding.'%values[0])
+                if (len(values) == 2):
+                    print('No PFT specified. Assuming universal parameter')
+                    os.system(myncap+' -O -s "%s = q10_mr*0+%1.4e" '%(values[0],values[1])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+                elif (len(values) == 3):
+                    if (float(values[1]) > 0):
+                        print('PFT specified. Setting value for all PFTs')
+                        os.system(myncap+' -O -s "%s = flnr*0+%s" '%(values[0],values[2])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+                    else:
+                        print('No PFT specified. Assuming universal parameter')
+                        os.system(myncap+' -O -s "%s = q10_mr*0+%s" '%(values[0],values[2])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+               
     input.close()
 
 if (options.parm_vals != ''):

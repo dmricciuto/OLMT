@@ -7,7 +7,8 @@ def getvar(fname, varname):
     if varname in nffile.variables:
       varvals = nffile.variables[varname][:]
     else:
-      print('Warning: '+varname+' not in '+fname)
+      # print('Warning: '+varname+' not in '+fname)
+      raise ValueError('"%s" not in %s'%(varname,fname))
       varvals=[-1]
     nffile.close()
     return varvals
