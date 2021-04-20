@@ -204,7 +204,7 @@ parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False,
                   help = 'Use variable soil depth from surface data file',action='store_true')
 parser.add_option("--no_budgets", dest="no_budgets", default=False, \
                   help = 'Turn off CNP budget calculations', action='store_true')
-parser.add_option("--alquimia", dest="alquimia",default=False, action="store_true", help="Compile model with alquimia BGC interface")
+parser.add_option("--alquimia", dest="alquimia",default='',  help="Compile model with alquimia BGC interface using specified input file")
 
 # model output options
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
@@ -651,8 +651,8 @@ for row in AFdatareader:
           basecmd = basecmd+' --domainfile '+options.domainfile 
 
 #---------------- build commands for runcase.py -----------------------------
-        if (options.alquimia):
-            basecmd = basecmd + ' --alquimia'
+        if (options.alquimia != ''):
+            basecmd = basecmd + ' --alquimia '+options.alquimia
 
 
         # define compsets
