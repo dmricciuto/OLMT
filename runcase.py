@@ -312,9 +312,8 @@ parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
                   help = 'Turn on hydraulic stress', action='store_true')
 parser.add_option("--spruce_treatments", dest="spruce_treatments", default=False, \
                   help = 'Run SPRUCE treatment simulations (ensemble mode)', action='store_true')
-
-parser.add_option("--alquimia", dest="alquimia",default=False, action="store_true", 
-                help="Compile model with alquimia BGC interface")
+parser.add_option("--alquimia", dest="alquimia",default="",
+                help="Compile model with alquimia BGC interface and use specified input file")
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
@@ -1392,8 +1391,9 @@ for i in range(1,int(options.ninst)+1):
     if (options.no_budgets):
         output.write(" do_budgets = .false.\n")
 
-    if (options.alquimia):
+    if (options.alquimia != ""):
         output.write(" use_alquimia = .TRUE.\n")
+        output.write(" alquimia_inputfile = '%s'\n"%options.alquimia)
 
     #pft dynamics file for transient run
     if ('20TR' in compset or options.istrans):
@@ -1616,7 +1616,7 @@ if (options.humhol):
 if (options.marsh):
     print("Turning on MARSH modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
-if (options.alquimia):
+if (options.alquimia != ""):
     print("Turning on alquimia interface for compilation and running")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
     result = os.system("./xmlchange "+mylsm+"_USE_ALQUIMIA=TRUE")
