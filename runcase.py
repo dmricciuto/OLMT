@@ -307,6 +307,8 @@ parser.add_option("--var_soilthickness", dest="var_soilthickness", default=False
 parser.add_option("--no_budgets", dest="no_budgets", default=False, \
                   help = 'Turn off CNP budget calculations', action='store_true')
 
+parser.add_option("--alquimia", dest="alquimia",default=False, action="store_true", 
+                help="Compile model with alquimia BGC interface")
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
@@ -1367,6 +1369,9 @@ for i in range(1,int(options.ninst)+1):
     if (options.no_budgets):
         output.write(" do_budgets = .false.\n")
 
+    if (options.alquimia):
+        output.write(" use_alquimia = .TRUE.\n")
+
     #pft dynamics file for transient run
     if ('20TR' in compset or options.istrans):
         if (options.nopftdyn):
@@ -1582,6 +1587,12 @@ if (options.humhol):
 if (options.marsh):
     print("Turning on MARSH modification\n")
     os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+if (options.alquimia):
+    print("Turning on alquimia interface for compilation and running")
+    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
+    result = os.system("./xmlchange "+mylsm+"_USE_ALQUIMIA=TRUE")
+    if result != 0:
+        raise RuntimeError('Command failed: "./xmlchange '+mylsm+'_USE_ALQUIMIA=TRUE"')
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
     os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
