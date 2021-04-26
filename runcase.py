@@ -25,7 +25,7 @@ parser = OptionParser()
 parser.add_option("--caseidprefix", dest="mycaseid", default="", \
                   help="Unique identifier to include as a prefix to the case name")
 parser.add_option("--caseroot", dest="caseroot", default='', \
-                  help = "case root directory (default = ./, i.e., under scripts/)")
+                  help = "case root directory (default = '', i.e., under model_root/cime/scripts/)")
 parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
 parser.add_option("--model_root", dest="csmdir", default='', \
@@ -56,7 +56,7 @@ parser.add_option("--machine", dest="machine", default = '', \
 parser.add_option("--compiler", dest="compiler", default='', \
 	          help = "compiler to use (pgi, gnu)")
 parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
-                      help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
+                      help = "mpi library (openmpi, mpich, ibm, mpi-serial)")
 parser.add_option("--diags", dest="diags", default=False, \
                  action="store_true", help="Write special outputs for diagnostics")
 parser.add_option("--debugq", dest="debug", default=False, \
@@ -197,9 +197,9 @@ parser.add_option("--clean_build", dest="clean_build", default=False, \
 parser.add_option("--no_config", dest="no_config", default=False, \
                   help = 'do NOT configure case', action="store_true")
 parser.add_option("--no_build", dest="no_build", default=False, \
-                  help = 'do NOT build CESM', action="store_true")
+                  help = 'do NOT build model', action="store_true")
 parser.add_option("--no_submit", dest="no_submit", default=False, \
-                  help = 'do NOT submit CESM to queue', action="store_true")
+                  help = 'do NOT submit built model to queue, i.e. build only', action="store_true")
 parser.add_option("--align_year", dest="align_year", default=-999, \
                   help = 'Alignment year (transient run only)')
 parser.add_option("--np", dest="np", default=1, \
@@ -209,7 +209,7 @@ parser.add_option("--ninst", dest="ninst", default=1, \
 parser.add_option("--ng", dest="ng", default=64, \
                   help = 'number of groups to run in ensmble mode')
 parser.add_option("--tstep", dest="tstep", default=0.5, \
-                  help = 'CLM timestep (hours)')
+                  help = 'model timestep (hours)')
 
 parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
                   help = 'number of years to run ad_spinup')
@@ -507,6 +507,10 @@ if (options.transtag != ""):
 
 PTCLMfiledir = options.ccsm_input+'/lnd/clm2/PTCLM'
 
+#if (caseroot == runroot):
+#    casedir=caseroot+"/"+casename+'/case'
+#    os.system('mkdir -p '+casedir)
+#elif (caseroot != "./"):
 if (caseroot != "./"):
     casedir=caseroot+"/"+casename
 else:
@@ -811,7 +815,8 @@ result = os.system(cmd)
 
 if (os.path.isdir(casedir)):
     print(casename+' created.  See create_newcase.log for details')
-    os.system('mv create_newcase.log '+casename)
+    #os.system('mv create_newcase.log '+casename)
+    os.system('mv create_newcase.log '+casedir)
 else:
     print('Error:  runcase.py Failed to create case.  See create_newcase.log for details')
     sys.exit(1)
@@ -821,10 +826,10 @@ os.chdir(casedir)
 #env_build
 result = os.system('./xmlchange SAVE_TIMING=FALSE')
 result = os.system('./xmlchange EXEROOT='+exeroot)
-if ('ED' in compset):
-  result = os.system('./xmlchange PIO_VERSION=1')
-else:
-  result = os.system('./xmlchange PIO_VERSION=2')
+#if ('ED' in compset):
+#    result = os.system('./xmlchange PIO_VERSION=1')
+#else:
+result = os.system('./xmlchange PIO_VERSION=2')
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
 #if (options.debug):
@@ -1328,6 +1333,7 @@ for i in range(1,int(options.ninst)+1):
               output.write(" metdata_bypass = '"+options.metdata_dir+"'\n")
         if (options.monthly_metdata != ''):
             output.write(" metdata_biases = '"+options.monthly_metdata+"'\n")
+
         if (options.co21850):
           output.write(" co2_file = '"+options.ccsm_input+"/atm/datm7/CO2/" \
                          +"fco2_datm_rcp4.5_1850-1850_c130312.nc'\n")
@@ -1340,7 +1346,7 @@ for i in range(1,int(options.ninst)+1):
         else:
           output.write(" aero_file = '"+options.ccsm_input+"/atm/cam/chem/" \
                          +"trop_mozart_aero/aero/aerosoldep_rcp4.5_monthly_1849-2104_1.9x2.5_c100402.nc'\n")
-
+    
     if (options.addt != 0):
       output.write(" add_temperature = "+str(options.addt)+"\n")
       output.write(" startdate_add_temperature = '"+str(options.sd_addt)+"'\n")
@@ -1499,6 +1505,17 @@ if (not cpl_bypass and not isglobal):
         myinput.close()
         myoutput.close()
 
+    if (options.co2_file != '' and '20TR' in compset):
+        myinput  = open('./Buildconf/datmconf/datm.streams.txt.co2tseries.20tr')
+        myoutput = open('./user_datm.streams.txt.co2tseries.20tr','w')
+        for s in myinput:
+            if ('.nc' in s):
+                myoutput.write('      '+options.co2_file+'\n')
+            else:
+                myoutput.write(s)
+        myinput.close()
+        myoutput.close()
+
     #reverse directories for CLM1PT and site
     if (options.cruncep == False):
         myinput  = open('./Buildconf/datmconf/datm.streams.txt.CLM1PT.CLM_USRDAT')
@@ -1516,6 +1533,9 @@ if (not cpl_bypass and not isglobal):
                 myoutput.write(s)
         myinput.close()
         myoutput.close()
+    # run preview_namelists to copy user_datm.streams.... to CaseDocs
+    os.system(os.path.abspath(options.csmdir)+'/cime/scripts/Tools/preview_namelists')
+
 
 #copy site data to run directory
 os.system('cp '+PTCLMdir+'/temp/domain.nc '+PTCLMdir+'/temp/surfdata.nc  '+ \
@@ -1714,5 +1734,8 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             cmd = cmd + ' --postproc_file '+options.postproc_file
         output_run.write(cmd+'\n')
         output_run.close()
+
         if (options.no_submit == False):
             os.system(mysubmit_type+' '+PTCLMdir+'/scripts/'+myscriptsdir+'/ensemble_run_'+casename+'.pbs')
+
+# END
