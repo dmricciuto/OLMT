@@ -11,10 +11,12 @@ import re
 parser = OptionParser();
 
 # general OLMT options
+parser.add_option("--no_submit", dest="no_submit", default=False, action="store_true", \
+                  help = 'do NOT submit built model to queue, i.e. build only')
 parser.add_option("--caseidprefix", dest="mycaseid", default="", \
                   help="Unique identifier to include as a prefix to the case name")
 parser.add_option("--caseroot", dest="caseroot", default='', \
-                  help = "case root directory, where submission scripts live (default = ./, i.e., under scripts/)")
+                  help = "case root directory, where submission scripts live (default = '', i.e., under model_root/scripts/)")
 parser.add_option("--runroot", dest="runroot", default="", \
                   help="Directory where the run would be created")
 parser.add_option("--exeroot", dest="exeroot", default="", \
@@ -50,7 +52,7 @@ parser.add_option("--model_root", dest="csmdir", default='', \
 parser.add_option("--compiler", dest="compiler", default = '', \
                   help = "compiler to use (pgi*, gnu)")
 parser.add_option("--mpilib", dest="mpilib", default="mpi-serial", \
-                  help = "mpi library (openmpi*, mpich, ibm, mpi-serial)")
+                  help = "mpi library (openmpi, mpich, ibm, mpi-serial)")
 parser.add_option("--debugq", dest="debug", default=False, action="store_true", \
                   help='Use debug queue and options')
 parser.add_option("--clean_build", action="store_true", default=False, \
@@ -348,7 +350,11 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
         runroot = csmdir+'/run'
 else:
     runroot = os.path.abspath(options.runroot)
-if (options.caseroot == '' or (os.path.exists(options.caseroot) == False)):
+
+if (options.caseroot == options.runroot):
+    caseroot = os.path.abspath(options.caseroot)+'/cime_case_dirs'
+    os.system('mkdir -p '+caseroot)
+elif (options.caseroot == '' or (os.path.exists(options.caseroot) == False)):
     caseroot = os.path.abspath(csmdir+'/cime/scripts')
 else:
     caseroot = os.path.abspath(options.caseroot)
@@ -942,6 +948,7 @@ for row in AFdatareader:
         print(case_list)
         #sys.exit('temp stop pre submit script copy & edit')
 
+
         for c in case_list:
             mysubmit_type = 'qsub'
             groupnum = int(sitenum/npernode)
@@ -1051,9 +1058,14 @@ for row in AFdatareader:
 
             if (sitenum == 0 and 'ad_spinup' in c):
                 if (options.ad_Pinit):
-                    output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_ad_spinup/\n")
+                    #output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_ad_spinup/\n")
+                    simsubmitdir='/'+basecase+'_'+modelst+'_ad_spinup/'
                 else:
-                    output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/\n")
+                    #output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/\n")
+                    simsubmitdir='/'+basecase+'_'+modelst.replace('CNP','CN')+'_ad_spinup'
+                #if (caseroot == runroot):
+                #    simsubmitdir=simsubmitdir+'/case'
+                output.write("cd "+caseroot+'/'+simsubmitdir+'\n')
                 output.write("./case.submit --no-batch &\n")
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
@@ -1176,7 +1188,7 @@ for row in AFdatareader:
 #======================================================#
 
         #if ensemble simulations requested, submit jobs created by runcase.py in correct order
-        if (options.ensemble_file != ''):
+        if (options.no_submit == False and options.ensemble_file != ''):
             cases=[]
             #build list of cases for fullrun
             if (options.noad == False):
@@ -1212,7 +1224,7 @@ for row in AFdatareader:
 
 
 # Submit PBS scripts for single/multi-site simulations on 1 node
-if (options.ensemble_file == ''):
+if (options.no_submit == False and options.ensemble_file == ''):
     for g in range(0,int(groupnum)+1):
         job_depend_run=''
         for thiscase in case_list:
