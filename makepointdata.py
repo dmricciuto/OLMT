@@ -54,6 +54,8 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+parser.add_option("--elmpf", dest="elmpfinterface", default=False, \
+                  help = 'turn on elm-pflotran interface', action="store_true")
 parser.add_option("--usersurfnc", dest="usersurfnc", default="none", \
                   help = 'User-provided surface data nc file, with one or more variable(s) as defined')
 parser.add_option("--usersurfvar", dest="usersurfvar", default="none", \

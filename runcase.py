@@ -49,6 +49,8 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+#parser.add_option("--elmpf", dest="elmpfinterface", default=False, \
+#                  help = 'turn on elm-pflotran interface', action="store_true")
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--mask", dest="mymask", default='', \
@@ -296,7 +298,21 @@ parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-
 #if LND model name changed from 'CLM' to 'ELM'
 parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
                   help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
+#options for coupling with PFLOTRAN
+parser.add_option("--clmpf_source_dir", dest="clmpf_source_dir", default='', \
+                  help = 'pflotran-elm-interface source directory, blanked by default, otherwise build ELM with PFLOTRAN coupled')
+parser.add_option("--clmpf_mode", dest="clmpf_mode", default=False, \
+                  help = 'option to run CLM with pflotran coupled codes, off by default. NOTE that ELM must be built with pflotran-elm-interface', \
+                  action="store_true")
+parser.add_option("--clmpf_inputdir", dest="pflotran_inputdir", default='', \
+                  help = 'pflotran input directory, by default it under lnd input directory. ONLY required if clmpf_mode ON')
+parser.add_option("--clmpf_prefix", dest="pflotran_prefix", default='', \
+                  help = 'pflotran.in customized, by default it "pflotran_clm" (.in ommitted) under lnd input directory. ONLY required if clmpf_mode ON')
+
+
 (options, args) = parser.parse_args()
+
+
 
 #-------------------------------------------------------------------------------
 # If only make point(s) data, reset relevant options.
@@ -339,7 +355,7 @@ elif ('metis' in options.machine):
 elif ('oic2' in options.machine):
     ppn=8
 elif ('oic5' in options.machine or 'cori-haswell' in options.machine or 'eos' in options.machine \
-      or 'cades' in options.machine):
+      or 'cades' in options.machine or 'elmpf' in options.machine):
     ppn=32
 elif ('cori-knl' in options.machine):
     ppn=64
@@ -349,7 +365,7 @@ elif ('anvil' in options.machine):
     ppn=36
 elif ('compy' in options.machine):
     ppn=40
-elif ('cades' in options.machine):
+elif ('cades' in options.machine or 'elmpf' in options.machine):
     ppn=32
 ppn=min(ppn, int(options.np))
 
@@ -367,6 +383,20 @@ if (options.mymodel == ''):
   else:
       print('Error:  Model not specified')
       sys.exit(1)
+
+# checking if pflotran-elm-interface libpflotran.a built, when coupling building option is on
+if (options.clmpf_mode and options.clmpf_source_dir == ''):
+    print('Error:  Model to be running in CLM_INTERFACE_MODE=pflotran, but NO CLM_PFLOTRAN_SOURCE_DIR specified')
+    print(' Please specify with  --clmpf_source_dir=PATH_TO_pflotran-elm-interface_srcdir')
+    os.sys.exit(-1)
+if (options.clmpf_source_dir != ''):
+    if (not os.path.exists(options.clmpf_source_dir)):
+        print('Error: Invalid CLM_PFLOTRAN_SOURCE_DIR. Please check --clmpf_source_dir=PATH_TO_pflotran-elm-interface_srcdir')
+        os.sys.exit(-2)
+    if (not os.path.exists(options.clmpf_source_dir+'/libpflotran.a')):
+        print('Error: "'+options.clmpf_source_dir+'/libpflotran.a NOT exists.')
+        print('Please check and build it, e.g. "make PETSC_DIR=$PETSC_PATH column_mode=1 libpflotran.a" ')
+        os.sys.exit(-2)
 
 #check for valid csm directory
 if (os.path.exists(options.csmdir) == False):
@@ -831,15 +861,29 @@ if (options.parm_file != ''):
     for s in input:
         if s[0:1] != '#':
             values = s.split()
-            thisvar = nffun.getvar(pftfile, values[0])
-            if (len(values) == 2):
-                thisvar[...] = float(values[1])
-            elif (len(values) == 3):
-                if (float(values[1]) > 0):
-                    thisvar[int(values[1])] = float(values[2])
-                else:
-                  thisvar[...] = float(values[2])
-            ierr = nffun.putvar(pftfile, values[0], thisvar)
+            try:
+                thisvar = nffun.getvar(pftfile, values[0])
+                if (len(values) == 2):
+                    thisvar[...] = float(values[1])
+                elif (len(values) == 3):
+                    if (float(values[1]) > 0):
+                        thisvar[int(values[1])] = float(values[2])
+                    else:
+                        thisvar[...] = float(values[2])
+                ierr = nffun.putvar(pftfile, values[0], thisvar)
+            except ValueError:
+                print('Parameter %s not found in clm_params.nc. Adding.'%values[0])
+                if (len(values) == 2):
+                    print('No PFT specified. Assuming universal parameter')
+                    os.system(myncap+' -O -s "%s = q10_mr*0+%1.4e" '%(values[0],values[1])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+                elif (len(values) == 3):
+                    if (float(values[1]) > 0):
+                        print('PFT specified. Setting value for all PFTs')
+                        os.system(myncap+' -O -s "%s = flnr*0+%s" '%(values[0],values[2])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+                    else:
+                        print('No PFT specified. Assuming universal parameter')
+                        os.system(myncap+' -O -s "%s = q10_mr*0+%s" '%(values[0],values[2])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+               
     input.close()
 
 if (options.parm_vals != ''):
@@ -899,7 +943,7 @@ elif (options.exit_spinup):
 cmd = './create_newcase --case '+casedir+' --mach '+options.machine+' --compset '+ \
 	   options.compset+' --res '+options.res+' --mpilib '+ \
            options.mpilib+' --walltime '+str(options.walltime)+ \
-          ':00:00'
+          ':00:00 '+'--handle-preexisting-dirs u'
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
 if (options.project != ''):
@@ -928,7 +972,7 @@ else:
   result = os.system('./xmlchange PIO_VERSION=2')
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
-    if(options.compiler == 'pgi' or options.compiler == 'PGI' or options.machine == 'cades'):
+    if(options.compiler == 'pgi' or options.compiler == 'PGI' or options.machine == 'cades' or options.machine == 'elmpf'):
         # pgi compiler for PIO2 has issue of 'USE_CXX == TRUE' in Macro.cmake or Macro.make 
         # bsulman: Doesn't work for me with gnu either.
         # bsulman: Might be a problem with compiler xml file which says CXX compiler is "gpp" when it should be "g++" on cades
@@ -962,6 +1006,13 @@ if (isglobal == False):
 if (options.ad_spinup):
     if (options.mymodel == 'ELM'):
         os.system("./xmlchange --append CLM_BLDNML_OPTS='-bgc_spinup on'")
+        print ("using ELM without PFLOTRAN")
+        if (options.mymodel == 'ELM' and 'elmpf' in options.machine):
+            os.system('./xmlchange -file env_run.xml -id CLM_BLDNML_OPTS ' \
+                  +' -val "-mask navy -bgc_spinup on -bgc '+mybgc.lower()+'"')
+            os.system('./xmlchange -file env_run.xml -id CLM_ACCELERATED_SPINUP -val on')
+            os.system('./xmlchange -file env_run.xml -id CLM_INTERFACE_MODE -val pflotran')
+            print ("turning on ELM-PFLOTRAN interface mode")
     elif (options.mymodel == 'CLM5'):
         os.system('./xmlchange CLM_ACCELERATED_SPINUP=on')
         os.system('./xmlchange CLM_FORCE_COLDSTART=on')
@@ -1052,7 +1103,7 @@ if (options.maxpatch_pft != 17):
   os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
-if('mac' in options.machine or 'cades' in options.machine): 
+if('mac' in options.machine or 'cades' in options.machine or 'elmpf' in options.machine): 
     os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
 
 
@@ -1321,6 +1372,8 @@ for i in range(1,int(options.ninst)+1):
     output.write(" paramfile = '"+rundir+"/clm_params.nc'\n")
     if ('ED' in compset and options.fates_paramfile != ''):
       output.write(" fates_paramfile = '"+options.fates_paramfile+"'\n")
+    if ('ED' in compset and options.fates_hydro):
+      output.write(" use_fates_planthydro = .true.\n")
 
     if ('CROP' in compset or 'RD' in compset or 'ECA' in compset or options.fates_nutrient != ''):
         #soil order parameter file
@@ -1483,6 +1536,13 @@ for i in range(1,int(options.ninst)+1):
     if (options.addco2 != 0):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
+#clm-pflotran coupled run is ON -----------------
+    if (options.clmpf_mode):
+      if (options.pflotran_inputdir!=''):
+        output.write(" pflotran_inputdir = '"+str(options.pflotran_inputdir)+"'\n")
+      if (options.pflotran_inputdir!=''):
+        output.write(" pflotran_prefix = '"+str(options.pflotran_prefix)+"'\n")
+    #------------------------------------------------
     output.close()
 # LND model name changed from 'CLM' to 'ELM'
 if (options.lndnamechanged): os.system('mv ./user_nl_clm ./user_nl_elm')
@@ -1510,6 +1570,25 @@ if (options.marsh):
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
     os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+if ('elmpf' in options.machine):
+    print('Running ELM-PFLOTRAN interface\n')
+    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DCLM_PFLOTRAN'")
+
+xval = subprocess.check_output('./xmlquery --value CLM_CONFIG_OPTS', cwd=casedir, shell=True)
+xval = xval.decode()
+cppdefs = ''
+#clm-pflotran coupled build/run is ON -----------------
+if (options.clmpf_source_dir!=''):
+    print(options.clmpf_source_dir)
+    os.system("export CLM_PFLOTRAN_SOURCE_DIR="+options.clmpf_source_dir)
+    print('Building CLM with PFLOTRAN coupling codes from: ')
+    os.system("echo $CLM_PFLOTRAN_SOURCE_DIR")
+    #building CPPDEFS
+    cppdefs = cppdefs + ' -DCLM_PFLOTRAN -DCOLUMN_MODE'
+    if (options.clmpf_mode):
+       #running option
+       print('PFLOTRAN coupled run is ON! \n')
+       os.system("./xmlchange -id CLM_INTERFACE_MODE --val pflotran")
 
 #Global CPPDEF modifications
 infile  = open("./Macros.make")
@@ -1749,7 +1828,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
     num=0
     #Launch ensemble if requested 
     mysubmit_type = 'qsub'
-    if ('cades' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
+    if ('cades' in options.machine or 'compy' in options.machine or 'elmpf' in options.machine or 'ubuntu' in options.machine or 'cori' in options.machine or options.machine == 'edison' ):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
         os.system('mkdir -p '+PTCLMdir+'/scripts/'+myscriptsdir)
@@ -1764,10 +1843,10 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             output_run.write('#PBS -N ens_'+casename+'\n')
             if (options.project != ''):
                 output_run.write('#PBS -A '+options.project+'\n')
-            if (options.machine == 'cades'):
+            if (options.machine == 'cades' or options.machine == 'elmpf'):
                 output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
                                     ':ppn='+str(ppn)+'\n')
-                output_run.write('#PBS -W group_list=ccsi\n')
+                output_run.write('#PBS -W group_list=cades-ccsi\n')
             else:
                 output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
                                      '\n')
@@ -1789,7 +1868,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
                 output_run.write('#SBATCH --constraint=knl\n')
             if ('compy' in options.machine and options.debug):
               output_run.write('#SBATCH --qos=short\n')
-            if ('cades' in options.machine):
+            if ('cades' in options.machine or 'elmpf' in options.machine):
               output_run.write('#SBATCH -A ccsi\n')
               output_run.write('#SBATCH -p batch\n')
               output_run.write('#SBATCH --mem=64G\n')
@@ -1821,7 +1900,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             output_run.write('module unload scipy\n')
             output_run.write('module unload numpy\n')
             output_run.write('module load cray-netcdf\n')
-            output_run.write('module load python/2.7-anaconda\n')
+            output_run.write('module load python/2.7-anaconda-5.2\n')
             output_run.write('module load nco\n')
         if ('compy' in options.machine):
             output_run.write('setenv LD_LIBRARY_PATH /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64_lin/gcc4.7:/share/apps/netcdf/4.6.3/intel/19.0.5/lib:/share/apps/hdf5/1.10.5/serial/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin:/share/apps/intel/2019u5/comepilers_and_libraries_2019.5.281/linux/mpi/intel64/libfabric/lib:/share/apps/pnetcdf/1.9.0/intel/19.0.5/intelmpi/2019u4/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib/release:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/ipp/lib/intel64:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mkl/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64/gcc4.7:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64/gcc4.7:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/daal/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/daal/../tbb/lib/intel64_lin/gcc4:/usr/lib64/\n\n')
@@ -1829,9 +1908,9 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         cnp = 'True'
         if (options.cn_only or options.c_only):
             cnp= 'False'
-        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
+        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine or 'elmpf' in options.machine):
             mpicmd = 'mpirun'
-            if ('cades' in options.machine):
+            if ('cades' in options.machine or 'elmpf' in options.machine):
                 mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
             cmd = mpicmd+' -np '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \

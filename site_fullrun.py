@@ -150,6 +150,8 @@ parser.add_option("--humhol", dest="humhol", default=False, action="store_true",
                   help = 'Use hummock/hollow microtopography')
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+parser.add_option("--elmpf", dest="elmpfinterface", default=False, \
+                  help = 'turn on elm-pflotran interface', action="store_true")
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--nofire", dest="nofire", default=False, action="store_true", \
@@ -221,7 +223,16 @@ parser.add_option("--res", dest="res", default="CLM_USRDAT", \
 #if LND model name changed from 'CLM' to 'ELM'
 parser.add_option("--lndnamechanged", dest="lndnamechanged", default=False, \
                   help = 'if LND name changed from "CLM" to "ELM"', action="store_true")
-
+#options for coupling with PFLOTRAN
+parser.add_option("--clmpf_source_dir", dest="clmpf_source_dir", default='', \
+                  help = 'pflotran-elm-interface source directory, blanked by default, otherwise build ELM with PFLOTRAN coupled')
+parser.add_option("--clmpf_mode", dest="clmpf_mode", default=False, \
+                  help = 'option to run CLM with pflotran coupled codes, off by default. NOTE that ELM must be built with pflotran-elm-interface', \
+                   action="store_true")
+parser.add_option("--clmpf_inputdir", dest="clmpf_inputdir", default='', \
+                  help = 'pflotran input directory, by default it under lnd input directory. ONLY required if clmpf_mode ON')
+parser.add_option("--clmpf_prefix", dest="clmpf_prefix", default='', \
+                  help = 'pflotran.in customized, by default it "pflotran_clm" (.in ommitted) under lnd input directory. ONLY required if clmpf_mode ON')
 parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
                     help='Do not submit jobs')
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
@@ -286,6 +297,9 @@ if (options.machine == ''):
    elif ('or-slurm' in hostname):
        options.machine = 'cades'
        npernode=32
+   elif ('or-slurm' in hostname and options.elmpf):
+       options.machine = 'elmpf'
+       npernode=32
    elif ('edison' in hostname):
        options.machine = 'edison'
        npernode = 24
@@ -317,8 +331,8 @@ if (options.ccsm_input != ''):
     ccsm_input = options.ccsm_input
 elif (options.machine == 'titan' or options.machine == 'eos'):
     ccsm_input = '/lustre/atlas/world-shared/cli900/cesm/inputdata'
-elif (options.machine == 'cades'):
-    ccsm_input = '/nfs/data/ccsi/proj-shared/E3SM/inputdata'
+elif (options.machine == 'cades' or optons.machine == 'elmpf'):
+    ccsm_input = '/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
 elif ('anvil' in options.machine):
@@ -361,7 +375,7 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
         for s in myinput:
             myproject=s[:-1]
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
-    elif (options.machine == 'cades'):
+    elif (options.machine == 'cades' or options.machine =='elmpf'):
         runroot='/lustre/or-hydra/cades-ccsi/scratch/'+myuser
     elif ('cori' in options.machine):
         runroot='/global/cscratch1/sd/'+myuser
@@ -462,11 +476,11 @@ for row in AFdatareader:
           ny_fin = str(int(ny_fin) + ncycle - (int(ny_fin) % ncycle))
 
         if (options.nyears_transient == -1):
-          translen = endyear-1850+1        #length of transient run
-        if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
-                   options.princeton or options.cruncepv8)):
-            print(endyear_trans, site_endyear)
-        translen = min(site_endyear,endyear_trans)-1850+1
+            translen = endyear-1850+1        #length of transient run
+            if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
+                options.princeton or options.cruncepv8)):
+                print(endyear_trans, site_endyear)
+                translen = min(site_endyear,endyear_trans)-1850+1
 
         #use site parameter file if it exists
         if (options.siteparms):
@@ -614,6 +628,14 @@ for row in AFdatareader:
             basecmd = basecmd + ' --res '+options.res
         if (options.lndnamechanged): #indicating LND name changed from 'CLM' to 'ELM'
             basecmd = basecmd + ' --lndnamechanged '
+        if (options.clmpf_source_dir !=''):   # for coupling pflotran with elm
+            basecmd = basecmd + ' --clmpf_source_dir '+options.clmpf_source_dir
+        if (options.clmpf_mode):              # for coupling pflotran with elm
+            basecmd = basecmd + ' --clmpf_mode '
+            if (options.clmpf_inputdir!=''): 
+                basecmd = basecmd + ' --clmpf_inputdir '+options.clmpf_inputdir             
+            if (options.clmpf_prefix!=''): 
+                basecmd = basecmd + ' --clmpf_prefix '+options.clmpf_prefix
 
         if (options.var_soilthickness):
             basecmd = basecmd + ' --var_soilthickness'
@@ -933,7 +955,7 @@ for row in AFdatareader:
             
             mysubmit_type = 'qsub'
             groupnum = int(sitenum/npernode)
-            if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
+            if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine or 'elmpf' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
                 mysubmit_type = ''
@@ -980,6 +1002,11 @@ for row in AFdatareader:
                                 output.write('#SBATCH -p batch\n')
                                 output.write('#SBATCH --mem=64G\n')
                                 output.write('#SBATCH --ntasks-per-node 32\n')
+                            if ('elmpf' in options.machine):
+                                output.write('#SBATCH -A ccsi\n')
+                                output.write('#SBATCH -p batch\n')
+                                output.write('#SBATCH --mem=64G\n')
+                                output.write('#SBATCH --ntasks-per-node 32\n')
                     elif ("#" in s and "ppn" in s):
                         if ('cades' in options.machine):
                             #if ('diags' in c or 'iniadjust' in c):
@@ -1019,10 +1046,11 @@ for row in AFdatareader:
                     output.write('module unload numpy\n')
                     output.write('module load python/2.7-anaconda\n')
                     output.write('module load nco\n')     
-                if ('cades' in options.machine):
+                if ('cades' in options.machine or 'elmpf' in options.machine):
                     output.write('source $MODULESHOME/init/bash\n')
                     output.write('module unload python\n')
                     output.write('module load python/2.7.12\n')
+
             else:
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','a')   
                 
@@ -1088,6 +1116,8 @@ for row in AFdatareader:
                  output.write(plotcmd+' --vars NEE --ylog\n')
                  output.write(plotcmd+' --vars TLAI,NPP,GPP,TOTVEGC,TOTSOMC\n') 
                  if (options.machine == 'cades'):
+                     output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
+                 if (options.machine == 'elmpf'):
                      output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             if (sitenum == 0 and 'fn_spinup' in c):
                 output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"\n")
@@ -1181,7 +1211,7 @@ if (options.ensemble_file == ''):
         for thiscase in case_list:
             output = open('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs','a')
             output.write('wait\n')
-            if ('trans_diags' in thiscase and options.machine == 'cades'):
+            if ('trans_diags' in thiscase and options.machine == 'cades' or options.machine == 'elmpf'):
                 output.write("scp -r ./plots/"+mycaseid+" acme-webserver.ornl.gov:~/www/single_point/plots\n")
             output.close()
             if not options.no_submit:
