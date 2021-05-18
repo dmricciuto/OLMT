@@ -16,7 +16,8 @@ parser.add_option('--BGC', dest='bgc', default=False, action="store_true", \
                     help='Flag to set for BGC compsets')
 parser.add_option('--harvest', dest='harvest', default=False, action="store_true", \
                     help='Add a 95% above ground harvest')
-
+parser.add_option('--model_name', dest='model_name', default="clm2", \
+                    help='Model name used in restart file (clm2 or elm)')
 (options,args)=parser.parse_args()
 
 #The purpose of this code is to replace the restart value with the average value of the last met cycle
@@ -25,7 +26,7 @@ parser.add_option('--harvest', dest='harvest', default=False, action="store_true
 casename = options.casename
 if (options.restart_year == ''):
         #if restart_year not provided, take the last existing restart file
-        restart_file = glob.glob(options.rundir+'/'+casename+'.clm2.r.*.nc')
+        restart_file = glob.glob(options.rundir+'/'+casename+'.'+options.model_name+'.r.*.nc')
         if (len(restart_file) > 1):
             restart_file_last = restart_file[-1]
         else:
@@ -37,9 +38,9 @@ else:
 if ('BGC' in casename):
 	options.bgc = True
 
-fname_restart = options.rundir+'/'+casename+'.clm2.r.'+str(10000+year)[1:]+ \
+fname_restart = options.rundir+'/'+casename+'.'+options.model_name+'.r.'+str(10000+year)[1:]+ \
     '-01-01-00000.nc'
-fname_hist    = options.rundir+'/'+casename+'.clm2.h1.'+str(10000+year)[1:]+ \
+fname_hist    = options.rundir+'/'+casename+'.'+options.model_name+'.h1.'+str(10000+year)[1:]+ \
     '-01-01-00000.nc'
 
 #save original restart file

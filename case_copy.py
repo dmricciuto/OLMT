@@ -88,7 +88,7 @@ for f in os.listdir(new_dir):
             elif ('lnd_in' in f and 'finidat =' in s and int(options.finyr) > 0):
                 year_orig = str((s.split('.')[-2:-1])[0])[0:4]
                 year_new = str(10000+int(options.finyr))[1:]
-                s_out = s.replace('.clm2.r.'+year_orig, '.clm2.r.'+year_new)
+                s_out = s.replace('.r.'+year_orig, '.r.'+year_new)
                 s_out = s_out.replace(options.site_orig, options.site_new)
                 if (options.suffix != ''):
                   s_out = s_out.replace(casename,casename+'_'+options.suffix)

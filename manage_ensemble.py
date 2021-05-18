@@ -28,6 +28,8 @@ parser.add_option("--mc_ensemble", dest="mc_ensemble", default=0, \
                   help = 'Create monte carlo ensemble')
 parser.add_option("--microbe", dest="microbe", default = False, action="store_true", \
                   help = 'CNP mode - initialize P pools')
+parser.add_option('--model_name', dest='model_name', default="clm2", \
+                    help='Model name used in restart file (clm2 or elm)')
 parser.add_option("--postproc_file", dest="postproc_file", default="", \
                   help="Location of post_processing info")
 parser.add_option("--postproc_only", dest="postproc_only", default=False, \
@@ -86,11 +88,11 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
         n_years = myyear_end[index]-myyear_start[index]+1
         for y in range(myyear_start[index],myyear_end[index]+1):
             if (mypft[index] == -1):
-              fname = rundir+case+'.clm2.h0.'+str(10000+y)[1:]+'-01-01-00000.nc'
+              fname = rundir+case+'.'+options.model_name+'.h0.'+str(10000+y)[1:]+'-01-01-00000.nc'
               myindex = 0
               hol_add = 1
             else:
-              fname = rundir+case+'.clm2.h1.'+str(10000+y)[1:]+'-01-01-00000.nc'
+              fname = rundir+case+'.'+options.model_name+'.h1.'+str(10000+y)[1:]+'-01-01-00000.nc'
               myindex = mypft[index]
               hol_add = 17
             if (os.path.exists(fname)):
@@ -194,7 +196,7 @@ def calc_costfucntion(constraints, thisjob, runroot, case):
   #Calculate cost function value (SSE) given the data constraints in the provided directory
   rundir = runroot+'/UQ/'+case+'/g'+str(100000+thisjob)[1:]+'/'
   sse = 0
-  os.system('rm '+rundir+case+'.clm2*_constraint.nc')
+  os.system('rm '+rundir+case+'.'+options.model_name+'*_constraint.nc')
   myoutput = open(rundir+'myoutput_sse.txt','w')
   for filename in os.listdir(constraints):
 
@@ -236,11 +238,11 @@ def calc_costfucntion(constraints, thisjob, runroot, case):
             #get the relevant variable/dataset
             #Assumes annual file with daily output
             if (PFT == -1):
-                myfile  = rundir+case+'.clm2.h0.'+str(year)+'-01-01-00000_constraint.nc'
-                myfileo = rundir+case+'.clm2.h0.'+str(year)+'-01-01-00000.nc'
+                myfile  = rundir+case+'.'+options.model_name+'.h0.'+str(year)+'-01-01-00000_constraint.nc'
+                myfileo = rundir+case+'.'+options.model_name+'.h0.'+str(year)+'-01-01-00000.nc'
             else:
-                myfile  = rundir+case+'.clm2.h1.'+str(year)+'-01-01-00000_constraint.nc'
-                myfileo = rundir+case+'.clm2.h1.'+str(year)+'-01-01-00000.nc'
+                myfile  = rundir+case+'.'+options.model_name+'.h1.'+str(year)+'-01-01-00000_constraint.nc'
+                myfileo = rundir+case+'.'+options.model_name+'.h1.'+str(year)+'-01-01-00000.nc'
             #post processing of model output with nco to match constraining variables
             if (not os.path.isfile(myfile)):
                 os.system('cp '+myfileo+' '+myfile)
@@ -545,7 +547,8 @@ else:
                   #Python script to set up the ensemble run directory and manipulate parameters
                   os.system('python ensemble_copy.py --case '+c+' --runroot '+ \
                         options.runroot +' --ens_num '+str(myjob)+' --ens_file '+options.ens_file+ \
-                        ' --parm_list '+options.parm_list+' --cnp '+cnp+' --site '+options.site)
+                        ' --parm_list '+options.parm_list+' --cnp '+cnp+' --site '+options.site+' --model_name '+ \
+                        options.model_name)
                   jobst = str(100000+int(myjob))
                   rundir = options.runroot+'/UQ/'+c+'/g'+jobst[1:]+'/'
                   os.chdir(rundir)

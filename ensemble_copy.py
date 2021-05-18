@@ -31,6 +31,8 @@ parser.add_option("--cnp", dest="cnp", default = False, action="store_true", \
                   help = 'CNP mode - initialize P pools')
 parser.add_option("--site", dest="site", default='parm_list', \
                   help = 'Site name')
+parser.add_option('--model_name', dest='model_name', default="clm2", \
+                    help='Model name used in restart file (clm2 or elm)')
 (options, args) = parser.parse_args()
 
 
@@ -149,21 +151,21 @@ for f in os.listdir(ens_dir):
                           ('trans' in casename)): 
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('1850CNP','1850CN')+'_ad_spinup/g'+gst[1:]
                       if (os.path.exists(finidat_file_path)):
-                            finidat_file_orig = finidat_file_path+'/*.clm2.r.*.nc'
+                            finidat_file_orig = finidat_file_path+'/*.'+options.model_name+'.r.*.nc'
                             os.system('python adjust_restart.py --rundir '+finidat_file_path+' --casename '+ \
                                 casename.replace('1850CNP','1850CN')+'_ad_spinup')
                    if ('20TR' in casename):
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('20TR','1850')+ \
                                        '/g'+gst[1:]
                       if (os.path.exists(finidat_file_path)):
-                          finidat_file_orig = finidat_file_path+'/*.clm2.r.*.nc'
-                          os.system('rm '+finidat_file_path+'/*ad_spinup*.clm2.r.*.nc')
+                          finidat_file_orig = finidat_file_path+'/*.'+options.model_name+'.r.*.nc'
+                          os.system('rm '+finidat_file_path+'/*ad_spinup*.'+options.model_name+'.r.*.nc')
                    if ('trans' in casename):
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('_trans','')+ \
                                        '/g'+gst[1:]
                       if (os.path.exists(finidat_file_path)):
-                          finidat_file_orig = finidat_file_path+'/*.clm2.r.*.nc'
-                          os.system('rm '+finidat_file_path+'/*ad_spinup*.clm2.r.*.nc')
+                          finidat_file_orig = finidat_file_path+'/*.'+options.model_name+'.r.*.nc'
+                          os.system('rm '+finidat_file_path+'/*ad_spinup*.'+options.model_name+'.r.*.nc')
                    os.system('cp '+finidat_file_orig+' '+finidat_file_new)
                    myoutput.write(" finidat = '"+finidat_file_new+"'\n")
                 else:
@@ -221,16 +223,16 @@ for p in parm_names:
          param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]
       elif ('fates_leaf_long' in p or 'fates_leaf_vcmax25top' in p):
          param[0,parm_indices[pnum]] = parm_values[pnum]
-      elif (p == 'fates_seed_alloc'):
-          if (not fates_seed_zeroed[0]):
-             param[:]=0.
-             fates_seed_zeroed[0]=True
-          param[parm_indices[pnum]] = parm_values[pnum]
-      elif (p == 'fates_seed_alloc_mature'):
-          if (not fates_seed_zeroed[1]):
-             param[:]=0.
-             fates_seed_zeroed[1]=True
-          param[parm_indices[pnum]] = parm_values[pnum]             
+      #elif (p == 'fates_seed_alloc'):
+      #    if (not fates_seed_zeroed[0]):
+      #       param[:]=0.
+      #       fates_seed_zeroed[0]=True
+      #    param[parm_indices[pnum]] = parm_values[pnum]
+      #elif (p == 'fates_seed_alloc_mature'):
+      #    if (not fates_seed_zeroed[1]):
+      #       param[:]=0.
+      #       fates_seed_zeroed[1]=True
+      #    param[parm_indices[pnum]] = parm_values[pnum]             
       elif (p == 'dayl_scaling' or p == 'vcmaxse'):
         os.system('ncap2 -O -s "'+p+' = flnr" '+myfile+' '+myfile)
         print('Creting netcdf variable for '+p)
@@ -239,27 +241,28 @@ for p in parm_names:
       elif (parm_indices[pnum] > 0):
          param[parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] == 0):
-         param[:] = parm_values[pnum]
-      else:
-         param = parm_values[pnum]
+         try:
+           param[:] = parm_values[pnum]
+         except:
+           param = parm_values[pnum]
       ierr = nffun.putvar(myfile, p, param)
-      if ('fr_flig' in p):
-         param=nffun.getvar(myfile, 'fr_fcel')
-         param[...]=1.0-parm_values[pnum]-parm_values[pnum-1]
-         ierr = nffun.putvar(myfile, 'fr_fcel', param)
+      #if ('fr_flig' in p):
+      #   param=nffun.getvar(myfile, 'fr_fcel')
+      #   param[parm_indices[pnum]]=1.0-parm_values[pnum]-parm_values[pnum-1]
+      #   ierr = nffun.putvar(myfile, 'fr_fcel', param)
    pnum = pnum+1
 
 #ensure FATES seed allocation paramters sum to one
-if (fates_seed_zeroed[0]):
-  param = nffun.getvar(myfile,'fates_seed_alloc')
-  param2 = nffun.getvar(myfile,'fates_seed_alloc_mature')
-  for i in range(0,12):
-    if (param[i] + param2[i] > 1.0):
-      sumparam= param[i]+param2[i]
-      param[i]  = param[i]/sumparam
-      param2[i] = param2[i]/sumparam
-  ierr = nffun.putvar(myfile, 'fates_seed_alloc', param)      
-  ierr = nffun.putvar(myfile, 'fates_seed_alloc_mature', param2)
+#if (fates_seed_zeroed[0]):
+#  param = nffun.getvar(myfile,'fates_seed_alloc')
+#  param2 = nffun.getvar(myfile,'fates_seed_alloc_mature')
+#  for i in range(0,12):
+#    if (param[i] + param2[i] > 1.0):
+#      sumparam= param[i]+param2[i]
+#      param[i]  = param[i]/sumparam
+#      param2[i] = param2[i]/sumparam
+#  ierr = nffun.putvar(myfile, 'fates_seed_alloc', param)      
+#  ierr = nffun.putvar(myfile, 'fates_seed_alloc_mature', param2)
 
 
 

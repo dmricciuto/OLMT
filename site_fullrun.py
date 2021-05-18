@@ -160,8 +160,6 @@ parser.add_option("--C14", dest="C14", default=False, action="store_true", \
                   help = 'Use C14 as C13 (no decay)')
 parser.add_option("--harvmod", action="store_true", dest='harvmod', default=False, \
                   help="turn on harvest modification:  All harvest at first timestep")
-parser.add_option("--bulk_denitrif", dest="bulk_denitrif", default=False, action="store_true", \
-                  help = 'To turn on BGC nitrification-denitrification')
 parser.add_option("--no_dynroot", dest="no_dynroot", default=False, action="store_true", \
                   help = 'Turn off dynamic root distribution')
 parser.add_option("--vertsoilc", dest="vsoilc", default=False, action="store_true", \
@@ -287,7 +285,7 @@ if (options.ccsm_input != ''):
 elif (options.machine == 'titan' or options.machine == 'eos'):
     ccsm_input = '/lustre/atlas/world-shared/cli900/cesm/inputdata'
 elif (options.machine == 'cades'):
-    ccsm_input = '/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/'
+    ccsm_input = '/nfs/data/ccsi/proj-shared/E3SM/inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
 elif ('anvil' in options.machine):
@@ -331,7 +329,7 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
     	    myproject=s[:-1]
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
     elif (options.machine == 'cades'):
-        runroot='/lustre/or-hydra/cades-ccsi/scratch/'+myuser
+        runroot='/lustre/or-scratch/cades-ccsi/scratch/'+myuser
     elif ('cori' in options.machine):
         runroot='/global/cscratch1/sd/'+myuser
         myinput = open(os.environ.get('HOME')+'/.cesm_proj','r')
@@ -508,8 +506,6 @@ for row in AFdatareader:
             basecmd = basecmd+' --nopftdyn'
         if (options.no_dynroot):
             basecmd = basecmd+' --no_dynroot'
-        if (options.bulk_denitrif):
-            basecmd = basecmd+' --bulk_denitrif'
         if (options.vsoilc):
             basecmd = basecmd+' --vertsoilc'
         if (options.centbgc):
@@ -733,8 +729,8 @@ for row in AFdatareader:
 
         if (options.spinup_vars):
                 cmd_fnsp = cmd_fnsp+' --spinup_vars'
-        if (options.ensemble_file != '' and options.notrans):	
-                cmd_fnsp = cmd_fnsp+' --spinup_vars'
+        #if (options.ensemble_file != '' and options.notrans):	
+        #        cmd_fnsp = cmd_fnsp+' --spinup_vars'
         if (options.ensemble_file != '' and options.notrans and options.constraints == ''):	
                 cmd_fnsp = cmd_fnsp + ' --postproc_file '+options.postproc_file
 
@@ -1075,15 +1071,20 @@ for row in AFdatareader:
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
 
             if ('iniadjust' in c):
+                #check whether model named clm or elm
+                if (os.path.exists(options.csmdir+'/components/elm')):
+                  model_name='elm'
+                else:
+                  model_name='clm2'
                 output.write("cd "+os.path.abspath(".")+'\n')
                 if (options.centbgc):
                     output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
-                                 str(int(ny_ad)+1)+' --BGC\n')
+                                 str(int(ny_ad)+1)+' --BGC --model_name '+model_name+'\n')
                 else:
                     output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ad_case+' --restart_year '+ \
-                                 str(int(ny_ad)+1)+'\n')
+                                 str(int(ny_ad)+1)+' --model_name '+model_name+'\n')
 
             if ('spinup_diags' in c):
                  if (options.cpl_bypass):

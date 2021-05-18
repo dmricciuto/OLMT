@@ -1,0 +1,6 @@
+To complile on CADES:
+mpif90 makezones_reanalysis.f90 -I$NETCDF_PATH/include -L$NETCDF_PATH/lib -lnetcdff -lnetcdf
+
+To run:
+sbatch 
+

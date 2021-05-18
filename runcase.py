@@ -228,8 +228,6 @@ parser.add_option("--harvmod", action="store_true", dest="harvmod", \
                       "All harvest is performed in first timestep")
 parser.add_option("--no_dynroot", dest="no_dynroot", default=False, \
                   help = 'Turn off dynamic root distribution', action="store_true")
-parser.add_option("--bulk_denitrif", dest="bulk_denitrif", default=False, \
-                  help = 'To turn off BGC nitrification-denitrification', action="store_true")
 parser.add_option("--vertsoilc", dest="vsoilc", default=False, \
                   help = 'To turn on CN with multiple soil layers, excluding CENTURY C module (CLM4ME on as well)', action="store_true")
 parser.add_option("--centbgc", dest="centbgc", default=False, \
@@ -314,6 +312,14 @@ if (options.csmdir == ''):
 elif (not os.path.exists(options.csmdir)):
      print('Error:  Model root '+options.csmdir+' does not exist.')
      sys.exit(1)
+
+#check whether model named clm or elm
+if (os.path.exists(options.csmdir+'/components/elm')):
+  mylsm='ELM'
+  if (options.res == 'CLM_USRDAT'):
+    options.res = 'ELM_USRDAT'
+else:
+  mylsm='CLM'
 
 #machine info:  cores per node
 ppn=1
@@ -471,7 +477,12 @@ if (options.finidat == ''  and options.finidat_case == ''):  #not user-defined
 
 if (options.finidat_case != ''):
     finidat_yst = str(10000+finidat_year)
-    finidat = runroot+'/'+options.finidat_case+'/run/'+ \
+    if (mylsm == 'ELM'):
+      finidat = runroot+'/'+options.finidat_case+'/run/'+ \
+              options.finidat_case+'.elm.r.'+finidat_yst[1:]+ \
+              '-01-01-00000.nc'
+    else:
+      finidat = runroot+'/'+options.finidat_case+'/run/'+ \
               options.finidat_case+'.clm2.r.'+finidat_yst[1:]+ \
               '-01-01-00000.nc'
 
@@ -854,10 +865,10 @@ os.system('./xmlchange DIN_LOC_ROOT_CLMFORC='+options.ccsm_input+'/atm/datm7/')
 
 #define mask and resoultion
 if (isglobal == False):
-    os.system('./xmlchange CLM_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
+    os.system('./xmlchange '+mylsm+'_USRDAT_NAME='+str(numxpts)+'x'+str(numypts)+'pt_'+options.site)
 if (options.ad_spinup):
     if (options.mymodel == 'ELM'):
-        os.system("./xmlchange --append CLM_BLDNML_OPTS='-bgc_spinup on'")
+        os.system("./xmlchange --append "+mylsm+"_BLDNML_OPTS='-bgc_spinup on'")
     elif (options.mymodel == 'CLM5'):
         os.system('./xmlchange CLM_ACCELERATED_SPINUP=on')
         os.system('./xmlchange CLM_FORCE_COLDSTART=on')
@@ -911,7 +922,7 @@ else:
     #adds capability to run with transient CO2
 if ('20TR' in compset or options.istrans):
     os.system('./xmlchange CCSM_BGC=CO2A')
-    os.system('./xmlchange CLM_CO2_TYPE=diagnostic')
+    os.system('./xmlchange '+mylsm+'_CO2_TYPE=diagnostic')
     if (options.run_startyear == -1):
         os.system('./xmlchange RUN_STARTDATE=1850-01-01')
     
@@ -955,14 +966,14 @@ if (options.clean_config):
 #clm namelist modifications
 for i in range(1,int(options.ninst)+1):
     if (int(options.ninst) == 1):
-        output = open("user_nl_clm",'w')
+        output = open("user_nl_"+mylsm.lower(),'w')
     else:
         if (i < 10):
-            output = open("user_nl_clm_000"+str(i),'w')
+            output = open("user_nl_"+mylsm.lower()+"_000"+str(i),'w')
         elif (i < 100):
-            output = open("user_nl_clm_00"+str(i),'w')
+            output = open("user_nl_"+mylsm.lower()+"_00"+str(i),'w')
         elif (i < 1000):
-            output = open("user_nl_clm_0"+str(i),'w')
+            output = open("user_nl_"+mylsm.lower()+"_0"+str(i),'w')
     output.write('&clm_inparm\n')
 
     if (options.namelist_file != ''):
@@ -1220,10 +1231,6 @@ for i in range(1,int(options.ninst)+1):
             output.write(" use_century_decomp = .true.\n")
         if (options.no_dynroot):
             output.write(" use_dynroot = .false.\n")
-        if (options.bulk_denitrif):
-            output.write(" use_nitrif_denitrif = .false.\n")
-        else:
-            output.write(" use_nitrif_denitrif = .true.\n")
         if ('CROP' in compset):
             output.write(" suplphos = 'ALL'\n")
         if (options.fates_nutrient != ''):
@@ -1234,7 +1241,7 @@ for i in range(1,int(options.ninst)+1):
               output.write(" suplnitro = 'ALL'\n")
         elif ('ED' in compset):    #C-only mode (no nutrient enabled)
             options.write(" fates_parteh_mode = 1\n")
-        if ((options.CH4 or (not options.bulk_denitrif)) and options.fates_nutrient == ''):
+        if (options.CH4 and options.fates_nutrient == ''):
             output.write(" use_lch4 = .true.\n")
         elif (options.fates_nutrient != ''):
             output.write(" use_lch4 = .false.\n")  
@@ -1373,10 +1380,10 @@ else:
 #Land CPPDEF modifications
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
 
 #Global CPPDEF modifications
 infile  = open("./Macros.make")
@@ -1475,7 +1482,7 @@ if (not cpl_bypass):
                                    ' '+str(startyear)+' '+str(endyear)+'  ", '+mypresaero+myco2+ \
                                    ', "datm.streams.txt.topo.observed 1 1 1"\n')
             else:
-                myoutput.write(' streams = "datm.streams.txt.CLM1PT.CLM_USRDAT '+str(myalign_year)+ \
+                myoutput.write(' streams = "datm.streams.txt.CLM1PT.'+mylsm+'_USRDAT '+str(myalign_year)+ \
                                    ' '+str(startyear)+' '+str(endyear)+'  ", '+mypresaero+myco2+ \
                                    ', "datm.streams.txt.topo.observed 1 1 1"\n')
         elif ('streams' in s):

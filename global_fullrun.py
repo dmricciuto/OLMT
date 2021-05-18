@@ -119,8 +119,6 @@ parser.add_option("--SP", dest="sp", default=False, \
                  action="store_true", help="Use satellite phenology")
 parser.add_option("--harvmod", action="store_true", dest='harvmod', default=False, \
                     help="turn on harvest modification:  All harvest at first timestep")
-parser.add_option("--bulk_denitrif", dest="bulk_denitrif", default=False, \
-                  help = 'To turn on BGC nitrification-denitrification', action="store_true")
 parser.add_option("--no_dynroot", dest="no_dynroot", default=False, \
                   help = 'Turn off dynamic root distribution', action="store_true")
 parser.add_option("--vertsoilc", dest="vsoilc", default=False, \
@@ -470,8 +468,6 @@ if (options.nopftdyn):
     basecmd = basecmd+' --nopftdyn'
 if (options.no_dynroot):
     basecmd = basecmd+' --no_dynroot'
-if (options.bulk_denitrif):
-    basecmd = basecmd+' --bulk_denitrif'
 if (options.vsoilc):
     basecmd = basecmd+' --vertsoilc'
 if (options.centbgc):
