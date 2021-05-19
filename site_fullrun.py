@@ -241,6 +241,12 @@ elif (not os.path.exists(options.csmdir)):
      print('Error:  Model root '+options.csmdir+' does not exist.')
      sys.exit(1)
 
+#check whether model named clm or elm
+if (os.path.exists(options.csmdir+'/components/elm')):
+  model_name='elm'
+else:
+  model_name='clm2'
+
 #get machine info if not specified
 npernode=32
 if (options.machine == ''):
@@ -586,9 +592,14 @@ for row in AFdatareader:
         # ECA or RD 
         if (options.eca):
             mycompset = nutrients+'ECA'+decomp_model
-        # APW: seems redundant given if statement below 
-        elif (options.fates):
-            mycompset = 'CLM45ED'
+        else:
+            mycompset = nutrients+'RD'+decomp_model+'BC'
+        #note - RD / ECA in FATES handled with namelist options, not compsets
+        if (options.fates):
+            if (model_name == 'elm'):
+              mycompset = 'ELMFATES'
+            else:
+              mycompset = 'CLM45ED'
         else:
             mycompset = nutrients+'RD'+decomp_model+'BC'
 
@@ -600,13 +611,11 @@ for row in AFdatareader:
         
         # crop model 
         if (options.crop):
-            mycompset = 'CLM45CNCROP'
+            if (model_name == 'elm'):
+              mycompset = 'ELMCNCROP'
+            else:
+              mycompset = 'CLM45CNCROP'
             mycompset_adsp = mycompset   
-        
-        # FATES model 
-        if (options.fates):
-            mycompset = 'CLM45ED'
-            mycompset_adsp = mycompset
         
         # model executable E3SM / CESM 
         myexe = 'e3sm.exe'
@@ -647,7 +656,10 @@ for row in AFdatareader:
               cmd_adsp = cmd_adsp+' --compset ICB1850'+mycompset_adsp
               ad_case = site+'_ICB1850'+mycompset_adsp
             if (options.sp):
-              ad_case = site+'_ICBCLM45BC'
+              if (model_name == 'elm'):
+                ad_case = site+'_ICBELMBC'
+              else:
+                ad_case = site+'_ICBCLM45BC'
         else:
             cmd_adsp = cmd_adsp+' --compset I1850'+mycompset_adsp
             ad_case = site+'_I1850'+mycompset_adsp
@@ -683,7 +695,10 @@ for row in AFdatareader:
             else:
                 basecase=site+'_I1850'+mycompset
             if (options.sp):
-                basecase=site+'_ICBCLM45BC'
+                if (model_name == 'elm'):
+                  basecase=site+'_ICBELMBC'
+                else:
+                  basecase=site+'_ICBCLM45BC'
 
         if (options.noad):
             cmd_fnsp = basecmd+' --run_units nyears --run_n '+str(fsplen)+' --align_year '+ \
@@ -718,7 +733,10 @@ for row in AFdatareader:
 
         if (options.cpl_bypass):
             if (options.sp):
-              cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
+              if (model_name == 'elm'):
+                cmd_fnsp = cmd_fnsp+' --compset ICBELMBC'
+              else:
+                cmd_fnsp = cmd_fnsp+' --compset ICBCLM45BC'
             else:
               if (options.crop):
                 cmd_fnsp = cmd_fnsp+' --compset ICB'+mycompset
@@ -1044,9 +1062,15 @@ for row in AFdatareader:
             if (options.cpl_bypass):
                 modelst = 'ICB1850'+mycompset
                 if (options.sp):
-                  modelst = 'ICBCLM45BC'
+                  if (model_name == 'elm'):
+                    modelst = 'ICBELMBC'
+                  else:
+                    modelst = 'ICBCLM45BC'
                 if (options.crop):
-                  modelst = 'ICBCLM45CNCROP'
+                  if (model_name == 'elm'):
+                    modelst = 'ICBELMCNCROP'
+                  else:
+                    modelst = 'ICBCLM45CNCROP'
 
             basecase = site
             if (mycaseid != ''):
@@ -1071,11 +1095,6 @@ for row in AFdatareader:
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
 
             if ('iniadjust' in c):
-                #check whether model named clm or elm
-                if (os.path.exists(options.csmdir+'/components/elm')):
-                  model_name='elm'
-                else:
-                  model_name='clm2'
                 output.write("cd "+os.path.abspath(".")+'\n')
                 if (options.centbgc):
                     output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \

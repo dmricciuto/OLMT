@@ -40,6 +40,9 @@ parser.add_option("--cnp", dest="cnp", default = False, action="store_true", \
                   help = 'CNP mode - initialize P pools')
 parser.add_option("--site", dest="site", default='parm_list', \
                   help = 'Site name')
+parser.add_option('--run_sa', dest="run_sa", default=True, action="store_true", \
+                  help = 'Run sensitivity analysis using UQTk')
+
 (options, args) = parser.parse_args()
 
 options.n = int(options.n)
@@ -96,17 +99,20 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
               myindex = mypft[index]
               hol_add = 17
             if (os.path.exists(fname)):
-              mydata = nffun.getvar(fname,v)  
-              if (len(mydata) < 365):
-                mydata = np.zeros([365,34], np.float)+np.NaN
+              mydata = nffun.getvar(fname,v) 
+              if (len(mydata) < 10):
+                npy = 1 
+              elif (len(mydata) >= 365):    #does not currently allow hourly
+                npy = 365
             else:
-              mydata = np.zeros([365,34], np.float)+np.NaN
+              print(fname)
+              mydata = np.zeros([npy,34], np.float)+np.NaN
             #get output and average over days/years
             n_days = myday_end[index]-myday_start[index]+1
             ndays_total = ndays_total + n_days
             #get number of timesteps per output file
             
-            if (('20TR' in case or (not '1850' in case)) and (not 'ED' in case)):     #Transient assume daily ouput
+            if (npy == 365):
                 for d in range(myday_start[index]-1,myday_end[index]):
                     if ('US-SPR' in case):
                       output.append(0.25*(mydata[d][myindex+hol_add]*myfactor[index] \
@@ -115,7 +121,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
                     else:
                       output.append(mydata[d][myindex]*myfactor[index] \
                              +myoffset[index])
-            else:                    #Assume annual output (ignore days)
+            elif (npy == 1):                    #Assume annual output (ignore days)
                for d in range(myday_start[index]-1,myday_end[index]):    #28-38 was myindex
                  if ('SCPF' in v):
                    output.append(sum(mydata[0,28:38])/10.0*myfactor[index]+myoffset[index])
@@ -125,6 +131,8 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
             data[thiscol] = sum(output[(i*myavg[index]):((i+1)*myavg[index])])/myavg[index]
             thiscol=thiscol+1
         index=index+1
+
+    #get the parameters
     if (options.microbe):
       pfname = rundir+'microbepar_in'
       pnum=0
@@ -176,17 +184,24 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
              elif (int(ppfts[pnum]) > 0):
                parms[pnum] = mydata[int(ppfts[pnum])]
              elif (int(ppfts[pnum]) == 0):
-               parms[pnum] = mydata[int(ppfts[pnum])] 
+               try:
+                 parms[pnum] = mydata[int(ppfts[pnum])] 
+               except:
+                 parms[pnum] = mydata
            else:
-             parms[pnum] = mydata[...]
+             try:
+               parms[pnum] = mydata[0]
+             except:
+               parms[pnum] = mydata
          else:                #Regular parameter file
            mydata = nffun.getvar(pfname,p) 
            if (int(ppfts[pnum]) > 0):
              parms[pnum] = mydata[int(ppfts[pnum])]
-           elif(int(ppfts[pnum]) == 0):
-             parms[pnum] = mydata[0]
-           else:
-             parms[pnum] = mydata
+           elif(int(ppfts[pnum]) <= 0):
+             try:
+               parms[pnum] = mydata[0]
+             except:
+               parms[pnum] = mydata
          pnum=pnum+1
 
     return ierr
@@ -521,6 +536,10 @@ if (rank == 0):
         myoutput.close()
         print(np.hstack((parm_out,data_out)))
         np.savetxt(UQ_output+'/data/foreden.csv', np.hstack((parm_out,data_out)), delimiter=',', header=eden_header[:-1])
+        if (options.run_sa):
+          os.system('cp UQTk_scripts/*.x '+UQ_output+'/')
+          os.chdir(UQ_output)
+          os.system('./run_sensitivity.x')
 
     MPI.Finalize()
 

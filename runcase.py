@@ -316,10 +316,12 @@ elif (not os.path.exists(options.csmdir)):
 #check whether model named clm or elm
 if (os.path.exists(options.csmdir+'/components/elm')):
   mylsm='ELM'
+  model_name='elm'
   if (options.res == 'CLM_USRDAT'):
     options.res = 'ELM_USRDAT'
 else:
   mylsm='CLM'
+  model_name='clm2'
 
 #machine info:  cores per node
 ppn=1
@@ -1724,17 +1726,17 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             cmd = mpicmd+' -np '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
-               ' --site '+options.site
+               ' --site '+options.site+' --model_name '+model_name
         elif (('titan' in options.machine or 'eos' in options.machine) and int(options.ninst) == 1):
             cmd = 'aprun -n '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
-               ' --site '+options.site
+               ' --site '+options.site+' --model_name '+model_name
         elif ('anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
             cmd = 'srun -n '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
-               ' --site '+options.site
+               ' --site '+options.site+' --model_name '+model_name
         if (options.constraints != ''):
             cmd = cmd + ' --constraints '+options.constraints
         if (options.postproc_file != ''): 
