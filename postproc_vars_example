@@ -1,4 +1,5 @@
-#Variable Startyear endyear Startday endday averaging period factor add offset pft
-GPP            2000    2009          1    365        3650            31536000    0
-NPP            2000    2009          1    365        3650            31536000    0
-NEE            2000    2009          1    365        3650            31536000    0
+#Variable Startyear endyear Startday endday averaging period factor add offset  pft obs  obs_err
+FPSN            2000    2009         60    151          920             1    0   0    1.0     0.1
+FPSN            2000    2009        152    242          910             1    0   0    7.0     0.1
+FPSN            2000    2009        243    333          910             1    0   0    2.5     0.1
+EFLX_LH_TOT     2000    2009          1     365         3650            1    0   0   33.3     0.5

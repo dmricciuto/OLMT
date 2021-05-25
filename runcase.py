@@ -1785,7 +1785,6 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
                         param_max.append(float(s.split()[3]))
         input.close() 
         n_parameters = len(param_names)
-
     if (options.ensemble_file != ''):    
         if (not os.path.isfile(options.ensemble_file)):
             print('Error:  ensemble file does not exist')
