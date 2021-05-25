@@ -94,6 +94,8 @@ parser.add_option("--nopointdata", dest="nopointdata", default=False, action="st
                   help="Do NOT make point data (use data already created)")
 parser.add_option("--metdir", dest="metdir", default="none", \
                   help = 'subdirectory for met data forcing')
+parser.add_option("--metdata_dir", dest="metdata_dir", default='none', \
+                  help = 'Directory containing cpl_bypass met data (site only)')
 parser.add_option("--makemetdata", action="store_true", dest="makemet", default=False, \
                   help="generate site meteorology")
 parser.add_option("--cruncep", dest="cruncep", default=False, action="store_true", \
@@ -397,7 +399,7 @@ if (int(options.mc_ensemble) != -1):
     options.ensemble_file = 'mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt'
 
 mysites = options.site.split(',')
-if (not 'all' in mysites):
+if (not 'all' in mysites and (options.ensemble_file == '')):
   npernode = len(mysites)
 for row in AFdatareader:
     if (row[0] in mysites) or ('all' in mysites and row[0] !='site_code' \
@@ -490,6 +492,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --namelist_file '+options.namelist_file
         if (options.metdir !='none'):
             basecmd = basecmd+' --metdir '+options.metdir
+        if (options.metdata_dir !='none'):
+            basecmd = basecmd+' --metdata_dir '+options.metdata_dir
         if (options.C13):
             basecmd = basecmd+' --C13 '
         if (options.C14):
@@ -1009,8 +1013,8 @@ for row in AFdatareader:
                             if ('cades' in options.machine):
                                 output.write('#SBATCH -A ccsi\n')
                                 output.write('#SBATCH -p batch\n')
-                                output.write('#SBATCH --mem=64G\n')
-                                output.write('#SBATCH --ntasks-per-node 32\n')
+                                output.write('#SBATCH --mem='+str(npernode*2)+'G\n')
+                                output.write('#SBATCH --ntasks-per-node '+str(npernode)+'\n')
                     elif ("#" in s and "ppn" in s):
                         if ('cades' in options.machine):
                             #if ('diags' in c or 'iniadjust' in c):
@@ -1020,7 +1024,11 @@ for row in AFdatareader:
                         else:
                             output.write("#PBS -l nodes=1\n")
                     elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
-                        output.write(s.replace(firstsite,site))
+                        if ('exclusive' in s):
+                          if (options.ensemble_file != ''):
+                            output.write(s.replace(firstsite,site))
+                        else:
+                          output.write(s.replace(firstsite,site))
                 input.close()
                 output.write("\n")
         
