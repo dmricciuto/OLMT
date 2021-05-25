@@ -40,7 +40,7 @@ parser.add_option("--cnp", dest="cnp", default = False, action="store_true", \
                   help = 'CNP mode - initialize P pools')
 parser.add_option("--site", dest="site", default='parm_list', \
                   help = 'Site name')
-parser.add_option('--run_sa', dest="run_sa", default=True, action="store_true", \
+parser.add_option('--run_uq', dest="run_uq", default=True, action="store_true", \
                   help = 'Run sensitivity analysis using UQTk')
 
 (options, args) = parser.parse_args()
@@ -89,8 +89,9 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
         ndays_total = 0
         output = []
         n_years = myyear_end[index]-myyear_start[index]+1
+        npy=1
         for y in range(myyear_start[index],myyear_end[index]+1):
-            if (mypft[index] == -1):
+            if (mypft[index] <= 0):
               fname = rundir+case+'.'+options.model_name+'.h0.'+str(10000+y)[1:]+'-01-01-00000.nc'
               myindex = 0
               hol_add = 1
@@ -126,7 +127,10 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
                  if ('SCPF' in v):
                    output.append(sum(mydata[0,28:38])/10.0*myfactor[index]+myoffset[index])
                  else:
-                   output.append(mydata[0,myindex]*myfactor[index]+myoffset[index])
+                   try:
+                     output.append(mydata[0,myindex]*myfactor[index]+myoffset[index])
+                   except:
+                     output.append(np.NaN)
         for i in range(0,ndays_total/myavg[index]):
             data[thiscol] = sum(output[(i*myavg[index]):((i+1)*myavg[index])])/myavg[index]
             thiscol=thiscol+1
@@ -341,6 +345,8 @@ if (os.path.isfile(options.postproc_file)):
     myfactor=[]
     myoffset=[]
     mypft=[]
+    myobs=[]
+    myobs_err=[]
     time.sleep(rank)
     postproc_input = open(options.postproc_file,'r')
     data_cols = 0
@@ -354,10 +360,16 @@ if (os.path.isfile(options.postproc_file)):
             myavg_pd.append(int(s.split()[5]))
             myfactor.append(float(s.split()[6]))
             myoffset.append(float(s.split()[7]))
-            if (len(s.split()) == 9):
+            if (len(s.split()) >= 9):
               mypft.append(int(s.split()[8]))
             else:
               mypft.append(-1)
+            if (len(s.split()) == 11):
+              myobs.append(float(s.split()[9]))
+              myobs_err.append(float(s.split()[10]))
+            else: 
+              myobs.append(-9999)
+              myobs_err.append(-9999)                
             days_total = (int(s.split()[2]) - int(s.split()[1])+1)*(int(s.split()[4]) - int(s.split()[3])+1)        
             data_cols = data_cols + days_total / int(s.split()[5])
     if (rank == 0):
@@ -519,6 +531,11 @@ if (rank == 0):
         np.savetxt(UQ_output+'/data/yval.dat',   data_out[int(len(good)*0.8):,:])
         np.savetxt(UQ_output+'/data/ptrain.dat', parm_out[0:int(len(good)*0.8),:])
         np.savetxt(UQ_output+'/data/pval.dat', parm_out[int(len(good)*0.8):,:])
+        if (len(myobs) > 0):
+          obs_out=open(UQ_output+'/data/obs.dat','w')
+          for i in range(0,len(myobs)): 
+            obs_out.write(str(myobs[i])+' '+str(myobs_err[i])+'\n')
+          obs_out.close()       
         myoutput = open(UQ_output+'/data/pnames.txt', 'w')
         eden_header=''
         for p in pnames:
@@ -536,11 +553,23 @@ if (rank == 0):
         myoutput.close()
         print(np.hstack((parm_out,data_out)))
         np.savetxt(UQ_output+'/data/foreden.csv', np.hstack((parm_out,data_out)), delimiter=',', header=eden_header[:-1])
-        if (options.run_sa):
+        if (options.run_uq):
+          #Run the sensitivity analysis using UQTk
           os.system('cp UQTk_scripts/*.x '+UQ_output+'/')
           os.chdir(UQ_output)
           os.system('./run_sensitivity.x')
-
+          os.system('mkdir -p UQTk_output')
+          os.system('mkdir -p UQTk_plots')
+          os.system('mkdir -p UQTk_scripts')
+          os.system('mv *.eps UQTk_plots')
+          os.system('mv *.x UQTk_scripts')
+          os.system('mv *.tar *.pk UQTk_output')
+          os.chdir('../..')
+          #Create the surrogate model
+          os.system('python surrogate_NN.py --case '+options.casename)
+          if (max(myobs_err) > 0):
+            #Run the MCMC calibration on surrogate model if data provided
+            os.system('python MCMC.py --case '+options.casename)
     MPI.Finalize()
 
 #--------------------- Slave process (individual ensemble members) --------------
