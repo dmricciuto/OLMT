@@ -223,8 +223,6 @@ parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
 
-parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
-                    help='Do not submit jobs')
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
 parser.add_option("--dryrun",dest="dryrun",default=False,action="store_true",help="Do not execute commands")
 (options, args) = parser.parse_args()
