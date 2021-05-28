@@ -67,6 +67,8 @@ parser.add_option("--np", dest="np", default=1, \
                   help = 'number of processors')
 parser.add_option("--walltime", dest="walltime", default=6, \
                   help = "desired walltime for each job (hours)")
+parser.add_option("--pio_version", dest="pio_version", default='2', \
+                      help = "PIO version (1 or 2)")
 
 # CASE options
 parser.add_option("--nyears_ad_spinup", dest="ny_ad", default=250, \
@@ -614,6 +616,7 @@ for row in AFdatareader:
         if (options.compiler != ''):
             basecmd = basecmd + ' --compiler '+options.compiler
         basecmd = basecmd + ' --mpilib '+options.mpilib
+        basecmd = basecmd + ' --pio_version '+options.pio_version
         basecmd = basecmd+' --caseroot '+caseroot
         basecmd = basecmd+' --runroot '+runroot
         basecmd = basecmd+' --walltime '+str(options.walltime)
