@@ -63,6 +63,8 @@ parser.add_option("--debugq", dest="debug", default=False, \
                  action="store_true", help='Use debug queue')
 parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
                   help = 'Copy sourcemods from this location')
+parser.add_option("--pio_version", dest="pio_version", default='2', \
+                      help = "PIO version (1 or 2)")
 
 # CASE options
 parser.add_option("--coldstart", dest="coldstart", default=False, \
@@ -980,14 +982,10 @@ result = os.system('./xmlchange EXEROOT='+exeroot)
 #if ('ED' in compset):
 #    result = os.system('./xmlchange PIO_VERSION=1')
 #else:
-result = os.system('./xmlchange PIO_VERSION=2')
+result = os.system('./xmlchange PIO_VERSION=%s'%options.pio_version)
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
-    if(options.compiler == 'pgi' or options.compiler == 'PGI' or options.machine == 'cades'):
-        # pgi compiler for PIO2 has issue of 'USE_CXX == TRUE' in Macro.cmake or Macro.make 
-        # bsulman: Doesn't work for me with gnu either.
-        # bsulman: Might be a problem with compiler xml file which says CXX compiler is "gpp" when it should be "g++" on cades
-        result = os.system('./xmlchange PIO_VERSION=1')
+
 #if (options.debug):
 #    result = os.system('./xmlchange DEBUG=TRUE')
 
