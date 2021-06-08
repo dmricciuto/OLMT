@@ -820,9 +820,8 @@ else:
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     if (options.humhol or options.marsh):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
-      print('humhol_ht = 0.15m')
-      print('humhol_dist = 1.0m')
-      print('qflx_h2osfc_surfrate = 1.0e-7')
+    #   print('humhol_ht = 0.15m')
+    #   print('humhol_dist = 1.0m')
       print('setting rsub_top_globalmax = 1.2e-5')
       print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -833,7 +832,12 @@ else:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.64')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      if options.marsh:
+        print('qflx_h2osfc_surfrate = 0.0')
+        os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      else:
+        print('qflx_h2osfc_surfrate = 1.0e-7')
+        os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "h2osoi_offset = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
