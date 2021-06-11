@@ -632,7 +632,7 @@ if (options.rmold):
 
 #------Make domain, surface data and pftdyn files ------------------
 mysimyr=1850
-if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset):
+if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset or 'FATES' in compset):
     #note - spinup with 2000 conditions for FATES
     mysimyr=2000
 
@@ -1328,7 +1328,7 @@ for i in range(1,int(options.ninst)+1):
 
     if (options.ad_spinup):
         #Write long-term average pool values
-        if (not 'ED' in compset):
+        if (not 'ED' in compset and not 'FATES' in compset):
           output.write(" hist_dov2xy = .true., .false.\n")
           h1_advars = ['CWDX_vr', 'SOIL2X_vr', 'SOIL3X_vr', 'DEADSTEMX','DEADCROOTX', 'LITR3X_vr','LEAFC','TOTVEGC','TLAI']
           if ('CTC' in compset):
@@ -1374,9 +1374,9 @@ for i in range(1,int(options.ninst)+1):
     #pft-physiology file
     output.write(" paramfile = '"+rundir+"/clm_params.nc'\n")
 
-    if ('ED' in compset and options.fates_paramfile != ''):
+    if (('ED' in compset or 'FATES' in compset) and options.fates_paramfile != ''):
       output.write(" fates_paramfile = '"+options.fates_paramfile+"'\n")
-    if ('ED' in compset and options.fates_hydro):
+    if (('ED' in compset or 'FATES' in compset) and options.fates_hydro):
       output.write(" use_fates_planthydro = .true.\n")
 
     if ('CROP' in compset or 'RD' in compset or 'ECA' in compset or options.fates_nutrient != ''):
@@ -1394,6 +1394,9 @@ for i in range(1,int(options.ninst)+1):
         else:
           output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
             "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1849-2106_1.9x2.5_c100428.nc'\n")
+        if (model_name == 'clm2'):  #set for older tags/branches (option was removed, this may not capture all tags 
+                                    #between rename to elm and removal of nitrif_dentrif)   
+            output.write(" use_nitrif_denitrif = .true.\n")
         if (options.vsoilc):
             output.write(" use_vertsoilc = .true.\n")
         if (options.centbgc or 'ECA' in options.fates_nutrient):
@@ -1408,7 +1411,7 @@ for i in range(1,int(options.ninst)+1):
               output.write(" suplnitro = 'NONE'\n")
             else:
               output.write(" suplnitro = 'ALL'\n")
-        elif ('ED' in compset):    #C-only mode (no nutrient enabled)
+        elif ('ED' in compset or 'FATES' in compset):    #C-only mode (no nutrient enabled)
             options.write(" fates_parteh_mode = 1\n")
         if (options.CH4 and options.fates_nutrient == ''):
             output.write(" use_lch4 = .true.\n")
@@ -1708,15 +1711,15 @@ if (not cpl_bypass and not isglobal):
 
     #reverse directories for CLM1PT and site
     if (options.cruncep == False):
-        myinput  = open('./Buildconf/datmconf/datm.streams.txt.CLM1PT.CLM_USRDAT')
-        myoutput = open('./user_datm.streams.txt.CLM1PT.CLM_USRDAT','w')
+        myinput  = open('./Buildconf/datmconf/datm.streams.txt.CLM1PT.'+mylsm+'_USRDAT')
+        myoutput = open('./user_datm.streams.txt.CLM1PT.'+mylsm+'_USRDAT','w')
         for s in myinput:
             if ('CLM1PT_data' in s):
                 temp = s.replace('CLM1PT_data', 'TEMPSTRING')
                 s    = temp.replace(str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site, 'CLM1PT_data')
                 temp  =s.replace('TEMPSTRING', str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site)
                 myoutput.write(temp)
-            elif ('ED' in compset and 'FLDS' in s):
+            elif (('ED' in compset or 'FATES' in compset) and 'FLDS' in s):
                 print('Not including FLDS in atm stream file')
             else:
                 myoutput.write(s)

@@ -213,10 +213,10 @@ for p in parm_names:
       else:
          myfile = pftfile
       param = nffun.getvar(myfile,p)
-      if ('fates_prt_nitr_stoich_p1' in p):
+      if (('fates_prt' in p and 'stoich' in p) or ('fates_turnover' in p and 'retrans' in p)):
         #this is a 2D parameter.
-         param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]
-         param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]
+         param[parm_indices[pnum] % 12 , parm_indices[pnum] / 12] = parm_values[pnum]
+         param[parm_indices[pnum] % 12 , parm_indices[pnum] / 12] = parm_values[pnum]
       elif ('fates_hydr_p50_node' in p or 'fates_hydr_avuln_node' in p or 'fates_hydr_kmax_node' in p or \
             'fates_hydr_pitlp_node' in p or 'fates_hydr_thetas_node' in p):
          param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]

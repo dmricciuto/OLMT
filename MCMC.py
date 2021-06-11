@@ -15,6 +15,8 @@ parser.add_option("--nevals", dest="nevals", default="50000", \
                   help="Number of model evaluations")
 parser.add_option("--burnsteps", dest="burnsteps", default="10", \
                   help="Number burn steps")
+parser.add_option("--parm_list", dest="parm_list", default='parm_list', \
+                  help = 'File containing list of parameters to vary')
 (options, args) = parser.parse_args()
 
 UQ_output = 'UQ_output/'+options.casename
@@ -178,7 +180,15 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
 
     np.savetxt(UQ_output+'/MCMC_output/MCMC_chain.txt', np.transpose(chain_afterburn))
     #Print out some statistics
-    np.savetxt(UQ_output+'/MCMC_output/parms_best.txt',parms_best)
+    parm_data=open(options.parm_list,'r')
+    parm_best=open(UQ_output+'/MCMC_output/parms_best.txt','w')
+    p=0
+    for s in parm_data:
+      row = s.split()
+      parm_best.write(row[0]+' '+row[1]+' '+str(parms_best[p])+'\n')
+      p=p+1
+    parm_data.close()
+    parm_best.close()
     np.savetxt(UQ_output+'/MCMC_output/correlation_matrix.txt',np.corrcoef(chain_afterburn))
 
     #parameter correlation plots (threshold correlations)
