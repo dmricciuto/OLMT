@@ -332,6 +332,18 @@ parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
+
+#options for coupling with PFLOTRAN
+parser.add_option("--clmpf_source_dir", dest="clmpf_source_dir", default='', \
+                  help = 'pflotran-elm-interface source directory, blanked by default, otherwise build ELM with PFLOTRAN coupled')
+parser.add_option("--clmpf_mode", dest="clmpf_mode", default=False, \
+                  help = 'option to run CLM with pflotran coupled codes, off by default. NOTE that ELM must be built with pflotran-elm-interface', \
+                  action="store_true")
+parser.add_option("--clmpf_inputdir", dest="pflotran_inputdir", default='', \
+                  help = 'pflotran input directory, by default it under lnd input directory. ONLY required if clmpf_mode ON')
+parser.add_option("--clmpf_prefix", dest="pflotran_prefix", default='', \
+                  help = 'pflotran.in customized, by default it "pflotran_clm" (.in ommitted) under lnd input directory. ONLY required if clmpf_mode ON')
+
 (options, args) = parser.parse_args()
 
 #-------------------------------------------------------------------------------
@@ -371,6 +383,24 @@ if (os.path.exists(options.csmdir+'/components/elm')):
 else:
   mylsm='CLM'
   model_name='clm2'
+
+print('land model name: ', mylsm)
+
+# checking if pflotran-elm-interface libpflotran.a built, when coupling building option is on
+if (options.clmpf_mode and options.clmpf_source_dir == ''):
+    print('Error:  Model to be running in '+mylsm+'_INTERFACE_MODE=pflotran, but NO CLM_PFLOTRAN_SOURCE_DIR specified')
+    print(' Please specify with  --clmpf_source_dir=PATH_TO_pflotran-elm-interface_srcdir')
+    os.sys.exit(-1)
+if (options.clmpf_source_dir != ''):
+    if (not os.path.exists(options.clmpf_source_dir)):
+        print('Error: Invalid CLM_PFLOTRAN_SOURCE_DIR. Please check --clmpf_source_dir=PATH_TO_pflotran-elm-interface_srcdir')
+        os.sys.exit(-2)
+    if (not os.path.exists(options.clmpf_source_dir+'/libpflotran.a')):
+        print('Error: "'+options.clmpf_source_dir+'/libpflotran.a NOT exists.')
+        print('Please check and build it, e.g. "make PETSC_DIR=$PETSC_PATH column_mode=1 libpflotran.a" ')
+        os.sys.exit(-2)
+
+
 
 #machine info:  cores per node
 ppn=1
@@ -1579,6 +1609,13 @@ for i in range(1,int(options.ninst)+1):
     if (options.addco2 != 0):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
+    #clm-pflotran coupled run is ON -----------------
+    if (options.clmpf_mode):
+      if (options.pflotran_inputdir!=''):
+        output.write(" pflotran_inputdir = '"+str(options.pflotran_inputdir)+"'\n")
+      if (options.pflotran_inputdir!=''):
+        output.write(" pflotran_prefix = '"+str(options.pflotran_prefix)+"'\n")
+    #------------------------------------------------
     output.close()
 
 
@@ -1596,16 +1633,43 @@ else:
     sys.exit(1)
 
 #Land CPPDEF modifications
+xval = subprocess.check_output('./xmlquery --value '+mylsm+'_CONFIG_OPTS', cwd=casedir, shell=True)
+xval = xval.decode()
+cppdefs = ''
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
-
+    #os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'") # this appending not works if already having '-cppdef ...'
+    cppdefs = cppdefs + ' -DHUM_HOL'
 if (options.marsh):
     print("Turning on MARSH modification\n")
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+    #os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'") # this appending not works if already having '-cppdef ...'
+    cppdefs = cppdefs + ' -DMARSH'
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    #os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'") # this appending not works if already having '-cppdef ...'
+    cppdefs = cppdefs + ' -DHARVMOD'
+#clm-pflotran coupled build/run is ON -----------------
+if (options.clmpf_source_dir!=''):
+    print(options.clmpf_source_dir)
+    os.system("export CLM_PFLOTRAN_SOURCE_DIR="+options.clmpf_source_dir)
+    print('Building '+mylsm+' with PFLOTRAN coupling codes from: ')
+    os.system("echo $CLM_PFLOTRAN_SOURCE_DIR")
+    #building CPPDEFS
+    cppdefs = cppdefs + ' -D'+mylsm+'_PFLOTRAN -DCOLUMN_MODE'
+    if (options.clmpf_mode):
+       #running option
+       print('PFLOTRAN coupled run is ON! \n')
+       os.system("./xmlchange -id "+mylsm+"_INTERFACE_MODE --val pflotran")
+#------------------------------------------------
+if (cppdefs!=''):
+    if ('-cppdefs' in xval): 
+       subidx = xval.index('-cppdefs')
+       cppdefs = xval[subidx+len('-cppdefs'):]+' '+ cppdefs  # orignal cppdefs included
+       xval = xval[:subidx]
+    xval_cppdefs = "-cppdefs \' "+cppdefs+" \'" # multiple cppdefs must be bracketed with single quotation marks
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --val \""+xval+ " " +xval_cppdefs+"\"")
+    print(mylsm+'_CONFIG_OPTS modified as following: ')
+    os.system("./xmlquery "+mylsm+"_CONFIG_OPTS")
 
 #Global CPPDEF modifications
 if (cpl_bypass):
@@ -1617,6 +1681,8 @@ if (cpl_bypass):
       if ('CPPDEFS' in s and cpl_bypass):
          stemp = s[:-1]+' -DCPL_BYPASS\n'
          outfile.write(stemp)
+      elif ('PFLOTRAN' in s and (not options.clmpf_mode)):
+         stemp = ''  # removal of any PFLOTRAN required libraries/includes
       else:
          outfile.write(s)
     infile.close()
@@ -1631,6 +1697,8 @@ if (cpl_bypass):
       if ('CPPDEFS' in s and cpl_bypass):
        stemp = s[:-3]+' -DCPL_BYPASS")\n'
        outfile.write(stemp)
+      elif ('PFLOTRAN' in s and (not options.clmpf_mode)):
+       stemp = ''  # removal of any PFLOTRAN required libraries/includes
       else:
        outfile.write(s)
     infile.close()

@@ -235,6 +235,18 @@ parser.add_option("--landusefile", dest="pftdynfile", default='', \
 
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
 parser.add_option("--dryrun",dest="dryrun",default=False,action="store_true",help="Do not execute commands")
+
+#options for coupling with PFLOTRAN
+parser.add_option("--clmpf_source_dir", dest="clmpf_source_dir", default='', \
+                  help = 'pflotran-elm-interface source directory, blanked by default, otherwise build ELM with PFLOTRAN coupled')
+parser.add_option("--clmpf_mode", dest="clmpf_mode", default=False, \
+                  help = 'option to run CLM with pflotran coupled codes, off by default. NOTE that ELM must be built with pflotran-elm-interface', \
+                   action="store_true")
+parser.add_option("--clmpf_inputdir", dest="clmpf_inputdir", default='', \
+                  help = 'pflotran input directory, by default it under lnd input directory. ONLY required if clmpf_mode ON')
+parser.add_option("--clmpf_prefix", dest="clmpf_prefix", default='', \
+                  help = 'pflotran.in customized, by default it "pflotran_clm" (.in ommitted) under lnd input directory. ONLY required if clmpf_mode ON')
+
 (options, args) = parser.parse_args()
 
 def runcmd(cmd,echo=True):
@@ -648,6 +660,15 @@ for row in AFdatareader:
           basecmd = basecmd+' --project '+myproject
         if (options.domainfile != ''):
           basecmd = basecmd+' --domainfile '+options.domainfile 
+
+        if (options.clmpf_source_dir !=''):   # for coupling pflotran with elm
+            basecmd = basecmd + ' --clmpf_source_dir '+options.clmpf_source_dir
+        if (options.clmpf_mode):              # for coupling pflotran with elm
+            basecmd = basecmd + ' --clmpf_mode '
+            if (options.clmpf_inputdir!=''): 
+                basecmd = basecmd + ' --clmpf_inputdir '+options.clmpf_inputdir             
+            if (options.clmpf_prefix!=''): 
+                basecmd = basecmd + ' --clmpf_prefix '+options.clmpf_prefix
 
 #---------------- build commands for runcase.py -----------------------------
 
