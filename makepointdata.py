@@ -2,6 +2,7 @@
 import os, sys, csv, time, math
 from optparse import OptionParser
 import numpy
+from scipy import interpolate
 import netcdf4_functions as nffun
 from netCDF4 import Dataset
 
@@ -284,6 +285,8 @@ for n in range(0,n_grids):
             ygrid_max[n] = i
         elif (lat_bounds[1] >= latixy[i+1]):
             ygrid_max[n] = i
+      
+    
     #print n, lat[n], lon[n], xgrid_max[n], ygrid_max[n]
 if (n_grids > 1 and options.site == ''):       #remove duplicate points
   n_grids_uniq = 1
@@ -549,6 +552,9 @@ for n in range(0,n_grids):
         pct_clay     = nffun.getvar(surffile_new, 'PCT_CLAY')
         organic      = nffun.getvar(surffile_new, 'ORGANIC')
         fmax         = nffun.getvar(surffile_new, 'FMAX')
+        f0           = nffun.getvar(surffile_new, 'F0')
+        p3           = nffun.getvar(surffile_new, 'P3')
+        zwt0         = nffun.getvar(surffile_new, 'ZWT0')
         pct_nat_veg  = nffun.getvar(surffile_new, 'PCT_NATVEG')
         pct_pft      = nffun.getvar(surffile_new, 'PCT_NAT_PFT') 
         monthly_lai  = nffun.getvar(surffile_new, 'MONTHLY_LAI')
@@ -556,6 +562,81 @@ for n in range(0,n_grids):
         monthly_height_top = nffun.getvar(surffile_new, 'MONTHLY_HEIGHT_TOP')
         monthly_height_bot = nffun.getvar(surffile_new, 'MONTHLY_HEIGHT_BOT')
 
+        # interpolating 'pct_sand', 'pct_clay', and 'organic'
+        if (options.point_area_km2!=None or options.point_area_deg2!=None):
+            #
+            if n==0:
+                long_orig = numpy.asarray(nffun.getvar(surffile_orig, 'LONGXY'))[0]
+                lati_orig = numpy.asarray(nffun.getvar(surffile_orig, 'LATIXY'))[:,0]
+                
+                # NOTE: if any NaN in known data points, interp2d won't work.
+                organic_orig = numpy.asarray(nffun.getvar(surffile_orig, 'ORGANIC'))
+                finterp_organic = {}
+                for i in range(organic.shape[0]): # soil layer
+                    finterp_organic[i] = interpolate.interp2d(long_orig,lati_orig, organic_orig[i], kind='linear') #'cubic' has issue of overshoot
+                #
+                finterp_sand = {}
+                pct_sand_orig = numpy.asarray(nffun.getvar(surffile_orig, 'PCT_SAND'))
+                for i in range(pct_sand.shape[0]):
+                    finterp_sand[i] = interpolate.interp2d(long_orig, lati_orig, pct_sand_orig[i], kind='linear')
+                #
+                finterp_clay = {}
+                pct_clay_orig = numpy.asarray(nffun.getvar(surffile_orig, 'PCT_CLAY'))
+                for i in range(pct_clay.shape[0]):
+                    finterp_clay[i] = interpolate.interp2d(long_orig, lati_orig, pct_clay_orig[i], kind='linear')
+                #
+                finterp_lai = {}
+                monthly_lai_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_LAI'))
+                finterp_sai = {}
+                monthly_sai_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_SAI'))
+                finterp_htop = {}
+                monthly_htop_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_HEIGHT_TOP'))
+                finterp_hbot = {}
+                monthly_hbot_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_HEIGHT_BOT'))
+                ij=0
+                for i in range(monthly_lai.shape[0]): # month
+                    for j in range(monthly_lai.shape[1]): #PFT no
+                        finterp_lai[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_lai_orig[i][j], kind='linear')
+                        finterp_sai[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_sai_orig[i][j], kind='linear')
+                        finterp_htop[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_htop_orig[i][j], kind='linear')
+                        finterp_hbot[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_hbot_orig[i][j], kind='linear')
+                        ij=ij+1
+                
+                #
+                fmax_orig = numpy.asarray(nffun.getvar(surffile_orig, 'FMAX'))
+                finterp_fmax =interpolate.interp2d(long_orig, lati_orig, fmax_orig, kind='linear')
+                f0_orig = numpy.asarray(nffun.getvar(surffile_orig, 'F0'))
+                finterp_f0 =interpolate.interp2d(long_orig, lati_orig, f0_orig, kind='linear')
+                p3_orig = numpy.asarray(nffun.getvar(surffile_orig, 'P3'))
+                finterp_p3 =interpolate.interp2d(long_orig, lati_orig, p3_orig, kind='linear')
+                zwt0_orig = numpy.asarray(nffun.getvar(surffile_orig, 'ZWT0'))
+                finterp_zwt0 =interpolate.interp2d(long_orig, lati_orig, zwt0_orig, kind='linear')
+            # done with interp2d function producing at first 
+            #
+            for i in range(organic.shape[0]):
+                organic[i] = finterp_organic[i](lon[n], lat[n])
+            for i in range(pct_sand.shape[0]):
+                pct_sand[i] = finterp_sand[i](lon[n], lat[n])
+            for i in range(pct_clay.shape[0]):
+                pct_clay[i] = finterp_clay[i](lon[n], lat[n])
+            #
+            ij=0
+            for i in range(monthly_lai.shape[0]):
+                for j in range(monthly_lai.shape[1]):
+                    monthly_lai[i][j] = finterp_lai[ij](lon[n], lat[n])
+                    monthly_sai[i][j] = finterp_sai[ij](lon[n], lat[n])
+                    monthly_height_top[i][j] = finterp_htop[ij](lon[n], lat[n])
+                    monthly_height_bot[i][j] = finterp_hbot[ij](lon[n], lat[n])
+                    ij=ij+1
+            
+            #
+            fmax = finterp_fmax(lon[n], lat[n])
+            f0   = finterp_f0(lon[n], lat[n])
+            p3   = finterp_p3(lon[n], lat[n])
+            zwt0 = finterp_zwt0(lon[n], lat[n])
+            
+        #-----------------------------------------------------------------
+        
         npft = 17
         npft_crop = 0
         if (options.crop or options.mymodel == 'CLM5'):
@@ -622,7 +703,7 @@ for n in range(0,n_grids):
                     print('Error correction - ', err,numpy.sum(pct_pft[:,0,0]))
 
           except NameError:
-            print('using PFT information from surface data')
+            if(n_grids<10): print('using PFT information from surface data')
 
         #landfrac_pft[0][0] = 1.0
         #pftdata_mask[0][0] = 1
@@ -734,6 +815,9 @@ for n in range(0,n_grids):
         ierr = nffun.putvar(surffile_new, 'OCCLUDED_P', occlp)
         ierr = nffun.putvar(surffile_new, 'SOIL_COLOR', soil_color)
         ierr = nffun.putvar(surffile_new, 'FMAX', fmax)
+        ierr = nffun.putvar(surffile_new, 'F0', f0)
+        ierr = nffun.putvar(surffile_new, 'P3', p3)
+        ierr = nffun.putvar(surffile_new, 'ZWT0', zwt0)
         ierr = nffun.putvar(surffile_new, 'ORGANIC', organic)
         ierr = nffun.putvar(surffile_new, 'PCT_SAND', pct_sand)
         ierr = nffun.putvar(surffile_new, 'PCT_CLAY', pct_clay)
