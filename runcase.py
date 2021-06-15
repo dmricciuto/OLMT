@@ -387,7 +387,8 @@ elif ('anvil' in options.machine):
     ppn=36
 elif ('compy' in options.machine):
     ppn=40
-ppn=min(ppn, int(options.np))
+if (options.ensemble_file == ''):
+  ppn=min(ppn, int(options.np))
 
 PTCLMdir = os.getcwd()
 
@@ -1917,7 +1918,12 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
                ' --site '+options.site+' --model_name '+model_name
-        elif ('anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
+        elif ('compy' in options.machine):
+            cmd = 'mpirun -np '+str(np_total)+' python manage_ensemble.py ' \
+               +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
+               options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
+               ' --site '+options.site+' --model_name '+model_name
+        elif ('anvil' in options.machine or 'cori' in options.machine):
             cmd = 'srun -n '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
