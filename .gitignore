@@ -3,6 +3,7 @@ scripts/
 temp/
 plots/
 srcmods*
+run_logs_archive/
 
 # files created by OLMT executions
 run.*
@@ -10,3 +11,5 @@ run.*
 *.run.o*
 slurm-*.out
 
+# user defined files
+*.txt

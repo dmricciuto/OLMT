@@ -42,7 +42,8 @@ parm_values=[]
 myinput = open(options.parm_list, 'r')
 casename = options.casename
 
-#get parameter names and PFT information
+
+# get parameter names and PFT information
 pnum=0
 for s in myinput:
    pdata = s.split()
@@ -56,7 +57,8 @@ for s in myinput:
    pnum=pnum+1
 myinput.close()
 
-#get parameter values
+
+# get parameter values
 if (options.ens_file == ''):
    myinput = open('./parm_data', 'r')
    for s in myinput:    
@@ -77,7 +79,8 @@ else:
 n_parameters = len(parm_names)
 gst=str(100000+int(options.ens_num))
 
-#create ensemble directory from original case 
+
+# create ensemble directory from original case 
 est = str(100000+int(options.ens_num))
 orig_dir = str(os.path.abspath(options.runroot)+'/'+casename+'/run')
 ens_dir  = os.path.abspath(options.runroot)+'/UQ/'+casename+'/g'+gst[1:]
@@ -92,7 +95,8 @@ os.system('cp  '+orig_dir+'/surf*.nc '+ens_dir)
 os.system('cp  '+orig_dir+'/domain*.nc '+ens_dir)
 os.system('cp  '+orig_dir+'/*para*.nc '+ens_dir)
 
-#loop through all filenames, change directories in namelists, change parameter values
+
+# loop through all filenames, change directories in namelists, change parameter values
 for f in os.listdir(ens_dir):
     if (os.path.isfile(ens_dir+'/'+f) and (f[-2:] == 'in' or f[-3:] == 'nml' or 'streams' in f)):
         myinput=open(ens_dir+'/'+f)
@@ -266,3 +270,4 @@ for p in parm_names:
 
 
 
+### END ###

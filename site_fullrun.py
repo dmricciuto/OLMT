@@ -400,7 +400,7 @@ else:
 
 
 sitenum=0
-#create ensemble file if requested (so that all cases use the same)
+# create ensemble file if requested (so that all cases use the same)
 if (int(options.mc_ensemble) != -1):
     if (not(os.path.isfile(options.parm_list))):
         print('parm_list file does not exist')
@@ -430,6 +430,7 @@ if (int(options.mc_ensemble) != -1):
     numpy.savetxt('mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt', \
                   numpy.transpose(samples))
     options.ensemble_file = 'mcsamples_'+options.mycaseid+'_'+str(options.mc_ensemble)+'.txt'
+
 
 mysites = options.site.split(',')
 

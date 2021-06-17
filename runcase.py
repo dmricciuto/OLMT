@@ -1812,6 +1812,9 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         numpy.savetxt('mcsamples_'+casename+'.txt', numpy.transpose(samples))
         options.ensemble_file = 'mcsamples_'+casename+'.txt'
 
+    print()
+    print()
+    print('Parameter ensembles selected:') 
     print(str(n_parameters)+' parameters are being modified') 
     print(str(nsamples)+' parameter samples provided')
   
