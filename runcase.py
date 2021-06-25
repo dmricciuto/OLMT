@@ -1414,10 +1414,15 @@ for i in range(1,int(options.ninst)+1):
               output.write(" suplnitro = 'ALL'\n")
         elif ('ED' in compset or 'FATES' in compset):    #C-only mode (no nutrient enabled)
             options.write(" fates_parteh_mode = 1\n")
-        if (options.CH4 and options.fates_nutrient == ''):
+#        if (options.CH4 and options.fates_nutrient == ''):
+#            output.write(" use_lch4 = .true.\n")
+#        elif (options.fates_nutrient != ''):
+#            output.write(" use_lch4 = .false.\n")  
+        if (options.CH4):
             output.write(" use_lch4 = .true.\n")
+        # APW: given RK suggests nitrif/denitrif is not correct w/o ch4 shuld this be for all nutrient enabled runs?
         elif (options.fates_nutrient != ''):
-            output.write(" use_lch4 = .false.\n")  
+            output.write(" use_lch4 = .true.\n")  
         if (options.nofire):
             output.write(" use_nofire = .true.\n")
         if (options.C13):
@@ -1812,8 +1817,8 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         numpy.savetxt('mcsamples_'+casename+'.txt', numpy.transpose(samples))
         options.ensemble_file = 'mcsamples_'+casename+'.txt'
 
-    print()
-    print()
+    print('')
+    print('')
     print('Parameter ensembles selected:') 
     print(str(n_parameters)+' parameters are being modified') 
     print(str(nsamples)+' parameter samples provided')

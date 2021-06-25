@@ -10,6 +10,6 @@ run.*
 *.pyc
 *.run.o*
 slurm-*.out
+mcsamples*.txt
 
 # user defined files
-*.txt

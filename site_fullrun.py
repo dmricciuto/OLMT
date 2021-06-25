@@ -29,22 +29,22 @@ parser.add_option("--constraints", dest="constraints", default="", \
                   help="Directory containing model constraints")
 parser.add_option("--compare_cases", dest="compare", default='', \
                   help = 'caseidprefix(es) to compare')
-parser.add_option("--postproc_file", dest="postproc_file", default="postproc_vars", \
-                  help = 'File for ensemble post processing')
 parser.add_option("--ninst", dest="ninst", default=1, \
                   help = 'number of land model instances')
 parser.add_option("--mc_ensemble", dest="mc_ensemble", default=-1, \
                   help = 'Monte Carlo ensemble (argument is # of simulations)')
 parser.add_option("--ng", dest="ng", default=256, \
                   help = 'number of groups to run in ensemble mode')
-parser.add_option("--ensemble_file", dest="ensemble_file", default='', \
-                  help = 'Parameter sample file to generate ensemble')
 parser.add_option("--parm_list", dest="parm_list", default='parm_list', \
                   help = 'File containing list of parameters to vary')
 parser.add_option("--mod_parm_file", dest="mod_parm_file", default='', \
                   help = "adding the path to the modified parameter file")
 parser.add_option("--mod_parm_file_P", dest="mod_parm_file_P", default='', \
                   help = "adding the path to the modified parameter file")
+parser.add_option("--ensemble_file", dest="ensemble_file", default='', \
+                  help = 'Parameter sample file to generate ensemble')
+parser.add_option("--postproc_file", dest="postproc_file", default="postproc_vars", \
+                  help = 'File for ensemble post processing')
 parser.add_option("--nopftdyn", dest="nopftdyn", default=False, action="store_true", \
                   help='Do not use dynamic PFT file')
 
@@ -1038,6 +1038,7 @@ for row in AFdatareader:
                 case_list.append('trans_diags')
         print('\n\nAliases of cases to be submitted:\n')
         print(case_list)
+        print('')
         #sys.exit('temp stop pre submit script copy & edit')
 
 
