@@ -148,7 +148,7 @@ elif (options.point_list != ''):
         point_ij = []
         for isurfvar in mysurfvar:
             point_mysurf[isurfvar] = []
-        
+ 
     for s in input_file:
         if (n_grids == 0):
             header = s.split()
@@ -922,7 +922,7 @@ if (options.nopftdyn == False):
             
                 #
                 # multiple natural PFTs' pct are read-in from a nc file
-                if('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
+                if(options.usersurfnc!='none' and ('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar)):
                     print('Message: PCT_NAT_PFT is extracted from a non-dynamical surface data FOR surfdata.pftdyn.nc')
                     sum_nat=numpy.sum(pct_pft[t,:,0,0]) # this is the original, saved for use later
                     if ('PCT_PFT' in point_mysurf.keys()):
