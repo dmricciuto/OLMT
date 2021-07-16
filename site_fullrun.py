@@ -1083,7 +1083,9 @@ for row in AFdatareader:
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
                 mysubmit_type = ''
-            if ('mac' in options.machine):
+            if ('mymac' in options.machine):
+                mysubmit_type = ''
+            if ('wsl' in options.machine):
                 mysubmit_type = ''
             if ((sitenum % npernode) == 0):
                 if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
@@ -1096,7 +1098,8 @@ for row in AFdatareader:
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
                     if ("perl" in s or "python" in s):
-                        if ('cades' in options.machine):
+                        if ('cades' in options.machine \
+                            or 'mymac' in options.machine or 'wsl' in options.machine):
                           output.write("#!/bin/bash -f\n")
                         else:
                           output.write("#!/bin/csh -f\n")
@@ -1109,7 +1112,7 @@ for row in AFdatareader:
                             output.write('#SBATCH -p short\n')
                         if (mysubmit_type == 'qsub'):
                             output.write('#PBS -l walltime='+timestr+'\n')
-                        else:
+                        elif (mysubmit_type == 'sbatch'):
                             output.write('#SBATCH --time='+timestr+'\n')
                             if ('anvil' in options.machine):
                                 output.write('#SBATCH -A condo\n')

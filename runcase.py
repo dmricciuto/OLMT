@@ -855,6 +855,7 @@ else:
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
     if ('cades' in options.machine or 'chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine \
+          or 'wsl' in options.machine \
           or 'mymac' in options.machine or 'anvil' in options.machine):
       myncap='ncap2'
 
@@ -1156,7 +1157,7 @@ if (options.maxpatch_pft != 17):
   os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
-if('mac' in options.machine or 'cades' in options.machine): 
+if('mymac' in options.machine or 'cades' in options.machine or 'wsl' in options.machine): 
     os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
 
 
