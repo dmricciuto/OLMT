@@ -1568,8 +1568,10 @@ for i in range(1,int(options.ninst)+1):
         elif options.metdir != 'none':
             if (options.daymet4 and options.gswp3):
                 output.write(" metdata_type = 'gswp3_daymet4'\n")
-            #else:
-            #    output.write(" metdata_type = 'gswp3v1_daymet'\n") # This needs to be updated for other types
+            elif (options.daymet and options.gswp3):
+                output.write(" metdata_type = 'gswp3v1_daymet'\n")
+            else:
+                output.write(" metdata_type = 'gswp3'\n") # This needs to be updated for other types
             output.write(" metdata_bypass = '%s'\n"%options.metdir)
             
         # not reanalysis
