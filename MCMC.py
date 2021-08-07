@@ -11,7 +11,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("--case", dest="casename", default="", \
                   help="Name of case")
-parser.add_option("--nevals", dest="nevals", default="50000", \
+parser.add_option("--nevals", dest="nevals", default="200000", \
                   help="Number of model evaluations")
 parser.add_option("--burnsteps", dest="burnsteps", default="10", \
                   help="Number burn steps")
@@ -92,7 +92,7 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
             acc_ratio = float(accepted_step) / nburn
             mycov_step = np.cov(chain_prop[0:nparms,accepted_tot- \
                                               accepted_step:accepted_tot])
-            mycov_chain = np.cov(chain_burn[0:nparms,(accepted_tot/4):accepted_tot])
+            mycov_chain = np.cov(chain_burn[0:nparms,int(accepted_tot/4):accepted_tot])
             thisscalefac = 1.0
             #Compute scaling factors for step sizes based on acceptance ratio
             if (acc_ratio <= 0.2):
@@ -127,8 +127,8 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
         #Parameter chain plots
             for p in range(0,nparms):
                 fig = plt.figure()
-                xchain = np.cumsum(np.ones(nburn*burnsteps))
-                plt.plot(xchain, chain[p,0:nburn*burnsteps])
+                xchain = np.cumsum(np.ones(int(nburn*burnsteps)))
+                plt.plot(xchain, chain[p,0:int(nburn*burnsteps)])
                 plt.xlabel('Evaluations')
                 plt.ylabel(model.parm_names[p])
                 if not os.path.exists(UQ_output+'/MCMC_output/plots/chains'):
@@ -173,9 +173,9 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
             print(' -- '+str(i)+' --\n')
 
     print("Computing statistics")
-    chain_afterburn = chain[0:nparms,nburn*burnsteps:]
+    chain_afterburn = chain[0:nparms,int(nburn*burnsteps):]
     chain_sorted = chain_afterburn
-    output_sorted = output[0:model.nobs,nburn*burnsteps:]
+    output_sorted = output[0:model.nobs,int(nburn*burnsteps):]
     output_sorted.sort()
 
     np.savetxt(UQ_output+'/MCMC_output/MCMC_chain.txt', np.transpose(chain_afterburn))
@@ -211,7 +211,7 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
     #Parameter chain plots
     for p in range(0,nparms):
         fig = plt.figure()
-        xchain = np.cumsum(np.ones(nevals-nburn*burnsteps))
+        xchain = np.cumsum(np.ones(nevals-int(nburn*burnsteps)))
         plt.plot(xchain, chain_afterburn[p,:])
         plt.xlabel('Evaluations')
         plt.ylabel(model.parm_names[p])

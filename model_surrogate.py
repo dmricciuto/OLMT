@@ -12,6 +12,10 @@ class MyModel(object):
         self.nparms = self.ptrain.shape[1]
         self.nobs   = self.ytrain.shape[1]
         self.ntrain=self.ptrain.shape[0]
+        self.yrange = np.zeros([2,self.nobs],np.float)
+        for i in range(0,self.nobs):
+          self.yrange[0,i] = min(self.ytrain[:,i])
+          self.yrange[1,i] = max(self.ytrain[:,i])
 
         self.pmin = np.zeros([self.nparms], np.float)
         self.pmax= np.zeros([self.nparms], np.float)
@@ -47,3 +51,5 @@ class MyModel(object):
         for p in range(0,self.nparms):
           parms_nn[0,p] = (parms[p]-self.pmin[p])/(self.pmax[p]-self.pmin[p])
         self.output = self.nnmodel.predict(parms_nn).flatten()
+        for q in range(0,len(self.output)):
+          self.output[q] = self.output[q]*(self.yrange[1,q]-self.yrange[0,q])+self.yrange[0,q]
