@@ -200,6 +200,8 @@ parser.add_option("--dailyvars", dest="dailyvars", default=False, \
                  action="store_true", help="Write daily ouptut variables")
 parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False, \
                   help = 'Use variable soil depth from surface data file',action='store_true')
+parser.add_option("--no_budgets", dest="no_budgets", default=False, \
+                  help = 'Turn off CNP budget calculations', action='store_true')
 
 # model output options
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
@@ -635,6 +637,8 @@ for row in AFdatareader:
             basecmd = basecmd + ' --var_soilthickness'
         if (options.var_list_pft != ''):
             basecmd = basecmd + ' --var_list_pft '+options.var_list_pft
+        if (options.no_budgets):
+            basecmd = basecmd+' --no_budgets'
 
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject

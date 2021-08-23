@@ -302,6 +302,8 @@ parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
 parser.add_option("--var_soilthickness", dest="var_soilthickness", default=False, \
                   help = 'Use variable soil thickness from surface data', action="store_true")
+parser.add_option("--no_budgets", dest="no_budgets", default=False, \
+                  help = 'Turn off CNP budget calculations', action='store_true')
 
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
@@ -1360,6 +1362,8 @@ for i in range(1,int(options.ninst)+1):
     
     if (options.var_soilthickness):
         output.write(" use_var_soil_thick = .TRUE.\n") 
+    if (options.no_budgets):
+        output.write(" do_budgets = .false.\n")
 
     #pft dynamics file for transient run
     if ('20TR' in compset or options.istrans):
