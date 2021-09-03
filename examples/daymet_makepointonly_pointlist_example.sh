@@ -7,7 +7,7 @@ ZONING_FILE=daymet_elm_mappings.txt
 
 cwd=$(pwd)
 
-if python3 ./makepointdata.py \
+if mpirun -np 4 python3 ../makepointdata.py \
   --ccsm_input /Users/f9y/clm4_5_inputdata \
   --keep_duplicates \
   --lat_bounds -999,-999 --lon_bounds -999,-999 \
@@ -17,6 +17,7 @@ if python3 ./makepointdata.py \
   --point_list ${ZONING_FILE} \
   --usersurfnc=/Users/f9y/clm4_5_inputdata/lnd/clm2/surfdata_map/high_res/Tesfa_pnnl_PFT_0.05_MODIS_nwh201201.nc \
   --usersurfvar='PCT_PFT' \
+  --nco_path=':/usr/local/nco/bin:/usr/local/gcc-x/netcdf-4.x-hdf5/bin' \
   --point_area_kmxkm 1.0 & sleep 10
 
 then
