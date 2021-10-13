@@ -178,7 +178,7 @@ elif (options.point_list != ''):
                  elif ('pft' in header[dnum]):
                       point_pfts[n_grids-1] = int(d)
                  if (int(options.mypft) >= 0):    #overrides info in file
-                     point_pfts[n_grids-1] = options.mypft
+                      point_pfts[n_grids-1] = options.mypft
                 
                  dnum=dnum+1
              #        
@@ -608,36 +608,45 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
         
                 # NOTE: if any NaN in known data points, interp2d won't work.
                 organic_orig = numpy.asarray(nffun.getvar(surffile_orig, 'ORGANIC'))
+                idx=numpy.where(organic_orig<=0.01)
+                if(len(idx[0])>0):organic_orig[idx]=0.01
+                #organic_orig = numpy.log(organic_orig)
                 finterp_organic = {}
                 for i in range(organic.shape[0]): # soil layer
-                    finterp_organic[i] = interpolate.interp2d(long_orig,lati_orig, organic_orig[i], kind='linear') #'cubic' has issue of overshoot
+                    finterp_organic[i] = interpolate.interp2d(long_orig,lati_orig, organic_orig[i], kind='cubic') #'cubic' has issue of overshoot
                 #
                 finterp_sand = {}
                 pct_sand_orig = numpy.asarray(nffun.getvar(surffile_orig, 'PCT_SAND'))
+                idx=numpy.where(pct_sand_orig<=0.01)
+                if(len(idx[0])>0):pct_sand_orig[idx]=0.01
+                #pct_sand_orig = numpy.log(pct_sand_orig)
                 for i in range(pct_sand.shape[0]):
-                    finterp_sand[i] = interpolate.interp2d(long_orig, lati_orig, pct_sand_orig[i], kind='linear')
+                    finterp_sand[i] = interpolate.interp2d(long_orig, lati_orig, pct_sand_orig[i], kind='cubic')
                 #
                 finterp_clay = {}
                 pct_clay_orig = numpy.asarray(nffun.getvar(surffile_orig, 'PCT_CLAY'))
+                idx=numpy.where(pct_clay_orig<=0.01)
+                if(len(idx[0])>0):pct_clay_orig[idx]=0.01
+                #pct_clay_orig = numpy.log(pct_clay_orig)
                 for i in range(pct_clay.shape[0]):
-                    finterp_clay[i] = interpolate.interp2d(long_orig, lati_orig, pct_clay_orig[i], kind='linear')
+                    finterp_clay[i] = interpolate.interp2d(long_orig, lati_orig, pct_clay_orig[i], kind='cubic')
                 #
-                finterp_lai = {}
-                monthly_lai_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_LAI'))
-                finterp_sai = {}
-                monthly_sai_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_SAI'))
-                finterp_htop = {}
-                monthly_htop_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_HEIGHT_TOP'))
-                finterp_hbot = {}
-                monthly_hbot_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_HEIGHT_BOT'))
-                ij=0
-                for i in range(monthly_lai.shape[0]): # month
-                    for j in range(monthly_lai.shape[1]): #PFT no
-                        finterp_lai[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_lai_orig[i][j], kind='linear')
-                        finterp_sai[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_sai_orig[i][j], kind='linear')
-                        finterp_htop[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_htop_orig[i][j], kind='linear')
-                        finterp_hbot[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_hbot_orig[i][j], kind='linear')
-                        ij=ij+1
+                #finterp_lai = {}
+                #monthly_lai_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_LAI'))
+                #finterp_sai = {}
+                #monthly_sai_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_SAI'))
+                #finterp_htop = {}
+                #monthly_htop_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_HEIGHT_TOP'))
+                #finterp_hbot = {}
+                #monthly_hbot_orig = numpy.asarray(nffun.getvar(surffile_orig, 'MONTHLY_HEIGHT_BOT'))
+                #ij=0
+                #for i in range(monthly_lai.shape[0]): # month
+                #    for j in range(monthly_lai.shape[1]): #PFT no
+                #        finterp_lai[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_lai_orig[i][j], kind='linear')
+                #        finterp_sai[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_sai_orig[i][j], kind='linear')
+                #        finterp_htop[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_htop_orig[i][j], kind='linear')
+                #        finterp_hbot[ij] = interpolate.interp2d(long_orig, lati_orig, monthly_hbot_orig[i][j], kind='linear')
+                #        ij=ij+1
                 
                 #
                 #overrides data from a PCT_PFT nc input file, after done global data interpolation
@@ -648,42 +657,59 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
                             for i in range(pct_pft.shape[0]):
                                 finterp_pct_pft[i] = interpolate.interp2d(mysurf_lon[0,:], mysurf_lat[:,0], mysurfnc[ivar][i], kind='linear')
                         # may add more surface data variable other than 'PCT_PFT', if any
+                else:
+                    pct_pft_orig = numpy.asarray(nffun.getvar(surffile_orig, 'PCT_NAT_PFT'))
+                    idx=numpy.where(pct_pft_orig<=0.0)
+                    if(len(idx[0])>0):pct_pft_orig[idx]=0.0
+                    for i in range(pct_pft.shape[0]):
+                        finterp_pct_pft[i] = interpolate.interp2d(long_orig, lati_orig, pct_pft_orig[i], kind='linear')
                 
                 #
                 fmax_orig = numpy.asarray(nffun.getvar(surffile_orig, 'FMAX'))
-                finterp_fmax =interpolate.interp2d(long_orig, lati_orig, fmax_orig, kind='linear')
+                finterp_fmax =interpolate.interp2d(long_orig, lati_orig, fmax_orig, kind='cubic')
                 f0_orig = numpy.asarray(nffun.getvar(surffile_orig, 'F0'))
-                finterp_f0 =interpolate.interp2d(long_orig, lati_orig, f0_orig, kind='linear')
+                finterp_f0 =interpolate.interp2d(long_orig, lati_orig, f0_orig, kind='cubic')
                 p3_orig = numpy.asarray(nffun.getvar(surffile_orig, 'P3'))
-                finterp_p3 =interpolate.interp2d(long_orig, lati_orig, p3_orig, kind='linear')
+                finterp_p3 =interpolate.interp2d(long_orig, lati_orig, p3_orig, kind='cubic')
                 zwt0_orig = numpy.asarray(nffun.getvar(surffile_orig, 'ZWT0'))
-                finterp_zwt0 =interpolate.interp2d(long_orig, lati_orig, zwt0_orig, kind='linear')
+                finterp_zwt0 =interpolate.interp2d(long_orig, lati_orig, zwt0_orig, kind='cubic')
             # done with interp2d function created at first grid 
             #
             for i in range(organic.shape[0]):
                 organic[i] = finterp_organic[i](lon[n], lat[n])
+            #organic = numpy.exp(organic)
+            organic[numpy.where(organic<=0.01)]=0.0
+            organic[numpy.where(organic>=129.0)]=129.0 # 130 is for peat, and better to set it 129.
             for i in range(pct_sand.shape[0]):
                 pct_sand[i] = finterp_sand[i](lon[n], lat[n])
+            #pct_sand = numpy.exp(pct_sand)
+            pct_sand[numpy.where(pct_sand<=0.01)]=0.01
             for i in range(pct_clay.shape[0]):
                 pct_clay[i] = finterp_clay[i](lon[n], lat[n])
+            #pct_clay = numpy.exp(pct_clay)
+            pct_clay[numpy.where(pct_clay<=0.01)]=0.01
             #
             if len(finterp_pct_pft)>0: #only do so, if any
                 for i in range(pct_pft.shape[0]):
-                    pct_pft[i] = finterp_pct_pft[i](lon[n], lat[n])
+                    pct_pft[i,0,0] = finterp_pct_pft[i](lon[n], lat[n])
                 #make sure its sum to 100% exactly, after intepolation
-                sum_nat=numpy.sum(pct_pft)
-                if (sum_nat!=100.0 and sum_nat!=0.0):
+                sum_nat=numpy.sum(pct_pft[:,0,0])
+                if (sum_nat<=0.0):
+                    # if any, arbitrarily set bare soil to 100%, the rest is 0
+                    pct_pft[:,0,0] = 0.0
+                    pct_pft[0,0,0] = 100.0
+                elif (sum_nat!=100.0):
                     adj=100.0/sum_nat
-                    pct_pft = pct_pft * adj
+                    pct_pft[:,0,0] = pct_pft[:,0,0] * adj
             #
-            ij=0
-            for i in range(monthly_lai.shape[0]):
-                for j in range(monthly_lai.shape[1]):
-                    monthly_lai[i][j] = finterp_lai[ij](lon[n], lat[n])
-                    monthly_sai[i][j] = finterp_sai[ij](lon[n], lat[n])
-                    monthly_height_top[i][j] = finterp_htop[ij](lon[n], lat[n])
-                    monthly_height_bot[i][j] = finterp_hbot[ij](lon[n], lat[n])
-                    ij=ij+1
+            #ij=0
+            #for i in range(monthly_lai.shape[0]):
+            #    for j in range(monthly_lai.shape[1]):
+            #        monthly_lai[i][j] = finterp_lai[ij](lon[n], lat[n])
+            #        monthly_sai[i][j] = finterp_sai[ij](lon[n], lat[n])
+            #        monthly_height_top[i][j] = finterp_htop[ij](lon[n], lat[n])
+            #        monthly_height_bot[i][j] = finterp_hbot[ij](lon[n], lat[n])
+            #        ij=ij+1
             
             #
             fmax = finterp_fmax(lon[n], lat[n])
@@ -724,16 +750,7 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
         else:
           try:
             
-            # need to check if summed to 100% exactly
-            if(numpy.sum(pct_pft[:,0,0])!=sum_nat):
-                # this is rare to occur, after corrections above, 
-                # seems due to numerical error relevant to machine
-                # have to fix it if any (will throw error when used by ELM)
-                err=sum_nat - numpy.sum(pct_pft[:,0,0])
-                err_ix=numpy.argmax(pct_pft[:,0,0])
-                pct_pft[err_ix,0,0]=pct_pft[err_ix,0,0]+err  # adding this err to max. fraction of PFT
-                #print('Error correction - ', err,numpy.sum(pct_pft[:,0,0]))
-                
+            
             # multiple PFTs' pct are read-in from a nc file
             if('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
                 # save the read-in for later use (in creating 'surfdata.pftdyn.nc')
@@ -752,10 +769,10 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
           #
           except:
             if(n_grids<10) and myrank==0: print('using PFT information from surface data')
-
+        
         #landfrac_pft[0][0] = 1.0
         #pftdata_mask[0][0] = 1
-
+        
         if (options.site != ''):
             longxy[0][0] = lon[n]
             latixy[0][0] = lat[n]
@@ -769,8 +786,17 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
             latixy[0][0] = lat[n]
             side_deg = math.sqrt(float(options.point_area_deg2)) # a square of lat/lon degrees assummed
             area[0][0] = 111.2*side_deg*111.321*math.cos((lat[n]*side_deg)*math.pi/180)*side_deg
-
-        if (not options.surfdata_grid or sum(mypft_frac[0:npft+npft_crop]) > 0.0):
+        
+        if ('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
+            pct_wetland[0][0] = 0.0
+            pct_lake[0][0]    = 0.0
+            pct_glacier[0][0] = 0.0
+            pct_nat_veg[0][0] = 100.0
+            for k in range(0,3):
+                pct_urban[k][0][0] = 0.0
+        
+        if ((not options.surfdata_grid) or (point_pfts[n]!=-1)):
+            # only change it when not from global data or from user-input value(s)
             pct_wetland[0][0] = 0.0
             pct_lake[0][0]    = 0.0
             pct_glacier[0][0] = 0.0
@@ -782,8 +808,7 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
                  pct_nat_veg[0][0] = 0.0
                  pct_crop[0][0] = 100.0
             else:
-                if (not options.surfdata_grid): # only change it when not from global data
-                    pct_nat_veg[0][0] = 100.0
+                pct_nat_veg[0][0] = 100.0
 
             if ('US-SPR' in options.site and mysimyr !=2000):
                 #SPRUCE P initial data
@@ -794,8 +819,7 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
                 occlp[0][0]      = 1.0
 
             for k in range(0,3):
-                if (not options.surfdata_grid): # only change it when not from global data
-                    pct_urban[k][0][0] = 0.0
+                pct_urban[k][0][0] = 0.0
             for k in range(0,10):
                 if (float(mypct_sand) > 0.0 or float(mypct_clay) > 0.0):
                     if (k == 0):

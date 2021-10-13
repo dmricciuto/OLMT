@@ -1,6 +1,6 @@
 #!/bin/bash -f
 
-source ~/.bashrc
+source ~/.bashrc_gnu
 
 #ZONING_FILE=zone_mappings.txt
 ZONING_FILE=daymet_elm_mappings.txt 
