@@ -210,7 +210,7 @@ parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False,
 parser.add_option("--no_budgets", dest="no_budgets", default=False, \
                   help = 'Turn off CNP budget calculations', action='store_true')
 parser.add_option("--alquimia", dest="alquimia",default='',  help="Compile model with alquimia BGC interface using specified input file")
-parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
+parser.add_option("--alquimia_ad",dest='alquimia_ad',default='',help='Alquimia input file for ad spinup')parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
                   help = 'Turn on hydraulic stress', action='store_true')
 parser.add_option("--spruce_treatments", dest="spruce_treatments", default=False, \
                   help = 'Run SPRUCE treatment simulations (ensemble mode)', action='store_true')
@@ -764,7 +764,8 @@ for row in AFdatareader:
             ad_case = mycaseid+'_'+ad_case
         if (sitenum == 0 and options.exeroot == ''):
             ad_exeroot = os.path.abspath(runroot+'/'+ad_case+'/bld')
-
+        if (options.alquimia_ad != ''):
+            cmd_adsp = cmd_adsp.replace(options.alquimia,options.alquimia_ad)
 
         # final spinup
         if mycaseid !='':
