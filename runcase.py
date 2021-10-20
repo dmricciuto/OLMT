@@ -91,6 +91,8 @@ parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
+parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
+                    help = 'Tide height and salinity forcing time series file')
 parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 
@@ -856,7 +858,7 @@ else:
             os.system(myncap+' -O -s "tide_coeff_amp_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Amplitude'].iloc[comp]*1000)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,360*3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-            os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+        os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     elif options.marsh:
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -1553,6 +1555,9 @@ for i in range(1,int(options.ninst)+1):
     if (options.addco2 != 0):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
+
+    if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
+        output.write(" tide_file = '%s'"%options.tide_forcing_file)
     output.close()
 
 
