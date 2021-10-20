@@ -167,6 +167,8 @@ parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
+parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
+                    help = 'Tide height and salinity forcing time series file')
 parser.add_option("--nofire", dest="nofire", default=False, action="store_true", \
                   help='Turn off fire algorithms')
 parser.add_option("--C13", dest="C13", default=False, action="store_true", \
@@ -558,6 +560,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --marsh'
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
+        if (options.tide_forcing_file != ''):
+            basecmd = basecmd + ' --tide_forcing_file %s'%options.tide_forcing_file
         if (float(options.lai) >= 0):
             basecmd = basecmd+' --lai '+str(options.lai)
         if (options.nopftdyn):
