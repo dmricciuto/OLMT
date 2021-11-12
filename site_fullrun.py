@@ -1002,20 +1002,20 @@ for row in AFdatareader:
                     sys.exit(1)
 
 
-            # experiment simulations
-            if ((options.eco2_file != '') and not options.cpl_bypass):
-                print('\n\nSetting up experiment transient case 2\n')
-                result = os.system(cmd_trns2)
-                print(cmd_trns2)
-                if (result > 0):
-                    print('Site_fullrun:  Error in runcase.py for transient 2')
-                    sys.exit(1)
-                print('\n\nSetting up experiment transient case 3\n')
-                print(cmd_trns3)
-                result = os.system(cmd_trns3)
-                if (result > 0):
-                    print('Site_fullrun:  Error in runcase.py for transient 3')
-                    sys.exit(1)
+        # experiment simulations
+        if ((options.eco2_file != '') and not options.cpl_bypass):
+            print('\n\nSetting up experiment transient case 2\n')
+            result = os.system(cmd_trns2)
+            print(cmd_trns2)
+            if (result > 0):
+                print('Site_fullrun:  Error in runcase.py for transient 2')
+                sys.exit(1)
+            print('\n\nSetting up experiment transient case 3\n')
+            print(cmd_trns3)
+            result = os.system(cmd_trns3)
+            if (result > 0):
+                print('Site_fullrun:  Error in runcase.py for transient 3')
+                sys.exit(1)
 
                  
         # Create .pbs etc scripts for each case
