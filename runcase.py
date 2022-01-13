@@ -840,7 +840,7 @@ else:
     #   print('humhol_ht = 0.15m')
     #   print('humhol_dist = 1.0m')
       print('setting rsub_top_globalmax = 1.2e-5')
-      print('Making br_mr a PFT-specific parameter')
+    #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       if options.marsh:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -858,12 +858,9 @@ else:
       os.system(myncap+' -O -s "moss_swc_adjust=scalar(0)" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "h2osoi_offset = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-      os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    #os.system(myncap+' -O -s "vcmaxse = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','vcmaxse', flnr*0.0+670)
-
+    #   flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
+    #   os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #   ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
     if (options.marsh and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
         print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
