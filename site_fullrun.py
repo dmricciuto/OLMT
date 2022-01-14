@@ -331,7 +331,7 @@ elif (options.machine == 'cades'):
     ccsm_input = '/nfs/data/ccsi/proj-shared/E3SM/inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
     ccsm_input = '/project/projectdirs/acme/inputdata'
-elif ('anvil' in options.machine):
+elif ('anvil' in options.machine or 'chrysalis' in options.machine):
     ccsm_input = '/home/ccsm-data/inputdata'
 elif ('compy' in options.machine):
     ccsm_input = '/compyfs/inputdata/'
@@ -381,7 +381,7 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
         print('Project = '+myproject)
     elif ('edison' in options.machine):
         runroot=os.environ.get('CSCRATCH')+'/acme_scratch/edison/'
-    elif ('anvil' in options.machine):
+    elif ('anvil' in options.machine or 'chrysalis' in options.machine):
         runroot="/lcrc/group/acme/"+myuser
         myproject='e3sm'
     elif ('compy' in options.machine):
@@ -437,7 +437,7 @@ if (int(options.mc_ensemble) != -1):
 mysites = options.site.split(',')
 
 nnode=1
-if(options.np>1): #in case of a single site in name but with multiple unstructured gridcells
+if(int(options.np)>1): #in case of a single site in name but with multiple unstructured gridcells
     npernode=min(int(npernode),int(options.np))
     nnode=-(int(options.np)//-int(npernode))
 elif (not 'all' in mysites and (options.ensemble_file == '')):
@@ -1049,7 +1049,8 @@ for row in AFdatareader:
         for c in case_list:
             mysubmit_type = 'qsub'
             groupnum = int(sitenum/npernode)
-            if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
+            if ('cades' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine or \
+                'compy' in options.machine or 'cori' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
                 mysubmit_type = ''
@@ -1081,11 +1082,11 @@ for row in AFdatareader:
                             output.write('#PBS -l walltime='+timestr+'\n')
                         else:
                             output.write('#SBATCH --time='+timestr+'\n')
-                            if (myproject != ''):
-                                output.write('#SBATCH -A '+myproject+'\n')
                             if ('anvil' in options.machine):
-                                output.write('#SBATCH --partition=acme-centos6\n')
-                                output.write('#SBATCH --account=condo\n')
+                                output.write('#SBATCH -A condo\n')
+                                output.write('#SBATCH -p acme-small\n')
+                            elif (myproject != ''):
+                                output.write('#SBATCH -A '+myproject+'\n')
                             if ('edison' in options.machine or 'cori' in options.machine):
                                 if (options.debug):
                                     output.write('#SBATCH --partition=debug\n')
