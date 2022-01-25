@@ -82,9 +82,9 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
         n_years = myyear_end[index]-myyear_start[index]+1
         npy=1
         for y in range(myyear_start[index],myyear_end[index]+1):
-            if (mypft[index] <= 0):
+            if (mypft[index] <= 0 or 'PFT' in v):
               fname = rundir+case+'.'+options.model_name+'.h0.'+str(10000+y)[1:]+'-01-01-00000.nc'
-              myindex = 0
+              myindex = max(0,mypft[index])
               hol_add = 1
             else:
               fname = rundir+case+'.'+options.model_name+'.h1.'+str(10000+y)[1:]+'-01-01-00000.nc'
@@ -117,12 +117,16 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
                for d in range(myday_start[index]-1,myday_end[index]):    #28-38 was myindex
                  if ('SCPF' in v):
                    output.append(sum(mydata[0,28:38])/10.0*myfactor[index]+myoffset[index])
+                 elif ('NPLANT_SCLS' in v):
+                   output.append(sum(mydata[0,1:])*myfactor[index]+myoffset[index])
+                 elif ('SCLS' in v):
+                    output.append(sum(mydata[0,:])*myfactor[index]+myoffset[index])
                  else:
                    try:
                      output.append(mydata[0,myindex]*myfactor[index]+myoffset[index])
                    except:
                      output.append(np.NaN)
-        for i in range(0,ndays_total/myavg[index]):
+        for i in range(0,int(ndays_total/myavg[index])):
             data[thiscol] = sum(output[(i*myavg[index]):((i+1)*myavg[index])])/myavg[index]
             thiscol=thiscol+1
         index=index+1
@@ -247,7 +251,7 @@ if (os.path.isfile(options.postproc_file)):
               myobs.append(-9999)
               myobs_err.append(-9999)                
             days_total = (int(s.split()[2]) - int(s.split()[1])+1)*(int(s.split()[4]) - int(s.split()[3])+1)        
-            data_cols = data_cols + days_total / int(s.split()[5])
+            data_cols = int(data_cols + days_total / int(s.split()[5]))
     if (rank == 0):
         data = np.zeros([data_cols,options.n], np.float)-999
     data_row = np.zeros([data_cols], np.float)-999

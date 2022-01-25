@@ -302,6 +302,8 @@ parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
 parser.add_option("--var_soilthickness", dest="var_soilthickness", default=False, \
                   help = 'Use variable soil thickness from surface data', action="store_true")
+parser.add_option("--no_budgets", dest="no_budgets", default=False, \
+                  help = 'Turn off CNP budget calculations', action='store_true')
 
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
@@ -592,9 +594,9 @@ PTCLMfiledir = options.ccsm_input+'/lnd/clm2/PTCLM'
 #    os.system('mkdir -p '+casedir)
 #elif (caseroot != "./"):
 if (caseroot != "./"):
-    casedir=caseroot+"/"+casename
+    casedir=os.path.abspath(caseroot+"/"+casename)
 else:
-    casedir=casename
+    casedir=os.path.abspath(casename)
 
 print('Machine is: '+options.machine)
 #Check for existing case directory
@@ -814,8 +816,8 @@ else:
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
-    if ('compy' in options.machine or 'ubuntu' in options.machine \
-          or 'mymac' in options.machine):
+    if ('chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine \
+          or 'mymac' in options.machine or 'anvil' in options.machine):
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
@@ -1360,6 +1362,8 @@ for i in range(1,int(options.ninst)+1):
     
     if (options.var_soilthickness):
         output.write(" use_var_soil_thick = .TRUE.\n") 
+    if (options.no_budgets):
+        output.write(" do_budgets = .false.\n")
 
     #pft dynamics file for transient run
     if ('20TR' in compset or options.istrans):
@@ -1578,18 +1582,19 @@ if (options.harvmod):
     os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
 
 #Global CPPDEF modifications
-infile  = open("./Macros.make")
-outfile = open("./Macros.make.tmp",'a')
+if (os.path.isfile("./Macros.make")):
+  infile  = open("./Macros.make")
+  outfile = open("./Macros.make.tmp",'a')
 
-for s in infile:
+  for s in infile:
     if ('CPPDEFS' in s and cpl_bypass):
        stemp = s[:-1]+' -DCPL_BYPASS\n'
        outfile.write(stemp)
     else:
        outfile.write(s)
-infile.close()
-outfile.close()
-os.system('mv Macros.make.tmp Macros.make')
+  infile.close()
+  outfile.close()
+  os.system('mv Macros.make.tmp Macros.make')
 
 if (options.mymodel == 'ELM' and os.path.isfile("./Macros.cmake")):
   infile  = open("./Macros.cmake")
@@ -1605,6 +1610,9 @@ if (options.mymodel == 'ELM' and os.path.isfile("./Macros.cmake")):
   outfile.close()
   os.system('mv Macros.cmake.tmp Macros.cmake')
 
+if (os.path.isfile("./cmake_macros/universal.cmake")):
+  #infile = open("./cmake_macros/universal.cmake")
+  os.system("echo 'string(APPEND CPPDEFS \" -DCPL_BYPASS\")' >> cmake_macros/universal.cmake")
 
 #copy sourcemods
 os.chdir('..')
@@ -1831,7 +1839,8 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
     num=0
     #Launch ensemble if requested 
     mysubmit_type = 'qsub'
-    if ('cades' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine or 'cori' in options.machine or options.machine == 'edison'):
+    if ('cades' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine or 'cori' in options.machine or \
+        options.machine == 'anvil' or options.machine == 'edison'):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
         os.system('mkdir -p '+PTCLMdir+'/scripts/'+myscriptsdir)
@@ -1855,9 +1864,6 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             else:
                 output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
                                      '\n')
-                if ('anvil' in options.machine):
-                  output_run.write('#PBS -q acme\n')
-                  output_run.write('#PBS -A ACME\n')
         else:
             output_run.write('#SBATCH --time='+timestr+'\n')
             output_run.write('#SBATCH -J ens_'+casename+'\n')
@@ -1878,6 +1884,9 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
               output_run.write('#SBATCH -p batch\n')
               output_run.write('#SBATCH --mem=64G\n')
               output_run.write('#SBATCH --ntasks-per-node 32\n')
+            if ('anvil' in options.machine):
+              output_run.write('#SBATCH -A condo\n')
+              output_run.write('#SBATCH -p acme-small\n')
         output_run.write("\n")
         if (options.machine == 'eos'):
             output_run.write('source $MODULESHOME/init/csh\n')
@@ -1907,8 +1916,13 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             output_run.write('module load cray-netcdf\n')
             output_run.write('module load python/2.7-anaconda-5.2\n')
             output_run.write('module load nco\n')
-        if ('compy' in options.machine):
-            output_run.write('setenv LD_LIBRARY_PATH /share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64_lin/gcc4.7:/share/apps/netcdf/4.6.3/intel/19.0.5/lib:/share/apps/hdf5/1.10.5/serial/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin:/share/apps/intel/2019u5/comepilers_and_libraries_2019.5.281/linux/mpi/intel64/libfabric/lib:/share/apps/pnetcdf/1.9.0/intel/19.0.5/intelmpi/2019u4/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib/release:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mpi/intel64/lib:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/ipp/lib/intel64:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/compiler/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/mkl/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64/gcc4.7:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/tbb/lib/intel64/gcc4.7:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/daal/lib/intel64_lin:/share/apps/intel/2019u5/compilers_and_libraries_2019.5.281/linux/daal/../tbb/lib/intel64_lin/gcc4:/usr/lib64/\n\n')
+        if ('compy' in options.machine or 'anvil' in options.machine):
+            #get the software environment
+            softenvfile = open(casedir+'/software_environment.txt','r')
+            for line in softenvfile:
+              if ('LD_LIBRARY_PATH' in line[0:20]):
+                output_run.write('setenv '+line.replace('=',' '))
+            softenvfile.close()
         output_run.write('cd '+PTCLMdir+'\n')
         cnp = 'True'
         if (options.cn_only or options.c_only):

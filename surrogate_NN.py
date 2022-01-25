@@ -27,6 +27,11 @@ ptrain = np.loadtxt(datapath+'/ptrain.dat')
 ytrain = np.loadtxt(datapath+'/ytrain.dat')
 pval   = np.loadtxt(datapath+'/pval.dat')
 yval   = np.loadtxt(datapath+'/yval.dat')
+varnames_file = open(datapath+'/outnames.txt')
+outnames=[]
+for s in varnames_file:
+  outnames.append(s)
+varnames_file.close()
 
 nparms = ptrain.shape[1]
 ntrain = ptrain.shape[0]
@@ -36,12 +41,26 @@ nqoi   = ytrain.shape[1]
 ptrain_norm = ptrain.copy()
 pval_norm   = pval.copy()
 
+#Normalize parameters
 for i in range(0,nparms):
   ptrain_norm[:,i] = (ptrain[:,i] - min(ptrain[:,i]))/(max(ptrain[:,i])-min(ptrain[:,i]))
   pval_norm[:,i]   = (pval[:,i]  -  min(ptrain[:,i]))/(max(ptrain[:,i])-min(ptrain[:,i]))
   for j in range(0,nval):
     pval_norm[j,i] = max(pval_norm[j,i], 0.0)
     pval_norm[j,i] = min(pval_norm[j,i], 1.0)
+
+#Normalize outputs
+ytrain_norm = ytrain.copy()
+yval_norm   = yval.copy()
+yrange = np.zeros([2,nqoi],np.float)
+for i in range(0,nqoi):
+  yrange[0,i] = min(ytrain[:,i])
+  yrange[1,i] = max(ytrain[:,i])
+  ytrain_norm[:,i] = (ytrain[:,i] - yrange[0,i])/(yrange[1,i]-yrange[0,i])  
+  yval_norm[:,i]   = (yval[:,i]  -  yrange[0,i])/(yrange[1,i]-yrange[0,i])
+  for j in range(0,nval):
+    yval_norm[j,i] = max(yval_norm[j,i], 0.0)
+    yval_norm[j,i] = min(yval_norm[j,i], 1.0)
 
 
 rmse_best = 9999
@@ -57,7 +76,7 @@ for n in range(0,100):
     clf = MLPRegressor(solver='adam', early_stopping=True, tol=1e-7, hidden_layer_sizes=(nl,nl2,nl3,), max_iter=200, validation_fraction=0.2)
   else: 
     clf = MLPRegressor(solver='adam', early_stopping=True, tol=1e-7, hidden_layer_sizes=(nl,nl2,), max_iter=200, validation_fraction=0.2)
-  clf.fit(ptrain_norm, ytrain) 
+  clf.fit(ptrain_norm, ytrain_norm) 
 
   ypredict_train = clf.predict(ptrain_norm)
   ypredict_val   = clf.predict(pval_norm)
@@ -67,10 +86,10 @@ for n in range(0,100):
   corr_val=[]
   rmse_val=[]
   for qoi in range(0,nqoi):
-    corr_train.append((np.corrcoef(ytrain.astype(float)[:,qoi], ypredict_train.astype(float)[:,qoi])[0,1])**2)
-    rmse_train.append((sum((ypredict_train[:,qoi]-ytrain[:,qoi])**2)/ntrain)**0.5)
+    corr_train.append((np.corrcoef(ytrain_norm.astype(float)[:,qoi], ypredict_train.astype(float)[:,qoi])[0,1])**2)
+    rmse_train.append((sum((ypredict_train[:,qoi]-ytrain_norm[:,qoi])**2)/ntrain)**0.5)
     corr_val.append((np.corrcoef(yval.astype(float)[:,qoi], ypredict_val.astype(float)[:,qoi])[0,1])**2)
-    rmse_val.append((sum((ypredict_val[:,qoi]-yval[:,qoi])**2)/nval)**0.5)
+    rmse_val.append((sum((ypredict_val[:,qoi]-yval_norm[:,qoi])**2)/nval)**0.5)
 
   if (sum(corr_val) > corr_best):
     myfile = open(UQ_output+'/NN_surrogate/fitstats.txt','w')
@@ -92,9 +111,11 @@ for n in range(0,100):
       pickle.dump(clf, file)
     for q in range(0,nqoi):
       plt.clf()
-      plt.scatter(yval[:,q], ypredict_val_best[:,q])
+      plt.scatter(yval[:,q], ypredict_val_best[:,q]*(yrange[1,q]-yrange[0,q])+yrange[0,q])
+      plt.xlabel('Model '+outnames[q])
+      plt.ylabel('Surrogate '+outnames[q])
       plt.savefig(UQ_output+'/NN_surrogate/nnfit_qoi'+str(q)+'.pdf')
       myfile.close()
-  if (min(corr_val) > 0.925):
-    print('All QOIs have R2 > 0.925')
+  if (min(corr_val) > 0.99):
+    print('All QOIs have R2 > 0.99')
     break
