@@ -750,9 +750,9 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
         else:
           try:
             
-            
             # multiple PFTs' pct are read-in from a nc file
-            if('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
+            if(options.usersurfnc!='none' and options.usersurfvar!='none'):
+              if('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
                 # save the read-in for later use (in creating 'surfdata.pftdyn.nc')
                 if ('PCT_PFT' in mysurfvar): # this is from older CLM4.5
                     vname = 'PCT_PFT'
@@ -787,13 +787,14 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
             side_deg = math.sqrt(float(options.point_area_deg2)) # a square of lat/lon degrees assummed
             area[0][0] = 111.2*side_deg*111.321*math.cos((lat[n]*side_deg)*math.pi/180)*side_deg
         
-        if ('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
-            pct_wetland[0][0] = 0.0
-            pct_lake[0][0]    = 0.0
-            pct_glacier[0][0] = 0.0
-            pct_nat_veg[0][0] = 100.0
-            for k in range(0,3):
-                pct_urban[k][0][0] = 0.0
+        if(options.usersurfnc!='none' and options.usersurfvar!='none'):
+            if ('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
+                pct_wetland[0][0] = 0.0
+                pct_lake[0][0]    = 0.0
+                pct_glacier[0][0] = 0.0
+                pct_nat_veg[0][0] = 100.0
+                for k in range(0,3):
+                    pct_urban[k][0][0] = 0.0
         
         if ((not options.surfdata_grid) or (point_pfts[n]!=-1)):
             # only change it when not from global data or from user-input value(s)
@@ -917,12 +918,19 @@ surffile_new = './temp/surfdata.nc' # this file is to be used in 'pftdyn.nc', so
 if myrank==0:
     
     if (n_grids > 1):
+      # extract 2 constants in the original surfdata.nc, to avoid 'ncecat'ing them below 
+      ierr = os.system('ncks -O -h -v mxsoil_color,mxsoil_order '+surffile_orig+' -o ./temp/constants.nc');
+      if(ierr!=0): raise RuntimeError('Error: ncks to extract constants')
       #os.system('ncecat '+surffile_list+' '+surffile_new) # not works with too long '_list'
       ierr = os.system('find ./temp/ -name "'+surffile_tmp+ \
-                     '" | xargs ls | sort | ncecat -O -h -o'+surffile_new)
+        '" | xargs ls | sort | ncecat -O -h -x -v mxsoil_color,mxsoil_order -o' \
+        +surffile_new) # must exclude 'mxsoil_color, mxsoil_order', which are scalars and to be added back afterwards
       if(ierr!=0): raise RuntimeError('Error: ncecat '); #os.sys.exit()
+      # append back 'constants.nc'
+      ierr = os.system('ncks -h -A ./temp/constants.nc -o '+surffile_new)
       #os.system('rm ./temp/surfdata?????.nc*') # not works with too many files
       os.system('find ./temp/ -name "'+surffile_tmp+'" -exec rm {} \;')
+      os.system('rm ./temp/constants.nc')
     
       #remove ni dimension
       ierr = os.system('ncwa -h -O -a lsmlat -d lsmlat,0,0 '+surffile_new+' '+surffile_new+'.tmp')
@@ -1120,7 +1128,8 @@ if (options.nopftdyn == False):
             #end of if 'surfdata_grid' 
             #
             # multiple natural PFTs' pct are read-in from a nc file
-            if(options.usersurfnc!='none' and ('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar)):
+            if(options.usersurfnc!='none' and options.usersurfvar!='none'):
+              if('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
                 if t==0 and n==0: print('Message: PCT_NAT_PFT is extracted from a non-dynamical surface data FOR surfdata.pftdyn.nc')
                 if ('PCT_PFT' in mysurfvar):
                     pct_pft[t,:,] = point_mysurf['PCT_PFT'][n]
