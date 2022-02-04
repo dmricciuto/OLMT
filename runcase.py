@@ -816,7 +816,7 @@ else:
     os.system('nccopy -3 '+options.ccsm_input+'/lnd/clm2/paramdata/'+parm_file+' ' \
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
-    if ('chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine \
+    if ('cades' in options.machine or 'chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine \
           or 'mymac' in options.machine or 'anvil' in options.machine):
       myncap='ncap2'
 
@@ -1582,37 +1582,38 @@ if (options.harvmod):
     os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
 
 #Global CPPDEF modifications
-if (os.path.isfile("./Macros.make")):
-  infile  = open("./Macros.make")
-  outfile = open("./Macros.make.tmp",'a')
+if (cpl_bypass):
+  if (os.path.isfile("./Macros.make")):
+    infile  = open("./Macros.make")
+    outfile = open("./Macros.make.tmp",'a')
 
-  for s in infile:
-    if ('CPPDEFS' in s and cpl_bypass):
-       stemp = s[:-1]+' -DCPL_BYPASS\n'
-       outfile.write(stemp)
-    else:
-       outfile.write(s)
-  infile.close()
-  outfile.close()
-  os.system('mv Macros.make.tmp Macros.make')
+    for s in infile:
+      if ('CPPDEFS' in s and cpl_bypass):
+         stemp = s[:-1]+' -DCPL_BYPASS\n'
+         outfile.write(stemp)
+      else:
+         outfile.write(s)
+    infile.close()
+    outfile.close()
+    os.system('mv Macros.make.tmp Macros.make')
 
-if (options.mymodel == 'ELM' and os.path.isfile("./Macros.cmake")):
-  infile  = open("./Macros.cmake")
-  outfile = open("./Macros.cmake.tmp",'a')
+  if (options.mymodel == 'ELM' and os.path.isfile("./Macros.cmake")):
+    infile  = open("./Macros.cmake")
+    outfile = open("./Macros.cmake.tmp",'a')
 
-  for s in infile:
-    if ('CPPDEFS' in s and cpl_bypass):
+    for s in infile:
+      if ('CPPDEFS' in s and cpl_bypass):
        stemp = s[:-3]+' -DCPL_BYPASS")\n'
        outfile.write(stemp)
-    else:
+      else:
        outfile.write(s)
-  infile.close()
-  outfile.close()
-  os.system('mv Macros.cmake.tmp Macros.cmake')
+    infile.close()
+    outfile.close()
+    os.system('mv Macros.cmake.tmp Macros.cmake')
 
-if (os.path.isfile("./cmake_macros/universal.cmake")):
-  #infile = open("./cmake_macros/universal.cmake")
-  os.system("echo 'string(APPEND CPPDEFS \" -DCPL_BYPASS\")' >> cmake_macros/universal.cmake")
+  if (os.path.isfile("./cmake_macros/universal.cmake")):
+    #infile = open("./cmake_macros/universal.cmake")
+    os.system("echo 'string(APPEND CPPDEFS \" -DCPL_BYPASS\")' >> cmake_macros/universal.cmake")
 
 #copy sourcemods
 os.chdir('..')
