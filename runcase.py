@@ -1664,6 +1664,9 @@ if (cpl_bypass):
     #infile = open("./cmake_macros/universal.cmake")
     os.system("echo 'string(APPEND CPPDEFS \" -DCPL_BYPASS\")' >> cmake_macros/universal.cmake")
 
+  if (options.alquimia != ""):
+      os.system('''echo 'set(ELM_USE_ALQUIMIA "TRUE")' >> cmake_macros/universal.cmake''')
+
 #copy sourcemods
 os.chdir('..')
 if (options.srcmods_loc != ''):
