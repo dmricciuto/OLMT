@@ -994,6 +994,10 @@ if (options.nopftdyn == False):
         else:
           os.system('ncks -h -O --fix_rec_dmn time -d lsmlon,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
                   ' -d lsmlat,'+str(ygrid_min[n])+','+str(ygrid_max[n])+' '+pftdyn_orig+' '+pftdyn_new)
+    
+    # in *.pftdyn.nc original file, there is a large variable of input file name (character array), which never used
+    os.system('ncks -h -O -x -v input_pftdata_filename '+pftdyn_new+' '+pftdyn_new)
+    
     if (issite):
         landfrac     = nffun.getvar(pftdyn_new, 'LANDFRAC_PFT')
         pftdata_mask = nffun.getvar(pftdyn_new, 'PFTDATA_MASK')
