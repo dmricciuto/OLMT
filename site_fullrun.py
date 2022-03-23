@@ -202,6 +202,8 @@ parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False,
                   help = 'Use variable soil depth from surface data file',action='store_true')
 parser.add_option("--no_budgets", dest="no_budgets", default=False, \
                   help = 'Turn off CNP budget calculations', action='store_true')
+parser.add_option("--spruce_treatments", dest="spruce_treatments", default=False, \
+                  help = 'Run SPRUCE treatment simulations (ensemble mode)', action='store_true')
 
 # model output options
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
@@ -363,7 +365,7 @@ translen = int(options.nyears_transient)
 csmdir = options.csmdir
 
 #case run and case root directories
-myproject=''
+myproject='e3sm'
 if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
     myuser = getpass.getuser()
     if (options.machine == 'titan' or options.machine == 'eos'):
@@ -425,7 +427,7 @@ if (int(options.mc_ensemble) != -1):
         input.close() 
         n_parameters = len(param_names)
     nsamples = int(options.mc_ensemble)
-    samples=numpy.zeros((n_parameters,nsamples), dtype=numpy.float)
+    samples=numpy.zeros((n_parameters,nsamples), dtype=float)
     for i in range(0,nsamples):
         for j in range(0,n_parameters):
             samples[j][i] = param_min[j]+(param_max[j]-param_min[j])*numpy.random.rand(1)
@@ -639,6 +641,8 @@ for row in AFdatareader:
             basecmd = basecmd + ' --var_list_pft '+options.var_list_pft
         if (options.no_budgets):
             basecmd = basecmd+' --no_budgets'
+        if (options.spruce_treatments):
+            basecmd = basecmd+' --spruce_treatments'
 
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
