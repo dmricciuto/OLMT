@@ -52,7 +52,7 @@ for i in range(0,nparms):
 #Normalize outputs
 ytrain_norm = ytrain.copy()
 yval_norm   = yval.copy()
-yrange = np.zeros([2,nqoi],np.float)
+yrange = np.zeros([2,nqoi],float)
 for i in range(0,nqoi):
   yrange[0,i] = min(ytrain[:,i])
   yrange[1,i] = max(ytrain[:,i])

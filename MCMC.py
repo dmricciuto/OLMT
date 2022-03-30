@@ -237,7 +237,7 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
     #make parameter histogram plots
     for p in range(0,nparms):
         fig = plt.figure()
-        n, bins, patches = plt.hist(chain_afterburn[p,:],25,normed=1)
+        n, bins, patches = plt.hist(chain_afterburn[p,:],25) #,normed=1)
         plt.xlabel(model.parm_names[p])
         plt.ylabel('Probability Density')
         if not os.path.exists(UQ_output+'/MCMC_output/plots/pdfs'):

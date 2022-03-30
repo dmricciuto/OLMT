@@ -217,7 +217,7 @@ print('')
 #sys.exit(0)
 
 obs     = options.myobs
-myobsdir = '/lustre/or-hydra/cades-ccsi/scratch/dmricciuto/fluxnet'
+myobsdir = '/home/ac.ricciuto/fluxnet'
 
 #get list of variables from varfile
 myvars=[]
@@ -257,10 +257,10 @@ if (options.myseasonal):
 
 #dirs=[]
 nvar = len(myvars)    
-x_toplot    = numpy.zeros([ncases, 2000000], numpy.float)
-data_toplot = numpy.zeros([ncases, nvar, 2000000], numpy.float)
-obs_toplot  = numpy.zeros([ncases, nvar, 2000000], numpy.float)+numpy.NaN
-err_toplot  = numpy.zeros([ncases, nvar, 2000000], numpy.float)+numpy.NaN
+x_toplot    = numpy.zeros([ncases, 2000000], float)
+data_toplot = numpy.zeros([ncases, nvar, 2000000], float)
+obs_toplot  = numpy.zeros([ncases, nvar, 2000000], float)+numpy.NaN
+err_toplot  = numpy.zeros([ncases, nvar, 2000000], float)+numpy.NaN
 snum        = numpy.zeros([ncases], numpy.int)
 
 for c in range(0,ncases):
@@ -344,10 +344,10 @@ for c in range(0,ncases):
         nypf = max(1, nhtot/8760)
 
     #initialize data arrays
-    mydata      = numpy.zeros([nvar,2000000], numpy.float)
-    myobs       = numpy.zeros([nvar,2000000], numpy.float)+numpy.NaN
-    myerr       = numpy.zeros([nvar,2000000], numpy.float)+numpy.NaN
-    x           = numpy.zeros([2000000], numpy.float)
+    mydata      = numpy.zeros([nvar,2000000], float)
+    myobs       = numpy.zeros([nvar,2000000], float)+numpy.NaN
+    myerr       = numpy.zeros([nvar,2000000], float)+numpy.NaN
+    x           = numpy.zeros([2000000], float)
     nsteps=0
  
     if (c == 0):   
@@ -359,7 +359,7 @@ for c in range(0,ncases):
     if (obs):
         myobsfiles = os.listdir(myobsdir+'/'+mytstep+'/')
         for f in myobsfiles:
-            if mysites[c] in f and '.csv' in f:
+            if mysites[0] in f and '.csv' in f:
                 myobsfile = myobsdir+'/'+mytstep+'/'+f
         avpd_obs = 1
         if (mytstep == 'halfhourly' and '_HH_' in myobsfile):
@@ -391,40 +391,40 @@ for c in range(0,ncases):
                             if (thisob == 0):
                                 thisob = (int(myvals[0][0:4])-ystart)*npy*avpd_obs
                             if (thisob % avpd_obs ==  0):
-                                myobs[v,thisob/avpd_obs] = 0.0
-                                myerr[v,thisob/avpd_obs] = 0.0
+                                myobs[v,int(thisob/avpd_obs)] = 0.0
+                                myerr[v,int(thisob/avpd_obs)] = 0.0
                             for h in header:
                                 if (h.strip() == 'NEE_CUT_REF' and 'NEE' in myvars[v]):
                                     myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] + float(myvals[thiscol])/avpd_obs
                                 elif (h.strip () == 'NEE_CUT_REF_JOINTUNC' and \
                                       'NEE' in myvars[v]):
                                     myerr[v,thisob/avpd_obs] = myerr[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
-                                elif (h.strip() == 'GPP_NT_CUT_REF' and 'GPP' in myvars[v]):
-                                    myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
-                                elif (h.strip() == 'GPP_NT_CUT_SE' and 'GPP' in myvars[v]):
-                                    myerr[v,thisob/avpd_obs] = myerr[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
+                                elif (h.strip() == 'GPP_NT_CUT_REF' and ('GPP' in myvars[v] or 'FPSN' in myvars[v])):
+                                    myobs[v,int(thisob/avpd_obs)] = myobs[v,int(thisob/avpd_obs)] +float(myvals[thiscol])/avpd_obs
+                                elif (h.strip() == 'GPP_NT_CUT_SE' and ('GPP' in myvars[v] or 'FPSN' in myvars[v])):
+                                    myerr[v,int(thisob/avpd_obs)] = myerr[v,int(thisob/avpd_obs)] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'RECO_NT_CUT_REF' and 'ER' in myvars[v]):
                                     myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'RECO_NET_CUT_SE' and 'ER' in myvars[v]):
                                     myerr[v,thisob/avpd_obs] = myerr[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'LE_F_MDS' and 'EFLX_LH_TOT' in myvars[v]):
-                                    myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
+                                    myobs[v,int(thisob/avpd_obs)] = myobs[v,int(thisob/avpd_obs)] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'LE_RANDUNC' and 'EFLX_LH_TOT' in myvars[v]):
-                                    myerr[v,thisob/avpd_obs] = myerr[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
+                                    myerr[v,int(thisob/avpd_obs)] = myerr[v,int(thisob/avpd_obs)] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'H_F_MDS' and 'FSH' in myvars[v]):
                                     myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'H_RANDUNC' and 'FSH' in myvars[v]):
                                     myerr[v,thisob/avpd_obs] = myerr[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'TA_F_MDS' and 'TBOT' in myvars[v]):
-                                    myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
+                                    myobs[v,int(thisob/avpd_obs)] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'SWIN_F_MDS' and 'FSDS' in myvars[v]):
                                     myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'WS_F' and 'WIND' in myvars[v]):
                                     myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
                                 elif (h.strip() == 'P_F' and 'RAIN' in myvars[v]):
                                     myobs[v,thisob/avpd_obs] = myobs[v,thisob/avpd_obs] +float(myvals[thiscol])/avpd_obs
-                                if myobs[v,thisob/avpd_obs] < -4000:
-                                    myobs[v,thisob/avpd_obs] = numpy.NaN
+                                if myobs[v,int(thisob/avpd_obs)] < -4000:
+                                    myobs[v,int(thisob/avpd_obs)] = numpy.NaN
                                 thiscol=thiscol+1
                             thisob=thisob+1
                     thisrow = thisrow+1
@@ -618,10 +618,10 @@ for c in range(0,ncases):
     if (avtype == 'diurnal'):
         snum[c]=24
         for v in range(0,nvar):
-            mysum = numpy.zeros(snum[c], numpy.float)
-            mysum_obs = numpy.zeros(snum[c], numpy.float)
-            myct = numpy.zeros(snum[c],numpy.float)
-            myct_obs = numpy.zeros(snum[c],numpy.float)
+            mysum = numpy.zeros(snum[c], float)
+            mysum_obs = numpy.zeros(snum[c], float)
+            myct = numpy.zeros(snum[c],float)
+            myct_obs = numpy.zeros(snum[c],float)
             for y in range(0,(yend_all-ystart+1)):
                 for d in range (int(options.dstart),int(options.dend)):
                     for s in range(0,snum[c]):        
@@ -646,8 +646,8 @@ for c in range(0,ncases):
     if (avtype == 'seasonal'):
         for v in range(0,nvar):
             snum[c] = 12
-            mysum=numpy.zeros(snum[c], numpy.float)
-            mysum_obs = numpy.zeros(snum[c], numpy.float)
+            mysum=numpy.zeros(snum[c], float)
+            mysum_obs = numpy.zeros(snum[c], float)
             mycount_obs = numpy.zeros(snum[c], numpy.int)
             for y in range(0,(yend_all-ystart+1)):
                 for s in range(0,snum[c]):
@@ -678,9 +678,9 @@ elif (mytstep == 'halfhourly'):
 else:
     analysis_type=mytstep
 
-rmse = numpy.zeros([len(myvars),ncases],numpy.float)
-bias = numpy.zeros([len(myvars),ncases],numpy.float)
-corr = numpy.zeros([len(myvars),ncases],numpy.float)
+rmse = numpy.zeros([len(myvars),ncases],float)
+bias = numpy.zeros([len(myvars),ncases],float)
+corr = numpy.zeros([len(myvars),ncases],float)
 
 options.nperpage=int(options.nperpage)
 if (options.nperpage > 1):
@@ -695,7 +695,7 @@ for v in range(0,len(myvars)):
         if (v % options.nperpage == 0):
           fig = plt.figure(figsize=(11,8.5))
         thisfig = v % options.nperpage+1
-        fignum = v/options.nperpage
+        fignum = int(v/options.nperpage)
         thiscol = (thisfig -1) % ncol
         thisrow = (thisfig -1) / ncol
         ax = plt.subplot(nrow*100+ncol*10+thisfig)
@@ -779,7 +779,7 @@ for v in range(0,len(myvars)):
 	          linestyle=styles[c], linewidth=3)
                 if (options.myobs and c == 0):
                     ax.errorbar(x_toplot[c, 0:snum[c]], obs_toplot[c,v,0:snum[c]], yerr = err_toplot[c,v,0:snum[c]], \
-                                color=colors[c], fmt='o')
+                                color='k', fmt='o')
 
     if (options.noplot == False):
         if (thisrow+1 == nrow):
@@ -793,8 +793,8 @@ for v in range(0,len(myvars)):
         plt.ylabel(myvars[v]+' ('+var_units[v]+')')
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-        #if (v % options.nperpage == options.nperpage-1):
-        #  ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),prop={'size': 10})
+        if (v % options.nperpage == options.nperpage-1):
+          ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),prop={'size': 10})
         if (v % options.nperpage == 0):
           ax.legend(loc='upper left', bbox_to_anchor=(0, 1.3), prop={'size': 8}, ncol=2)
         plt.title(var_long_names[v]) #+' at '+mysites[0])
