@@ -17,6 +17,8 @@ parser.add_option("--burnsteps", dest="burnsteps", default="10", \
                   help="Number burn steps")
 parser.add_option("--parm_list", dest="parm_list", default='parm_list', \
                   help = 'File containing list of parameters to vary')
+parser.add_option("--parm_default", dest="parm_default", default='' \
+                  ,help = 'File containing list of parameters to vary')
 (options, args) = parser.parse_args()
 
 UQ_output = 'UQ_output/'+options.casename
@@ -50,7 +52,7 @@ def posterior(parms):
 
 #-------------------------------- MCMC ------------------------------------------------------
 
-def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
+def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10, default=[]):
     #Metropolis-Hastings Markov Chain Monte Carlo with adaptive sampling
     post_best = -99999
     post_last = -99999
@@ -237,7 +239,7 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
     #make parameter histogram plots
     for p in range(0,nparms):
         fig = plt.figure()
-        n, bins, patches = plt.hist(chain_afterburn[p,:],25) #,normed=1)
+        n, bins, patches = plt.hist(chain_afterburn[p,:],25)
         plt.xlabel(model.parm_names[p])
         plt.ylabel('Probability Density')
         if not os.path.exists(UQ_output+'/MCMC_output/plots/pdfs'):
@@ -246,30 +248,45 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10):
         plt.close(fig)
 
     #make prediction plots
-    fig = plt.figure()
-    ax=fig.add_subplot(111)
-    x = np.cumsum(np.ones([model.nobs],np.float))
-    ax.errorbar(x,model.obs, yerr=model.obs_err, label='Observations')
-    ax.plot(x,output_best,'r', label = 'Model best')
-    ax.plot(x,output_sorted[:,int(0.025*(nevals-nburn*burnsteps))], \
+    obs_set = list(set(model.obs_name))
+    print(obs_set)
+    for s in range(0,len(obs_set)):
+      thisob = [ix for ix, value in enumerate(model.obs_name) if value == obs_set[s]]
+      fig = plt.figure()
+      ax=fig.add_subplot(111)
+      x = np.cumsum(np.ones([len(thisob)],np.float))
+      ax.errorbar(x,model.obs[thisob], yerr=model.obs_err[thisob], label='Observations')
+      ax.plot(x,output_best[thisob],'r', label = 'Model best')
+      ax.plot(x,output_sorted[thisob,int(0.025*(nevals-nburn*burnsteps))], \
                  'k--', label='Model 95% CI')
-    ax.plot(x,output_sorted[:,int(0.975*(nevals-nburn*burnsteps))],'k--')
-    #plt.xlabel(model.xlabel)
-    #plt.ylabel(model.ylabel)
-    box = ax.get_position()
-    ax.set_position([box.x0,box.y0,box.width*0.8,box.height])
-    ax.legend(loc='center left', bbox_to_anchor=(1,0.5), fontsize='small')
-    if not os.path.exists(UQ_output+'/MCMC_output/plots/predictions'):
+      ax.plot(x,output_sorted[thisob,int(0.975*(nevals-nburn*burnsteps))],'k--')
+      if (options.parm_default != ''):
+        ax.plot(x,default, 'g', label='Default')
+        #plt.xlabel(model.xlabel)
+        #plt.ylabel(model.ylabel)
+      box = ax.get_position()
+      ax.set_position([box.x0,box.y0,box.width*0.8,box.height])
+      ax.legend(loc='center left', bbox_to_anchor=(1,0.5), fontsize='small')
+      if not os.path.exists(UQ_output+'/MCMC_output/plots/predictions'):
         os.makedirs(UQ_output+'/MCMC_output/plots/predictions')
-    plt.savefig(UQ_output+'/MCMC_output/plots/predictions/Predictions.pdf')
-    plt.close(fig)
+      plt.savefig(UQ_output+'/MCMC_output/plots/predictions/Predictions_'+obs_set[s]+'.pdf')
+      plt.close(fig)
     return parms_best
 
 
 #Create the model object
 model = models.MyModel(case=options.casename)
-#run MCMC
-parms = MCMC(model.pdef, int(options.nevals), burnsteps=int(options.burnsteps), \
+if (options.parm_default != ''):
+  parms_default = np.loadtxt(options.parm_default)
+  model.run(parms_default)
+  default_output = model.output.flatten()
+
+  parms = MCMC(model.pdef, int(options.nevals), burnsteps=int(options.burnsteps), \
+                          nburn=int(options.nevals)/(2*int(options.burnsteps)), \
+                          default=default_output)
+else:
+  #run MCMC
+  parms = MCMC(model.pdef, int(options.nevals), burnsteps=int(options.burnsteps), \
                           nburn=int(options.nevals)/(2*int(options.burnsteps)))
 
 plt.show()

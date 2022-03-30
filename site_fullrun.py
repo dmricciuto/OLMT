@@ -206,6 +206,8 @@ parser.add_option("--no_budgets", dest="no_budgets", default=False, \
                   help = 'Turn off CNP budget calculations', action='store_true')
 parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
                   help = 'Turn on hydraulic stress', action='store_true')
+parser.add_option("--spruce_treatments", dest="spruce_treatments", default=False, \
+                  help = 'Run SPRUCE treatment simulations (ensemble mode)', action='store_true')
 
 # model output options
 parser.add_option("--hist_vars", dest="hist_vars", default='', \
@@ -358,7 +360,7 @@ translen = int(options.nyears_transient)
 csmdir = options.csmdir
 
 #case run and case root directories
-myproject=''
+myproject='e3sm'
 if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
     myuser = getpass.getuser()
     if (options.machine == 'titan' or options.machine == 'eos'):
@@ -640,7 +642,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --no_budgets'
         if (options.use_hydrstress):
             basecmd = basecmd+' --use_hydrstress'
-
+        if (options.spruce_treatments):
+            basecmd = basecmd+' --spruce_treatments'
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
         if (options.domainfile != ''):
