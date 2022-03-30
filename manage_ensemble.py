@@ -207,7 +207,10 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
          else:                #Regular parameter file
            mydata = nffun.getvar(pfname,p) 
            if (int(ppfts[pnum]) > 0):
-             parms[pnum] = mydata[int(ppfts[pnum])]
+             if (p == 'psi50'):
+               parms[pnum] = mydata[0,int(ppfts[pnum])]
+             else:
+               parms[pnum] = mydata[int(ppfts[pnum])]
            elif(int(ppfts[pnum]) <= 0):
              try:
                parms[pnum] = mydata[0]
@@ -240,7 +243,7 @@ if (os.path.isfile(options.postproc_file)):
     myobs=[]
     myobs_err=[]
     mytreatment=[]
-    time.sleep(rank)
+    time.sleep(rank*0.2)
     postproc_input = open(options.postproc_file,'r')
     data_cols = 0
     for s in postproc_input:
@@ -361,13 +364,26 @@ if (rank == 0):
           obs_out.close()       
         myoutput = open(UQ_output+'/data/pnames.txt', 'w')
         eden_header=''
+        pnum=0      
         for p in pnames:
-          myoutput.write(p+'\n')
+          if ((pnum == 0 and pnames[pnum+1] == p) or p == pnames[pnum-1]):
+            myoutput.write(p+'_'+str(mypft[pnum])+'\n')
+          else:
+            myoutput.write(p+'\n')
+          pnum=pnum+1
           eden_header=eden_header+p+','
         myoutput.close()
         myoutput = open(UQ_output+'/data/outnames.txt', 'w')
+        vlast=''
         for v in myvars:
-          myoutput.write(v+'\n')
+          if v != vlast:
+            vcount=0
+            vlast=v
+          if (myvars.count(v) > 1):
+            myoutput.write(v+'_'+str(vcount)+'\n')
+            vcount=vcount+1
+          else:
+            myoutput.write(v+'\n')
           eden_header=eden_header+v+','
         myoutput.close()
         myoutput = open(UQ_output+'/data/param_range.txt', 'w')

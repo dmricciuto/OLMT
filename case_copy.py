@@ -85,7 +85,8 @@ for f in os.listdir(new_dir):
                 s_out = s
             elif ('drv_in' in f and 'restart_n' in s and int(options.nyears) > 0):
                 s_out = ' restart_n = '+str(options.nyears)+'\n'
-            elif ('lnd_in' in f and 'finidat =' in s and int(options.finyr) > 0):
+            elif ('lnd_in' in f and 'finidat =' in s and not ("finidat = ' '" in s) and int(options.finyr) > 0):
+                print(s)
                 year_orig = str((s.split('.')[-2:-1])[0])[0:4]
                 year_new = str(10000+int(options.finyr))[1:]
                 s_out = s.replace('.r.'+year_orig, '.r.'+year_new)

@@ -108,6 +108,8 @@ parser.add_option("--cruncepv8", dest="cruncepv8", default=False, action="store_
                   help = 'Use CRU-NCEP meteorology')
 parser.add_option("--gswp3", dest="gswp3", default=False, action="store_true", \
                   help = 'Use GSWP3 meteorology')
+parser.add_option("--gswp3_w5e5", dest="gswp3_w5e5", default=False, action="store_true", \
+                  help = 'Use GSWP3 meteorology')
 parser.add_option("--princeton", dest="princeton", default=False, action="store_true", \
                   help = 'Use Princeton meteorology')
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
@@ -202,6 +204,8 @@ parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False,
                   help = 'Use variable soil depth from surface data file',action='store_true')
 parser.add_option("--no_budgets", dest="no_budgets", default=False, \
                   help = 'Turn off CNP budget calculations', action='store_true')
+parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
+                  help = 'Turn on hydraulic stress', action='store_true')
 parser.add_option("--spruce_treatments", dest="spruce_treatments", default=False, \
                   help = 'Run SPRUCE treatment simulations (ensemble mode)', action='store_true')
 
@@ -292,24 +296,12 @@ if (options.machine == ''):
    hostname = socket.gethostname()
    print('')
    print('Machine not specified.  Using hostname '+hostname+' to determine machine')
-   if ('or-condo' in hostname):
+   if ('or-slurm' in hostname):
        options.machine = 'cades'
        npernode=32
-   elif ('or-slurm' in hostname):
-       options.machine = 'cades'
-       npernode=32
-   elif ('edison' in hostname):
-       options.machine = 'edison'
-       npernode = 24
    elif ('cori' in hostname):
        print('Cori machine not specified.  Setting to cori-haswell')
        options.machine = 'cori-haswell'
-       npernode=32
-   elif ('titan' in hostname):
-       options.machine = 'titan'
-       npernode=16
-   elif ('eos' in hostname):
-       options.machine = 'eos'
        npernode=32
    elif ('blues' in hostname or 'blogin' in hostname):
        print('Hostname = '+hostname+' and machine not specified.  Assuming anvil')
@@ -321,6 +313,9 @@ if (options.machine == ''):
    elif ('ubuntu' in hostname):
        options.machine = 'ubuntu'
        npernode = 8
+   elif ('chrlogin' in hostname):
+       options.machine = 'chrysalis'
+       npernode = 64    
    else:
        print('ERROR in site_fullrun.py:  Machine not specified.  Aborting')
        sys.exit(1)
@@ -453,13 +448,15 @@ for row in AFdatareader:
             firstsite=site
         site_lat  = row[4]
         site_lon  = row[3]
-        if (options.cruncepv8 or options.cruncep or options.gswp3 or options.princeton):
+        if (options.cruncepv8 or options.cruncep or options.gswp3 or options.gswp3_w5e5 or options.princeton):
           startyear = 1901
           endyear = 1920
           if (options.cruncepv8):
             endyear_trans=2016
           elif (options.gswp3):
             endyear_trans=2014
+          elif (options.gswp3_w5e5):
+            endyear_trans=2019
           elif (options.princeton):
             endyear_trans=2012
           else:
@@ -488,7 +485,7 @@ for row in AFdatareader:
             if (options.eco2_file != ''):
                 translen = translen - ncycle     # if experiment sim, stop first transient at exp start yr - 1
             if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
-                options.princeton or options.cruncepv8)):
+                options.princeton or options.cruncepv8 or options.gswp3_w5e5)):
                 print(endyear_trans, site_endyear)
                 translen = min(site_endyear,endyear_trans)-1850+1
 
@@ -580,6 +577,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --cruncepv8'
         if (options.gswp3):
             basecmd = basecmd+' --gswp3'
+        if (options.gswp3_w5e5):
+            basecmd = basecmd+' --gswp3_w5e5'    
         if (options.princeton):
             basecmd = basecmd+' --princeton'
         if (options.daymet):
@@ -641,9 +640,10 @@ for row in AFdatareader:
             basecmd = basecmd + ' --var_list_pft '+options.var_list_pft
         if (options.no_budgets):
             basecmd = basecmd+' --no_budgets'
+        if (options.use_hydrstress):
+            basecmd = basecmd+' --use_hydrstress'
         if (options.spruce_treatments):
             basecmd = basecmd+' --spruce_treatments'
-
         if (myproject != ''):
           basecmd = basecmd+' --project '+myproject
         if (options.domainfile != ''):
@@ -867,7 +867,8 @@ for row in AFdatareader:
 
         #transient phase 2 
         #(CRU-NCEP only, without coupler bypass)
-        if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
+        if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton \
+                or options.gswp3_w5e5) and not options.cpl_bypass):
             basecase=basecase.replace('1850','20TR')+'_phase1'
             thistranslen = site_endyear - 1921 + 1
             cmd_trns2 = basecmd+' --trans2 --finidat_case '+basecase+ \
@@ -952,6 +953,7 @@ for row in AFdatareader:
                 print('Site_fullrun:  Error in runcase.py for ad_spinup ')
                 sys.exit(1)
         else:
+          if (sitenum == 0):
             ad_case_firstsite = ad_case
 
 
@@ -966,7 +968,9 @@ for row in AFdatareader:
             else:
                 ptcmd = 'python case_copy.py --runroot '+runroot+' --case_copy '+ \
                         fin_case_firstsite+' --site_orig '+firstsite +\
-                        ' --site_new '+site+' --nyears '+str(ny_fin)+' --finidat_year ' \
+                        ' --site_new '+site+' --nyears '+str(ny_fin)
+                if (not options.sp):
+                  ptcmd = ptcmd+' --finidat_year ' \
                         +str(int(ny_ad)+1)+' --spin_cycle '+str(endyear-startyear+1)
                 print(ptcmd)
                 result = os.system(ptcmd)
@@ -1170,6 +1174,20 @@ for row in AFdatareader:
             if (mycaseid != ''):
                 basecase = mycaseid+'_'+site
 
+            #Get the software environment for selected machines
+            if (sitenum == 0 and ('ad_spinup' in c or (options.noad and 'fn_spinup' in c))):
+                if ('ad_spinup' in c):
+                  mycasedir=caseroot+'/'+basecase+'_'+modelst.replace('CNP','CN')+'_ad_spinup' 
+                else:
+                  mycasedir=caseroot+'/'+basecase+'_'+modelst
+            if (sitenum % npernode == 0 and ('compy' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine)):
+              softenvfile = open(mycasedir+'/software_environment.txt','r')
+              for line in softenvfile:
+                if ('LD_LIBRARY_PATH' in line[0:20]):
+                  output.write('setenv '+line.replace('=',' '))
+              softenvfile.close()
+
+            #Submission for first site, ad_spinup
             if (sitenum == 0 and 'ad_spinup' in c):
                 if (options.ad_Pinit):
                     #output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"_ad_spinup/\n")
@@ -1185,12 +1203,13 @@ for row in AFdatareader:
                     output.write('./xmlchange BUILD_COMPLETE=FALSE\n')
                     output.write("./case.build || exit 1\n")
                 output.write("./case.submit --no-batch &\n")
+            #Submission for subsequent sites, ad spinup
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
                     output.write("cd "+runroot+'/'+basecase+"_"+modelst+"_ad_spinup/run\n")
                 else:
                     output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('CNP','CN')+"_ad_spinup/run\n")
-                output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
+                output.write(ad_exeroot+'/'+myexe+' &\n')
 
             if ('iniadjust' in c):
                 output.write("cd "+os.path.abspath(".")+'\n')
@@ -1227,7 +1246,7 @@ for row in AFdatareader:
                 output.write('./case.submit --no-batch &\n')
             elif ('fn_spinup' in c):
                 output.write("cd "+runroot+'/'+basecase+"_"+modelst+"/run\n")
-                output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
+                output.write(ad_exeroot+'/'+myexe+' &\n')
 
             if (sitenum == 0 and 'transient' in c):
                 if (options.crop):
@@ -1244,7 +1263,7 @@ for row in AFdatareader:
 #                  output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans/run\n")
                 else:
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"/run\n")
-                output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
+                output.write(ad_exeroot+'/'+myexe+' &\n')
 
             # APW: possible alternative structure for these if statements, could help simplfy
             elif ('trans_' in c and c != 'trans_diags'):
@@ -1297,7 +1316,7 @@ for row in AFdatareader:
                  output2.close()
                  os.system('chmod u+x '+'./scripts/'+myscriptsdir+'/transdiag_'+site+'.csh')
                  output.write('./scripts/'+myscriptsdir+'/transdiag_'+site+'.csh &\n')
-            output.write('sleep 1\n')
+            output.write('sleep 5\n')
             output.close()
 
 

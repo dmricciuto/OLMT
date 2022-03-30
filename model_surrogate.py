@@ -12,13 +12,13 @@ class MyModel(object):
         self.nparms = self.ptrain.shape[1]
         self.nobs   = self.ytrain.shape[1]
         self.ntrain=self.ptrain.shape[0]
-        self.yrange = np.zeros([2,self.nobs],np.float)
+        self.yrange = np.zeros([2,self.nobs],float)
         for i in range(0,self.nobs):
           self.yrange[0,i] = min(self.ytrain[:,i])
           self.yrange[1,i] = max(self.ytrain[:,i])
 
-        self.pmin = np.zeros([self.nparms], np.float)
-        self.pmax= np.zeros([self.nparms], np.float)
+        self.pmin = np.zeros([self.nparms], float)
+        self.pmax= np.zeros([self.nparms], float)
         for i in range(0,self.nparms):
           self.pmin[i] = min(self.ptrain[:,i])
           self.pmax[i] = max(self.ptrain[:,i])
@@ -29,12 +29,11 @@ class MyModel(object):
           self.parm_names.append(s[:-1])
         pnamefile.close()
         print(self.parm_names, self.nobs, self.nparms)
-        self.pdef = np.zeros([self.nparms], np.float)
+        self.pdef = np.zeros([self.nparms], float)
         for i in range(0,self.nparms):
           self.pdef[i] = (self.pmin[i]+self.pmax[i])/2
-
-        self.obs = np.zeros([self.nobs],np.float)
-        self.obs_err = np.zeros([self.nobs],np.float)
+        self.obs = np.zeros([self.nobs],float)
+        self.obs_err = np.zeros([self.nobs],float)
         self.obs_name = []
         obsfile = open(UQdir+'/data/obs.dat')
         i=0
@@ -53,7 +52,7 @@ class MyModel(object):
         self.qoi_good = np.loadtxt(UQdir+'/NN_surrogate/qoi_good.txt').astype(int)
 
     def run(self,parms):
-        parms_nn = np.zeros([1,self.nparms],np.float)
+        parms_nn = np.zeros([1,self.nparms],float)
         for p in range(0,self.nparms):
           parms_nn[0,p] = (parms[p]-self.pmin[p])/(self.pmax[p]-self.pmin[p])
         self.output = np.zeros([self.nobs])
