@@ -1169,14 +1169,21 @@ if (options.nopftdyn == False):
           os.system('rm -rf '+pftdyn_new)
     
       if (n_grids > 1):
+          # extract 'YEAR' in the original pftdyn.nc, to avoid 'ncecat'ing it below
+          ierr = os.system('ncks -O -h -v YEAR '+pftdyn_orig+' -o ./temp/year.nc');
+          if(ierr!=0): raise RuntimeError('Error: ncks to extract "YEAR"')
+
           #ios.system('ncecat -h '+pftdyn_list+' '+pftdyn_new) # not works with too long '_list'
           ierr = os.system('find ./temp/ -name "'+pftdyn_tmp+ \
-                        '" | xargs ls | sort | ncecat -O -h -o'+pftdyn_new)
+                        '" | xargs ls | sort | ncecat -O -h -x -v YEAR -o'+pftdyn_new)
           if(ierr!=0): raise RuntimeError('Error: ncecat '); #os.sys.exit()
-    
+          # append back 'year.nc'
+          ierr = os.system('ncks -h -A ./temp/year.nc -o '+pftdyn_new)
+
           #os.system('rm ./temp/surfdata.pftdyn?????.nc*') # 'rm' not works for too long file list
           os.system('find ./temp/ -name "'+pftdyn_tmp+'" -exec rm {} \;')
-    
+          os.system('rm ./temp/year.nc')
+
           #remove ni dimension
           ierr = os.system('ncwa -h -O -a lsmlat -d lsmlat,0,0 '+pftdyn_new+' '+pftdyn_new+'.tmp')
           if(ierr!=0): raise RuntimeError('Error: ncwa '); #os.sys.exit()
