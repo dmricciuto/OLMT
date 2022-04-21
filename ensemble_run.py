@@ -206,7 +206,7 @@ for casename in casenames:
 
     isfirstcase=False
 
-#---------  code to post-process ensebmle member and cacluate total normalized SSE ----------
+#---------  code to post-process ensemble member and cacluate total normalized SSE ----------
 sse=0
 myoutput = open('myoutput_sse.txt','w')
 myind = 0

@@ -1321,6 +1321,10 @@ for row in AFdatareader:
                 else:
                   cases.append(basecase+'_'+modelst.replace('1850','20TR'))
 
+                if (options.eco2_file):
+                  cases.append(basecase+'_'+modelst.replace('1850','20TR')+'_aCO2')
+                  cases.append(basecase+'_'+modelst.replace('1850','20TR')+'_eCO2')
+
             job_depend_run=''    
             if (len(cases) > 1 and options.constraints != ''):
               cases=[]    #QPSO will run all cases

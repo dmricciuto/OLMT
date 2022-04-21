@@ -152,18 +152,25 @@ for f in os.listdir(ens_dir):
                       finidat_file_orig = orig_dir+'/'+finidat_file_orig[2:]
                    #get finidat files from previous ensemble cases if available
                    if (('1850' in casename or 'CROP' in casename) and not ('ad_spinup' in casename) and not \
-                          ('trans' in casename)): 
+                          ('trans' in casename or '20TR' in casename)): 
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('1850CNP','1850CN')+'_ad_spinup/g'+gst[1:]
                       if (os.path.exists(finidat_file_path)):
                             finidat_file_orig = finidat_file_path+'/*.'+options.model_name+'.r.*.nc'
                             os.system('python adjust_restart.py --rundir '+finidat_file_path+' --casename '+ \
                                 casename.replace('1850CNP','1850CN')+'_ad_spinup')
                    if ('20TR' in casename):
-                      finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('20TR','1850')+ \
-                                       '/g'+gst[1:]
-                      if (os.path.exists(finidat_file_path)):
-                          finidat_file_orig = finidat_file_path+'/*.'+options.model_name+'.r.*.nc'
-                          os.system('rm '+finidat_file_path+'/*ad_spinup*.'+options.model_name+'.r.*.nc')
+                      if ( not ('CO2' in casename)):
+                          finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('20TR','1850')+ \
+                                          '/g'+gst[1:]
+                          if (os.path.exists(finidat_file_path)):
+                              finidat_file_orig = finidat_file_path+'/*.'+options.model_name+'.r.*.nc'
+                              os.system('rm '+finidat_file_path+'/*ad_spinup*.'+options.model_name+'.r.*.nc')
+                      else: 
+                          finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename[:-5]+ \
+                                          '/g'+gst[1:]
+                          if (os.path.exists(finidat_file_path)):
+                              finidat_file_orig = finidat_file_path+'/*.'+options.model_name+'.r.*.nc'
+                              os.system('rm '+finidat_file_path+'/*1850*.'+options.model_name+'.r.*.nc')
                    if ('trans' in casename):
                       finidat_file_path = os.path.abspath(options.runroot)+'/UQ/'+casename.replace('_trans','')+ \
                                        '/g'+gst[1:]
