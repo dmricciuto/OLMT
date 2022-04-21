@@ -223,7 +223,7 @@ if (options.res == 'hcru_hcru'):
 elif ('f19' in options.res):
     longxy = (numpy.cumsum(numpy.ones([145]))-1)*2.5-1.25
     latixy_centers = (numpy.cumsum(numpy.ones([96]))-1)*(180.0/95) - 90.0
-    latixy = numpy.zeros([97], numpy.float)
+    latixy = numpy.zeros([97], float)
     longxy[0]   = 0
     latixy[0]   =  -90
     latixy[96]  =  90
@@ -232,7 +232,7 @@ elif ('f19' in options.res):
 elif ('f09' in options.res):
     longxy = (numpy.cumsum(numpy.ones([289]))-1)*1.25-0.625
     latixy_centers = (numpy.cumsum(numpy.ones([192]))-1)*(180.0/191) - 90.0
-    latixy = numpy.zeros([193], numpy.float)
+    latixy = numpy.zeros([193], float)
     longxy[0]   = 0
     latixy[0]   =  -90
     latixy[192]  =  90
@@ -563,7 +563,7 @@ for n in range(0,n_grids):
             npft_crop = 10
 
         #read file for site-specific PFT information
-        mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+        mypft_frac = numpy.zeros([npft+npft_crop], float)
         mypct_sand = 0.0 
         mypct_clay = 0.0
  
@@ -684,7 +684,7 @@ for n in range(0,n_grids):
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
             if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
                 print('Setting PFT area in tidal column to zero')
-                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+                mypft_frac = numpy.zeros([npft+npft_crop], float)
                 mypft_frac[0]=100.0
             if (options.mypft >= 0 and not (options.marsh and n==1)):
               print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')

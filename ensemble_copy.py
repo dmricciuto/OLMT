@@ -249,6 +249,8 @@ for p in parm_names:
         print('Creting netcdf variable for '+p)
         param = nffun.getvar(myfile,'flnr')
         param[:] = parm_values[pnum]
+      elif (p == 'psi50'):
+        param[:,parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] > 0):
          param[parm_indices[pnum]] = parm_values[pnum]
       elif (parm_indices[pnum] == 0):
