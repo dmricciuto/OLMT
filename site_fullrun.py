@@ -404,6 +404,8 @@ else:
 if (options.caseroot == options.runroot):
     caseroot = os.path.abspath(options.caseroot)+'/cime_case_dirs'
     os.system('mkdir -p '+caseroot)
+    runroot = os.path.abspath(options.caseroot)+'/cime_run_dirs'
+    os.system('mkdir -p '+runroot)
 elif (options.caseroot == '' or (os.path.exists(options.caseroot) == False)):
     caseroot = os.path.abspath(csmdir+'/cime/scripts')
 else:
@@ -1087,6 +1089,8 @@ for row in AFdatareader:
                 mysubmit_type = ''
             if ('wsl' in options.machine):
                 mysubmit_type = ''
+            if ('docker' in options.machine):
+                mysubmit_type = ''
             if ((sitenum % npernode) == 0):
                 if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
                     input = open(caseroot+'/'+ad_case_firstsite+'/case.run')
@@ -1099,7 +1103,9 @@ for row in AFdatareader:
                 for s in input:
                     if ("perl" in s or "python" in s):
                         if ('cades' in options.machine \
-                            or 'mymac' in options.machine or 'wsl' in options.machine):
+                            or 'mymac' in options.machine \
+                            or 'wsl' in options.machine \
+                            or 'docker' in options.machine):
                           output.write("#!/bin/bash -f\n")
                         else:
                           output.write("#!/bin/csh -f\n")

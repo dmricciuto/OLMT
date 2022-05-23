@@ -1157,7 +1157,8 @@ if (options.maxpatch_pft != 17):
   os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
-if('mymac' in options.machine or 'cades' in options.machine or 'wsl' in options.machine): 
+if('mymac' in options.machine or 'cades' in options.machine \
+   or 'wsl' in options.machine or 'docker' in options.machine): 
     os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
 
 
