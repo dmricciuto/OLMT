@@ -131,6 +131,8 @@ parser.add_option("--surffile", dest="surffile", default='', \
                   help = 'Use specified surface data file')
 parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'Domain file to use')
+parser.add_option("--finitfile", dest="finitfile", default="", \
+                  help = 'initial ELM data file to start/restart')
 # parameters
 parser.add_option("--pft", dest="mypft", default=-1, \
                   help = 'Use this PFT (override site default)')
@@ -662,6 +664,8 @@ for row in AFdatareader:
           basecmd = basecmd+' --project '+myproject
         if (options.domainfile != ''):
           basecmd = basecmd+' --domainfile '+options.domainfile 
+        if (options.finitfile != ''):
+          basecmd = basecmd+' --finidat '+options.finitfile 
 
         if (options.clmpf_source_dir !=''):   # for coupling pflotran with elm
             basecmd = basecmd + ' --clmpf_source_dir '+options.clmpf_source_dir

@@ -93,6 +93,8 @@ parser.add_option("--surffile", dest="surffile", default='', \
                   help = 'Use specified surface data file')
 parser.add_option("--domainfile", dest="domainfile", default="", \
                   help = 'Domain file to use')
+parser.add_option("--finitfile", dest="finitfile", default="", \
+                  help = 'initial ELM data file to start/restart')
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
 parser.add_option("--parm_file", dest="parm_file", default="", \
@@ -545,6 +547,8 @@ if (options.domainfile != ''):
     basecmd = basecmd+' --domainfile '+options.domainfile
 if (options.pftdynfile != ''):
     basecmd = basecmd + ' --landusefile '+options.pftdynfile
+if (options.finitfile != ''):
+    basecmd = basecmd+' --finidat '+options.finitfile
 basecmd = basecmd + ' --np '+str(options.np)
 basecmd = basecmd + ' --tstep '+str(options.tstep)
 basecmd = basecmd + ' --co2_file '+options.co2_file
