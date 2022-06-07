@@ -658,6 +658,7 @@ if (options.exeroot == '' or (os.path.exists(options.exeroot) == False)):
     #if ('titan' in options.machine or 'eos' in options.machine):
     #    exeroot = os.path.abspath(os.environ['HOME']+ \
    # 	    '/acme_scratch/pointclm/'+casename+'/bld')
+    if(not options.makepointdata_only): options.no_build=False  # make sure model to be built
 else:
     options.no_build=True
     exeroot=options.exeroot

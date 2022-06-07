@@ -862,6 +862,9 @@ for row in AFdatareader:
 
 
         #transient
+        if(options.noad and options.exeroot==""):
+            # if 'noad' is on, model exe root needs to be in spinup bld directory
+            ad_exeroot = os.path.abspath(runroot)+'/'+basecase+'/bld'
         cmd_trns = basecmd+' --finidat_case '+basecase+ \
             ' --finidat_year '+str(fsplen+1)+' --run_units nyears' \
             +' --run_n '+str(translen)+' --align_year '+ \
@@ -1100,8 +1103,16 @@ for row in AFdatareader:
                     input = open(caseroot+'/'+ad_case_firstsite+'/case.run')
                 elif (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/.case.run')):
                     input = open(caseroot+'/'+ad_case_firstsite+'/.case.run')
+                elif (os.path.isfile(caseroot+'/'+fin_case_firstsite+'/case.run')):
+                    input = open(caseroot+'/'+fin_case_firstsite+'/case.run')
+                elif (os.path.isfile(caseroot+'/'+fin_case_firstsite+'/.case.run')):
+                    input = open(caseroot+'/'+fin_case_firstsite+'/.case.run')
+                elif (os.path.isfile(caseroot+'/'+tr_case_firstsite+'/case.run')):
+                    input = open(caseroot+'/'+tr_case_firstsite+'/case.run')
+                elif (os.path.isfile(caseroot+'/'+tr_case_firstsite+'/.case.run')):
+                    input = open(caseroot+'/'+tr_case_firstsite+'/.case.run')
                 else:
-                    print(caseroot+'/'+ad_case_firstsite+'/case.run file not found.  Aborting')
+                    print(caseroot+'/'+ad_case_firstsite+'/.case.run or /case.run not found.  Aborting')
                     sys.exit(1)
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
