@@ -1609,22 +1609,46 @@ else:
     sys.exit(1)
 
 #Land CPPDEF modifications
+# At least for E3SM v2, cppdefs appear to only work as a list after one "-cppdefs". With repeated "-cppdefs" it only applies the last one!
+import subprocess
+status,opts=subprocess.getstatusoutput("./xmlquery -value %s_CONFIG_OPTS"%mylsm)
+if status != 0:
+    raise RuntimeError('Command failed: "./xmlquery -value %s_CONFIG_OPTS"%mylsm')
+
+if 'cppdefs' in opts:
+    cppdefs=opts[opts.find('cppdefs')+7:].strip().strip("'").split()
+else:
+    cppdefs=[]
+
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+    # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+    cppdefs.append('-DHUM_HOL')
 
 if (options.marsh):
     print("Turning on MARSH modification\n")
-    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+    # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+    cppdefs.append('-DMARSH')
 if (options.alquimia != ""):
     print("Turning on alquimia interface for compilation and running")
-    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
+    # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
+    cppdefs.append('-DUSE_ALQUIMIA_LIB')
     result = os.system("./xmlchange "+mylsm+"_USE_ALQUIMIA=TRUE")
     if result != 0:
         raise RuntimeError('Command failed: "./xmlchange '+mylsm+'_USE_ALQUIMIA=TRUE"')
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    cppdefs.append('-DHARVMOD')
+
+if len(cppdefs)>0:
+    cppdefs_str='-cppdefs "'
+    for cppdef in cppdefs:
+        if cppdef.startswith('-D'):
+            cppdefs_str = cppdefs_str + ' ' + cppdef
+    cppdefs_str = cppdefs_str + '"'
+    print("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '%s'"%(cppdefs_str))
+    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '%s'"%(cppdefs_str))
 
 #Global CPPDEF modifications
 if (cpl_bypass):
