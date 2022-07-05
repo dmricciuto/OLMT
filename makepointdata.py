@@ -5,7 +5,11 @@ import numpy
 from scipy import interpolate
 import netcdf4_functions as nffun
 from netCDF4 import Dataset
-from mpi4py import MPI
+try:
+    from mpi4py import MPI
+    HAS_MPI4PY=True
+except ImportError:
+    HAS_MPI4PY=False
 
 parser = OptionParser()
 
@@ -68,9 +72,14 @@ parser.add_option("--nco_path", dest="nco_path", default="", \
 ccsm_input = os.path.abspath(options.ccsm_input)
 
 #------------------- get site information ----------------------------------
-mycomm = MPI.COMM_WORLD
-myrank = mycomm.Get_rank()
-mysize = mycomm.Get_size()
+if HAS_MPI4PY:
+    mycomm = MPI.COMM_WORLD
+    myrank = mycomm.Get_rank()
+    mysize = mycomm.Get_size()
+else:
+    mycomm = 0
+    myrank = 0
+    mysize = 1
 
 #Remove existing temp files
 if myrank ==0:
@@ -376,7 +385,7 @@ if (options.nco_path!=''):
 domainfile_tmp = 'domain??????.nc' # filename pattern of 'domainfile_new'
 
 # the following is a must so that multiple ranks can start at same point
-mycomm.Barrier()
+if HAS_MPI4PY: mycomm.Barrier()
 
 #for n in range(0,n_grids):
 for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
@@ -477,7 +486,7 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
     domainfile_old = domainfile_new
 #end for loop of n in range(0, n_grids)
 #
-mycomm.Barrier()
+if HAS_MPI4PY: mycomm.Barrier()
 
 # multiple nc file merging on rank 0 only
 if myrank==0:
@@ -522,7 +531,7 @@ if myrank==0:
     t3 = time.process_time()
     print('domain.nc DONE in seconds of ', t3-t2, '\n')
 #
-mycomm.Barrier()
+if HAS_MPI4PY: mycomm.Barrier()
 #
 #-------------------- create surface data ----------------------------------
 if myrank==0: 
@@ -532,7 +541,7 @@ if myrank==0:
 surffile_tmp = 'surfdata??????.nc' # filename pattern of 'surffile_new'
 
 # prior to multiple ranks, the following is a must
-mycomm.Barrier()
+if HAS_MPI4PY: mycomm.Barrier()
 #for n in range(0,n_grids):
 for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
     nst = str(1000000+n)[1:]
@@ -911,7 +920,7 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
     surffile_old = surffile_new
 #end of for loop of n
 
-mycomm.Barrier()
+if HAS_MPI4PY: mycomm.Barrier()
 #
 surffile_new = './temp/surfdata.nc' # this file is to be used in 'pftdyn.nc', so must be out of 'if myrank==0'
 
@@ -962,7 +971,7 @@ if myrank==0:
     t4 = time.process_time()
     print('"surfdata.nc" is DONE in seconds of ', t4-t3, '\n')
 
-mycomm.Barrier()
+if HAS_MPI4PY: mycomm.Barrier()
 
 #-------------------- create pftdyn surface data ----------------------------------
 
@@ -976,7 +985,7 @@ if (options.nopftdyn == False):
   pftdyn_tmp = 'surfdata.pftdyn??????.nc' # filename pattern of 'pftdyn_new'
 
   # prior to multiple ranks, the following is a must
-  mycomm.Barrier()
+  if HAS_MPI4PY: mycomm.Barrier()
   #for n in range(0,n_grids):
   for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
     nst = str(1000000+n)[1:]
@@ -1158,7 +1167,7 @@ if (options.nopftdyn == False):
     pftdyn_old = pftdyn_new
   # end of for loop of n_grids
   #
-  mycomm.Barrier()
+  if HAS_MPI4PY: mycomm.Barrier()
 
   #
   if myrank==0:
