@@ -106,8 +106,7 @@ if ('hcru' in options.res):
             surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr2000_c180216.nc'
         else:
             #CMIP6 stype (Hurtt v2)
-            #surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr1850_c180216.nc'
-            surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_0.125x0.125_simyr1850_c190730.nc'
+            surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr1850_c180216.nc'
     pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_360x720cru_hist_simyr1850-2015_c180220.nc'
     nyears_landuse=166
 elif ('f19' in options.res):
@@ -618,13 +617,15 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
         monthly_height_bot = nffun.getvar(surffile_new, 'MONTHLY_HEIGHT_BOT')
 
         # 'soil thickness' data, which used not in surfdata.nc
-        try: 
-            tempdata = Dataset(surffile_new, 'a')
-            tempvar = tempdata.createVariable('aveDTB', pct_pft.dtype,('lsmlat','lsmlon',), fill_value=-999.)
-            tempdata.close()
+        try:
             aveDTB = nffun.getvar(surffile_new, 'aveDTB')
         except:
-            aveDTB = nffun.getvar(surffile_new, 'aveDTB')
+            if 'aveDTB' in mysurfvar:
+               tempdata = Dataset(surffile_new, 'a')
+               tempvar = tempdata.createVariable('aveDTB', pct_pft.dtype,('lsmlat','lsmlon',), fill_value=-999.)
+               tempdata.close()
+               aveDTB = nffun.getvar(surffile_new, 'aveDTB')
+        
 
         # interpolating 'pct_sand', 'pct_clay', 'organic', etc. for high-res land model
         if (options.point_area_km2!=None or options.point_area_deg2!=None):
@@ -852,7 +853,10 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
                 point_mysurf['PCT_LAKE'][n] = pct_lake
               if('PCT_GLACIER' in mysurfvar):
                 point_mysurf['PCT_GLACIER'][n] = pct_glacier
-            
+              if('PCT_URBAN' in mysurfvar or 'LAKE' in mysurfvar \
+                 or 'PCT_WETLAND' in mysurfvar or 'PCT_GLACIER' in mysurfvar):
+                point_mysurf['PCT_NATVEG'][n] = pct_nat_veg
+ 
             
             #mypft_frac[point_pfts[n]] = 100.0
             if(point_pfts[n]!=-1):
@@ -1023,7 +1027,10 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
         ierr = nffun.putvar(surffile_new, 'MONTHLY_HEIGHT_TOP', monthly_height_top)
         ierr = nffun.putvar(surffile_new, 'MONTHLY_HEIGHT_BOT', monthly_height_bot)
         ierr = nffun.putvar(surffile_new, 'MONTHLY_LAI', monthly_lai)
-        ierr = nffun.putvar(surffile_new, 'aveDTB', aveDTB)
+        try:
+           ierr = nffun.putvar(surffile_new, 'aveDTB', aveDTB)
+        except:
+           if (myrank==0): print('aveDTB not in surface data set')
 
     else: # not if(issite)
         if (int(options.mypft) >= 0):
@@ -1128,6 +1135,7 @@ if (options.nopftdyn == False):
         longxy       = nffun.getvar(pftdyn_new, 'LONGXY')
         latixy       = nffun.getvar(pftdyn_new, 'LATIXY')
         area         = nffun.getvar(pftdyn_new, 'AREA')
+        pct_nat_veg  = nffun.getvar(pftdyn_new, 'PCT_NATVEG')
         pct_pft      = nffun.getvar(pftdyn_new, 'PCT_NAT_PFT')
         pct_urban    = nffun.getvar(pftdyn_new, 'PCT_URBAN')
         PCT_lake     = nffun.getvar(pftdyn_new, 'PCT_LAKE')
@@ -1268,6 +1276,8 @@ if (options.nopftdyn == False):
                     pct_pft[t,:,] = point_mysurf['PCT_PFT'][n]
                 elif('PCT_NAT_PFT' in mysurfvar):
                     pct_pft[t,:,] = point_mysurf['PCT_NAT_PFT'][n]
+              
+
               #
             #
         # end of for 't' loop
@@ -1298,6 +1308,10 @@ if (options.nopftdyn == False):
             if('PCT_WETLAND' in mysurfvar):
                 pct_wetland[:,] = point_mysurf['PCT_WETLAND'][n]
                 ierr = nffun.putvar(pftdyn_new, 'PCT_WETLAND', pct_wetland)
+            if('PCT_URBAN' in mysurfvar or 'LAKE' in mysurfvar \
+                 or 'PCT_WETLAND' in mysurfvar or 'PCT_GLACIER' in mysurfvar):
+                pct_nat_veg[:,] = point_mysurf['PCT_NATVEG'][n]
+                ierr = nffun.putvar(pftdyn_new, 'PCT_NATVEG', pct_nat_veg)
 
     #end of if (issite)
     pftdyn_old = pftdyn_new
