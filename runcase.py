@@ -2035,7 +2035,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         cnp = 'True'
         if (options.cn_only or options.c_only):
             cnp= 'False'
-        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
+        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine or 'docker' in options.machine):
             mpicmd = 'mpirun'
             if ('cades' in options.machine):
                 mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
