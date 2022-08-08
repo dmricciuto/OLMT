@@ -13,3 +13,6 @@ slurm-*.out
 mcsamples*.txt
 
 # user defined files
+
+# MacOSX files
+.DS_Store
