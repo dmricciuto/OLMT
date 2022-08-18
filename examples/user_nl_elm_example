@@ -1,0 +1,6 @@
+ hist_empty_htapes = .true.
+ hist_fincl1 = 'VCMAX25TOP','TLAI','GPP','NPP','NEE','AR','HR','FCEV','FCTR','FGEV','FGR','FSH','H2OCAN','H2OSNO','H2OSOI','SOILPSI','TSOI'
+ hist_dov2xy = .false.
+ hist_nhtfrq = 1
+ hist_mfilt  = 8760
+ hist_avgflag_pertape = 'A'
