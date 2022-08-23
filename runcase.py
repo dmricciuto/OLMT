@@ -1621,11 +1621,11 @@ for i in range(1,int(options.ninst)+1):
 
     if (options.sclr != 0):
       output.write(" scale_rain = "+str(options.sclr)+"\n")
-      output.write(" startdate_add_rain = '"+str(options.sd_sclr)+"'\n")
+      output.write(" startdate_scale_rain = '"+str(options.sd_sclr)+"'\n")
 
     if (options.scls != 0):
       output.write(" scale_snow = "+str(options.scls)+"\n")
-      output.write(" startdate_add_snow = '"+str(options.sd_scls)+"'\n")
+      output.write(" startdate_scale_snow = '"+str(options.sd_scls)+"'\n")
     
     if (options.addco2 != 0):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
