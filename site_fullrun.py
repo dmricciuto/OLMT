@@ -124,10 +124,6 @@ parser.add_option("--add_temperature", dest="addt", default=0.0, \
                   help = 'Temperature to add to atmospheric forcing')
 parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
                   help = 'Date (YYYYMMDD) to begin addding temperature')
-parser.add_option("--scale_precipitation", dest="sclp", default=1.0, \
-                  help = 'Scaling factor to apply to total precipitation in atmospheric forcing')
-parser.add_option("--startdate_scale_precipitation", dest="sd_sclp", default="99991231", \
-                  help = 'Date (YYYYMMDD) to begin scaling total precipitation')
 parser.add_option("--scale_rain", dest="sclr", default=1.0, \
                   help = 'Scaling factor to apply to rain in atmospheric forcing')
 parser.add_option("--startdate_scale_rain", dest="sd_sclr", default="99991231", \
@@ -632,9 +628,6 @@ for row in AFdatareader:
         if (options.addt != 0):
             basecmd = basecmd+' --add_temperature '+str(options.addt)
             basecmd = basecmd+' --startdate_add_temperature '+str(options.sd_addt)
-        if (options.sclp != 0):
-            basecmd = basecmd+' --scale_precipitation '+str(options.sclp)
-            basecmd = basecmd+' --startdate_scale_precipitation '+str(options.sd_sclp)
         if (options.sclr != 0):
             basecmd = basecmd+' --scale_rain '+str(options.sclr)
             basecmd = basecmd+' --startdate_scale_rain '+str(options.sd_sclr)
