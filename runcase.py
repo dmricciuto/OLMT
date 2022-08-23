@@ -149,12 +149,24 @@ parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
                   help = "File containing met data (cpl_bypass only)")
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
                   help = 'Temperature to add to atmospheric forcing')
+parser.add_option("--scale_precipitation", dest="sclp", default=1.0, \
+                  help = 'Scaling factor to apply to total precipitation in atmospheric forcing')
+parser.add_option("--scale_rain", dest="sclr", default=1.0, \
+                  help = 'Scaling factor to apply to rain in atmospheric forcing')
+parser.add_option("--scale_snow", dest="scls", default=1.0, \
+                  help = 'Scaling factor to apply to snowfall in atmospheric forcing')
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'CLM timestep (hours)')
 parser.add_option("--add_co2", dest="addco2", default=0.0, \
                   help = 'CO2 (ppmv) to add to atmospheric forcing')
 parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
                   help = 'Date (YYYYMMDD) to begin addding temperature')
+parser.add_option("--startdate_scale_precipitation", dest="sd_sclp", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin scaling total precipitation')
+parser.add_option("--startdate_scale_rain", dest="sd_sclr", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin scaling rain')
+parser.add_option("--startdate_scale_snow", dest="sd_scls", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin scaling snowfall')
 parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
                   help = 'Date (YYYYMMDD) to begin addding CO2')
 
@@ -1611,6 +1623,18 @@ for i in range(1,int(options.ninst)+1):
       output.write(" add_temperature = "+str(options.addt)+"\n")
       output.write(" startdate_add_temperature = '"+str(options.sd_addt)+"'\n")
 
+    if (options.sclp != 0):
+      output.write(" scale_precipitation = "+str(options.sclp)+"\n")
+      output.write(" startdate_add_precipitation = '"+str(options.sd_sclp)+"'\n")
+
+    if (options.sclr != 0):
+      output.write(" scale_rain = "+str(options.sclr)+"\n")
+      output.write(" startdate_add_rain = '"+str(options.sd_sclr)+"'\n")
+
+    if (options.scls != 0):
+      output.write(" scale_snow = "+str(options.scls)+"\n")
+      output.write(" startdate_add_snow = '"+str(options.sd_scls)+"'\n")
+    
     if (options.addco2 != 0):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
