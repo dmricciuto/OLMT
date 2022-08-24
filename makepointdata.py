@@ -169,7 +169,7 @@ elif (options.point_list != ''):
         point_mysurf = {}
         for isurfvar in mysurfvar:
             point_mysurf[isurfvar] = {}
-        if('PCT_URBAN' in mysurfvar or 'LAKE' in mysurfvar \
+        if('PCT_URBAN' in mysurfvar or 'PCT_LAKE' in mysurfvar \
             or 'PCT_WETLAND' in mysurfvar or 'PCT_GLACIER' in mysurfvar):
             point_mysurf['PCT_NATVEG'] = {}
         
@@ -269,6 +269,7 @@ for n in range(0,n_grids):
     if (issite):
         lon_bounds = [lon[n],lon[n]]
         lat_bounds = [lat[n],lat[n]]
+        
     xgrid_min.append(-1)
     xgrid_max.append(-1)
     ygrid_min.append(-1)
@@ -322,7 +323,7 @@ if (n_grids > 1 and options.site == ''):       #remove duplicate points
     
   if myrank==0: print('Total grids', n_grids)
   
-  for n in range (1,n_grids):
+  for n in range (1,n_grids):  # only need to do for more than 1 gridcell
       is_unique = True
       #for m in range(0,n_grids_uniq):
       #    if (xgrid_min[n] == xgrid_min_uniq[m] and ygrid_min[n] == ygrid_min_uniq[m] \
@@ -900,6 +901,16 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
                         pct_urban[k][0][0] = 0.0
                 pct_nat_veg[0][0] = 100.0 - pct_wetland[0][0] - pct_lake[0][0] - pct_glacier[0][0] \
                     -pct_urban[0][0][0]-pct_urban[1][0][0]-pct_urban[2][0][0]
+                if pct_nat_veg[0][0]<0.0:
+                    pct_nat_veg[0][0] = 0.0
+                    sum_spec = pct_wetland[0][0] + pct_lake[0][0] + pct_glacier[0][0] \
+                       + pct_urban[0][0][0]+pct_urban[1][0][0]+pct_urban[2][0][0]
+                    pct_wetland[0][0]  = pct_wetland[0][0]/sum_spec*100.0
+                    pct_lake[0][0]     = pct_lake[0][0]/sum_spec*100.0
+                    pct_glacier[0][0]  = pct_glacier[0][0]/sum_spec*100.0
+                    pct_urban[0][0][0] = pct_urban[0][0][0]/sum_spec*100.0
+                    pct_urban[1][0][0] = pct_urban[1][0][0]/sum_spec*100.0
+                    pct_urban[2][0][0] = pct_urban[2][0][0]/sum_spec*100.0
         
         if ((not options.surfdata_grid) or (point_pfts[n]!=-1)):
             # only change it when not from global data or from user-input value(s)
