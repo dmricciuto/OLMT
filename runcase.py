@@ -149,9 +149,9 @@ parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
                   help = "File containing met data (cpl_bypass only)")
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
                   help = 'Temperature to add to atmospheric forcing')
-parser.add_option("--scale_rain", dest="sclr", default='', \
+parser.add_option("--scale_rain", dest="sclr", default="", \
                   help = 'Scaling factor to apply to rain in atmospheric forcing')
-parser.add_option("--scale_snow", dest="scls", default='', \
+parser.add_option("--scale_snow", dest="scls", default="", \
                   help = 'Scaling factor to apply to snowfall in atmospheric forcing')
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'CLM timestep (hours)')
