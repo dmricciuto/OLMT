@@ -124,11 +124,11 @@ parser.add_option("--add_temperature", dest="addt", default=0.0, \
                   help = 'Temperature to add to atmospheric forcing')
 parser.add_option("--startdate_add_temperature", dest="sd_addt", default="99991231", \
                   help = 'Date (YYYYMMDD) to begin addding temperature')
-parser.add_option("--scale_rain", dest="sclr", default=1.0, \
+parser.add_option("--scale_rain", dest="sclr", default="", \
                   help = 'Scaling factor to apply to rain in atmospheric forcing')
 parser.add_option("--startdate_scale_rain", dest="sd_sclr", default="99991231", \
                   help = 'Date (YYYYMMDD) to begin scaling rain')
-parser.add_option("--scale_snow", dest="scls", default=1.0, \
+parser.add_option("--scale_snow", dest="scls", default="", \
                   help = 'Scaling factor to apply to snowfall in atmospheric forcing')
 parser.add_option("--startdate_scale_snow", dest="sd_scls", default="99991231", \
                   help = 'Date (YYYYMMDD) to begin scaling snowfall')
@@ -628,10 +628,10 @@ for row in AFdatareader:
         if (options.addt != 0):
             basecmd = basecmd+' --add_temperature '+str(options.addt)
             basecmd = basecmd+' --startdate_add_temperature '+str(options.sd_addt)
-        if (options.sclr != 0):
+        if (options.sclr != ''):
             basecmd = basecmd+' --scale_rain '+str(options.sclr)
             basecmd = basecmd+' --startdate_scale_rain '+str(options.sd_sclr)
-        if (options.scls != 0):
+        if (options.scls != ''):
             basecmd = basecmd+' --scale_snow '+str(options.scls)
             basecmd = basecmd+' --startdate_scale_snow '+str(options.sd_scls)
         if (options.addco2 != 0):
