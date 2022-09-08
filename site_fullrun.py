@@ -65,6 +65,8 @@ parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
 parser.add_option("--np", dest="np", default=1, \
                   help = 'number of processors')
+parser.add_option("--ppn", dest="ppn", default=1, \
+                  help = 'processors per node for user-known machine' )
 parser.add_option("--walltime", dest="walltime", default=6, \
                   help = "desired walltime for each job (hours)")
 parser.add_option("--pio_version", dest="pio_version", default='2', \
@@ -641,6 +643,7 @@ for row in AFdatareader:
             basecmd = basecmd+' --surffile '+options.surffile      
         basecmd = basecmd + ' --ng '+str(options.ng)
         basecmd = basecmd + ' --np '+str(options.np)
+        basecmd = basecmd + ' --ppn '+str(options.ppn)
         basecmd = basecmd + ' --tstep '+str(options.tstep)
         basecmd = basecmd + ' --co2_file '+options.co2_file
         if (options.aerorcp85):

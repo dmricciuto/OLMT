@@ -225,6 +225,8 @@ parser.add_option("--align_year", dest="align_year", default=-999, \
                   help = 'Alignment year (transient run only)')
 parser.add_option("--np", dest="np", default=1, \
                   help = 'number of processors')
+parser.add_option("--ppn", dest="ppn", default=1, \
+                  help = 'processors per node for user-known machine' )
 parser.add_option("--ninst", dest="ninst", default=1, \
                   help = 'number of land model instances')
 parser.add_option("--ng", dest="ng", default=64, \
@@ -435,6 +437,8 @@ elif ('compy' in options.machine):
     ppn=40
 elif ('chrysalis' in options.machine):
     ppn=64
+elif (int(options.ppn)>1):
+    ppn=int(options.ppn)
 if (options.ensemble_file == ''):
   ppn=min(ppn, int(options.np))
 
