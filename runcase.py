@@ -149,9 +149,9 @@ parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
                   help = "File containing met data (cpl_bypass only)")
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
                   help = 'Temperature to add to atmospheric forcing')
-parser.add_option("--scale_rain", dest="sclr", default=1.0, \
+parser.add_option("--scale_rain", dest="sclr", default='', \
                   help = 'Scaling factor to apply to rain in atmospheric forcing')
-parser.add_option("--scale_snow", dest="scls", default=1.0, \
+parser.add_option("--scale_snow", dest="scls", default='', \
                   help = 'Scaling factor to apply to snowfall in atmospheric forcing')
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'CLM timestep (hours)')
@@ -1619,11 +1619,11 @@ for i in range(1,int(options.ninst)+1):
       output.write(" add_temperature = "+str(options.addt)+"\n")
       output.write(" startdate_add_temperature = '"+str(options.sd_addt)+"'\n")
 
-    if (options.sclr != 0):
+    if (options.sclr != ''):
       output.write(" scale_rain = "+str(options.sclr)+"\n")
       output.write(" startdate_scale_rain = '"+str(options.sd_sclr)+"'\n")
 
-    if (options.scls != 0):
+    if (options.scls != ''):
       output.write(" scale_snow = "+str(options.scls)+"\n")
       output.write(" startdate_scale_snow = '"+str(options.sd_scls)+"'\n")
     
