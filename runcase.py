@@ -1161,9 +1161,10 @@ if (options.rest_n > 0):
 # user-defined PFT numbers (default is 17)
 if (options.maxpatch_pft != 17):
   print('resetting maxpatch_pft to '+str(options.maxpatch_pft))
-  xval = subprocess.check_output('./xmlquery --value CLM_BLDNML_OPTS', cwd=casedir, shell=True)
+  xval = subprocess.check_output('./xmlquery --value '+mylsm+'_BLDNML_OPTS', cwd=casedir, shell=True)
+  xval = xval.decode()
   xval = '-maxpft '+str(options.maxpatch_pft)+' '+xval
-  os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
+  os.system("./xmlchange --id "+mylsm+"_BLDNML_OPTS --val '" + xval + "'")
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
 if('mymac' in options.machine or 'cades' in options.machine \
