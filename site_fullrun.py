@@ -630,10 +630,10 @@ for row in AFdatareader:
         if (options.addt != 0):
             basecmd = basecmd+' --add_temperature '+str(options.addt)
             basecmd = basecmd+' --startdate_add_temperature '+str(options.sd_addt)
-        if (options.sclr != 0):
+        if (options.sclr != 1.0):
             basecmd = basecmd+' --scale_rain '+str(options.sclr)
             basecmd = basecmd+' --startdate_scale_rain '+str(options.sd_sclr)
-        if (options.scls != 0):
+        if (options.scls != 1.0):
             basecmd = basecmd+' --scale_snow '+str(options.scls)
             basecmd = basecmd+' --startdate_scale_snow '+str(options.sd_scls)
         if (options.addco2 != 0):
