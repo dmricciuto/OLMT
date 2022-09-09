@@ -265,6 +265,10 @@ parser.add_option("--1850_ndep", dest="ndep1850", default=False, \
                   help = 'Use constant 1850 N deposition', action="store_true")
 parser.add_option("--ndep_rcp85", dest="ndeprcp85", default=False, \
                   help = 'Use RCP8.5 N deposition', action="store_true")
+parser.add_option("--scale_ndep", dest="scln", default="", \
+                  help = 'Scaling factor to apply to N deposition in atmospheric forcing')
+parser.add_option("--startdate_scale_ndep", dest="sd_scln", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin scaling N deposition')                  
 parser.add_option("--1850_aero", dest="aero1850", default=False, \
                   help = 'Use constant 1850 aerosol deposition', action="store_true")
 parser.add_option("--aero_rcp85", dest="aerorcp85", default=False, \
@@ -1654,7 +1658,11 @@ for i in range(1,int(options.ninst)+1):
     if (options.scls != 1.0):
       output.write(" scale_snow = "+str(options.scls)+"\n")
       output.write(" startdate_scale_snow = '"+str(options.sd_scls)+"'\n")
-    
+
+    if (options.scln != ''):
+      output.write(" scale_ndep = "+str(options.scln)+"\n")
+      output.write(" startdate_scale_ndep = '"+str(options.sd_scln)+"'\n")
+
     if (options.addco2 != 0):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
