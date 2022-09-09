@@ -244,6 +244,10 @@ parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
                   help = "user-defined max. patch PFT number, default is 17")
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
+parser.add_option("--megan", dest="megan", default=False, action="store_true", \
+                  help = "switch on MEGAN namelist option, default is False")
+parser.add_option("--drydep", dest="drydep", default=False, action="store_true", \
+                  help = "switch on DryDep namelist option, default is False")
 
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
 parser.add_option("--dryrun",dest="dryrun",default=False,action="store_true",help="Do not execute commands")
@@ -661,12 +665,14 @@ for row in AFdatareader:
           basecmd = basecmd+' --constraints '+options.constraints
         if (options.hist_vars != ''):
           basecmd = basecmd+' --hist_vars '+options.hist_vars
-
         if (options.maxpatch_pft!=17):
             basecmd = basecmd + ' --maxpatch_pft '+options.maxpatch_pft
         if (options.pftdynfile != ''):
             basecmd = basecmd + ' --landusefile '+options.pftdynfile
-
+        if (options.megan):
+            basecmd = basecmd + ' --megan'
+        if (options.drydep):
+            basecmd = basecmd + ' --drydep'
         if (options.var_soilthickness):
             basecmd = basecmd + ' --var_soilthickness'
         if (options.var_list_pft != ''):

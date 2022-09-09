@@ -337,11 +337,17 @@ parser.add_option("--walltime", dest="walltime", default=6, \
                   help = "desired walltime for each job (hours)")
 parser.add_option("--lai", dest="lai", default=-999, \
                   help = 'Set constant LAI (SP mode only)')
-parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
-                  help = "user-defined max. patch PFT number, default is 17")
 parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
+
+# for ngee-arctic but generic
+parser.add_option("--maxpatch_pft", dest="maxpatch_pft", default=17, \
+                  help = "user-defined max. patch PFT number, default is 17")
+parser.add_option("--megan", dest="megan", default=False, action="store_true", \
+                  help = "switch on MEGAN namelist option, default is False")
+parser.add_option("--drydep", dest="drydep", default=False, action="store_true", \
+                  help = "switch on DryDep namelist option, default is False")
 
 #options for coupling with PFLOTRAN
 parser.add_option("--clmpf_source_dir", dest="clmpf_source_dir", default='', \
@@ -1169,6 +1175,23 @@ if (options.maxpatch_pft != 17):
   xval = xval.decode()
   xval = '-maxpft '+str(options.maxpatch_pft)+' '+xval
   os.system("./xmlchange --id "+mylsm+"_BLDNML_OPTS --val '" + xval + "'")
+
+# switch on MEGAN (voc model) (default is False)
+if (options.megan):
+  print('MEGAN namelist is on ')
+  xval = subprocess.check_output('./xmlquery --value '+mylsm+'_BLDNML_OPTS', cwd=casedir, shell=True)
+  xval = xval.decode()
+  xval = xval + ' -megan '
+  os.system("./xmlchange --id "+mylsm+"_BLDNML_OPTS --val '" + xval + "'")
+
+# switch on DryDep (default is False)
+if (options.drydep):
+  print('Drydep namelist is on ')
+  xval = subprocess.check_output('./xmlquery --value '+mylsm+'_BLDNML_OPTS', cwd=casedir, shell=True)
+  xval = xval.decode()
+  xval = xval + ' -drydep '
+  os.system("./xmlchange --id "+mylsm+"_BLDNML_OPTS --val '" + xval + "'")
+
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
 if('mymac' in options.machine or 'cades' in options.machine \
