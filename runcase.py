@@ -1493,8 +1493,8 @@ for i in range(1,int(options.ninst)+1):
           output.write( " stream_fldfilename_ndep = '"+options.ccsm_input+ \
             "/lnd/clm2/ndepdata/fndep_clm_rcp4.5_simyr1849-2106_1.9x2.5_c100428.nc'\n")
         if (options.scale_ndep != ''):
-          output.write(" scale_ndep = "+str(options.ndep)+"\n")
-          output.write(" startdate_scale_ndep = '"+str(options.sd_ndep)+"'\n")
+          output.write(" scale_ndep = "+str(options.scln)+"\n")
+          output.write(" startdate_scale_ndep = '"+str(options.sd_scln)+"'\n")
         if (model_name == 'clm2'):  #set for older tags/branches (option was removed, this may not capture all tags 
                                     #between rename to elm and removal of nitrif_dentrif)   
             output.write(" use_nitrif_denitrif = .true.\n")
