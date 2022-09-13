@@ -187,7 +187,11 @@ parser.add_option("--ndep_rcp85",dest="ndeprcp85", action="store_true", default=
 parser.add_option("--scale_ndep", dest="scln", default="", \
                   help = 'Scaling factor to apply to N deposition in atmospheric forcing')
 parser.add_option("--startdate_scale_ndep", dest="sd_scln", default="99991231", \
-                  help = 'Date (YYYYMMDD) to begin scaling N deposition')       
+                  help = 'Date (YYYYMMDD) to begin scaling N deposition')  
+parser.add_option("--scale_pdep", dest="sclp", default="", \
+                  help = 'Scaling factor to apply to P deposition in atmospheric forcing')
+parser.add_option("--startdate_scale_pdep", dest="sd_sclp", default="99991231", \
+                  help = 'Date (YYYYMMDD) to begin scaling P deposition')            
 parser.add_option("--harvmod", action="store_true", dest='harvmod', default=False, \
                   help="turn on harvest modification:  All harvest at first timestep")
 parser.add_option("--no_dynroot", dest="no_dynroot", default=False, action="store_true", \
@@ -660,7 +664,10 @@ for row in AFdatareader:
             basecmd = basecmd + ' --ndep_rcp85'
         if (options.scln != ''):
             basecmd = basecmd+' --scale_ndep '+str(options.scln)
-            basecmd = basecmd+' --startdate_scale_ndep '+str(options.sd_scln)    
+            basecmd = basecmd+' --startdate_scale_ndep '+str(options.sd_scln)
+        if (options.sclp != ''):
+            basecmd = basecmd+' --scale_pdep '+str(options.sclp)
+            basecmd = basecmd+' --startdate_scale_pdep '+str(options.sd_sclp)      
         if (options.compiler != ''):
             basecmd = basecmd + ' --compiler '+options.compiler
         basecmd = basecmd + ' --mpilib '+options.mpilib
