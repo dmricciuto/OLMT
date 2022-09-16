@@ -140,6 +140,9 @@ issite = False
 isglobal = False
 lat=[]
 lon=[]
+# if providing a user-defined nc file for extracting surface data other than standard inputs
+mysurfvar = ''
+
 if (lat_bounds[0] > -90 and lon_bounds[0] > -180):
     print( '\nCreating regional datasets using '+options.res+ 'resolution')
     if (lon_bounds[0] < 0):
@@ -152,8 +155,6 @@ elif (options.point_list != ''):
     n_grids=0
     point_pfts=[]
     
-    # if providing a user-defined nc file for extracting surface data other than standard inputs
-    mysurfvar = ''
     if (options.usersurfnc!='none'):
         if (options.usersurfvar=='none'):
             print('must provide variable name(s) for extracting data from : ',options.usersurfnc)

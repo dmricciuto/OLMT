@@ -18,6 +18,7 @@ if python3 ./site_fullrun.py \
       --np 2 \
       --ppn 2 \
       --maxpatch_pft 12 \
+      --var_soilthickness \
       --cpl_bypass --gswp3 --daymet4 \
       --metdir /inputdata/atm/datm7/GSWP3_daymet/cpl_bypass_kougarok \
       --domainfile /inputdata/share/domains/domain.clm/domain.lnd.51x63pt_kougarok-NGEE_TransA_navy.nc \
