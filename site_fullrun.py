@@ -518,7 +518,7 @@ for row in AFdatareader:
         if (int(options.nyears_final_spinup) % ncycle !=0):
           ny_fin = str(int(ny_fin) + ncycle - (int(ny_fin) % ncycle))
 
-        if (options.nyears_transient == -1):
+        if (int(options.nyears_transient) == -1):
             translen = endyear-1850+1            # length of transient run
             if (options.eco2_file != ''):
                 translen = translen - ncycle     # if experiment sim, stop first transient at exp start yr - 1
