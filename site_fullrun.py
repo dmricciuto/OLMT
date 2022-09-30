@@ -667,7 +667,7 @@ for row in AFdatareader:
             basecmd = basecmd+' --startdate_scale_ndep '+str(options.sd_scln)    
         if (options.sclp != ''):
             basecmd = basecmd+' --scale_pdep '+str(options.sclp)
-            basecmd = basecmd+' --startdate_scale_npep '+str(options.sd_sclp)      
+            basecmd = basecmd+' --startdate_scale_pdep '+str(options.sd_sclp)      
         if (options.compiler != ''):
             basecmd = basecmd + ' --compiler '+options.compiler
         basecmd = basecmd + ' --mpilib '+options.mpilib
