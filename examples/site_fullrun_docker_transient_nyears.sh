@@ -61,8 +61,8 @@ if [ ! -d ${ELM_USER_DATA} ]; then
 fi
 cd ${ELM_USER_DATA}
 
-if [ ! ${site_name} = kougarok ] ; then
-  if [ ${ncfile_init} = /tools/OLMT/examples/site_fullrun_docker_tr_demo_fini.nc ]; then
+if [ ${ncfile_init} = /tools/OLMT/examples/site_fullrun_docker_tr_demo_fini.nc ]; then
+  if [ ! ${site_name} = kougarok ] ; then
      # this file in OLMT/examples/ is specifically for kougarok site only
      echo " "
      echo "**** EXECUTION HALTED ****"
