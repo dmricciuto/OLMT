@@ -1,3 +1,3 @@
- hist_fincl2 = 'VCMAX25TOP','TLAI','GPP','NPP','NEE','AR'
+ hist_fincl2 = 'VCMAX25TOP','TLAI','GPP','NPP','NEE','AR','TOTVEGC','LEAFC','FROOTC','DEADSTEMC','LIVESTEMC','DEADCROOTC','LIVECROOTC'
  hist_dov2xy = .true. .false.
  

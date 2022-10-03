@@ -139,6 +139,8 @@ fi
 cd /output/cime_run_dirs/My_${site_code}_ICB20TRCNPRDCTCBC/run
 ncrcat --ovr *.elm.h0.*.nc ELM_output.nc
 chmod 777 ELM_output.nc
+ncrcat --ovr *.elm.h1.*.nc ELM_output_PFT.nc
+chmod 777 ELM_output_PFT.nc
 
 cd ${cwd}
 
