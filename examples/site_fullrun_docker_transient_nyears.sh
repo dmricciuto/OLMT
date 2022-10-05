@@ -70,9 +70,8 @@ if [ ${ncfile_init} = /tools/OLMT/examples/site_fullrun_docker_tr_demo_fini.nc ]
      exit 0
      echo " "
   fi
-else
-  cp ${ncfile_init} ${ELM_USER_DATA}/OLMT_${site_code}_ICB1850CNPRDCTCBC.elm.r.0601-01-01-00000.nc  # assuming the initial restart file are after 600 years spinup.
 fi
+cp ${ncfile_init} ${ELM_USER_DATA}/OLMT_${site_code}_ICB1850CNPRDCTCBC.elm.r.0601-01-01-00000.nc  # assuming the initial restart file are after 600 years spinup.
 
 # allow user edit ascii files, which either in ascii or 'ncdump' generated from netcdf files
 if [ ! -f ${ELM_USER_DATA}/user_nl_elm ]; then
