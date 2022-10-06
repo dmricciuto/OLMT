@@ -140,7 +140,7 @@ else
 fi
 
 #
-cd /output/cime_run_dirs/My_${site_code}_ICB20TRCNPRDCTCBC/run
+cd /output/cime_run_dirs/${case_prefix}_${site_code}_ICB20TRCNPRDCTCBC/run
 ncrcat --ovr *.elm.h0.*.nc ELM_output.nc
 chmod 777 ELM_output.nc
 ncrcat --ovr *.elm.h1.*.nc ELM_output_PFT.nc
