@@ -8,6 +8,10 @@ cwd=$(pwd)
 for i in "$@"
 do
 case $i in
+    -prefix=*|--case_prefix=*)
+    case_prefix="${i#*=}"
+    shift # past argument=value
+    ;;
     -sn=*|--site_name=*)
     site_name="${i#*=}"
     shift # past argument=value
@@ -28,6 +32,7 @@ done
 
 # =======================================================================================
 # Set defaults and print the selected options back to the screen before running
+case_prefix="${case_prefix:-My}"
 site_name="${site_name:-kougarok}"
 transient_years="${transient_years:-10}"
 ncfile_init="${ncfile_init:-/tools/OLMT/examples/site_fullrun_docker_tr_demo_fini.nc}"
@@ -107,7 +112,7 @@ chmod 777 user_nl_elm
 cd /tools/OLMT
 
 if python3 ./site_fullrun.py \
-      --site ${site_code} --sitegroup NGEEArctic --caseidprefix My \
+      --site ${site_code} --sitegroup NGEEArctic --caseidprefix ${case_prefix} \
       --noad --nofnsp --nyears_transient ${transient_years} --tstep 1 \
       --machine docker --compiler gnu --mpilib openmpi \
       --cpl_bypass --gswp3 \
