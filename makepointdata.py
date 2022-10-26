@@ -9,6 +9,9 @@ parser = OptionParser()
 
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
+#added by wei huang 2022-07-28 for 3 columns run
+parser.add_option("--site3rd", dest="site3rd", default='', \
+                  help = '6-character FLUXNET code to run (optional)')
 parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
@@ -54,6 +57,9 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
+parser.add_option("--col3rd", dest="col3rd", default=False, \
+                  help = 'Adding 3rd column/gridcell', action="store_true")
 parser.add_option("--usersurfnc", dest="usersurfnc", default="none", \
                   help = 'User-provided surface data nc file, with one or more variable(s) as defined')
 parser.add_option("--usersurfvar", dest="usersurfvar", default="none", \
@@ -210,6 +216,21 @@ elif (options.site != ''):
                 lon.append(mylon)
                 lat.append(float(row[4]))
                 n_grids = 2
+            #adding third grid cell [Wei Huang, 2022-07-06]
+            if (options.col3rd):
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
+                for row in AFdatareader:
+                   if row[0] == options.site3rd:
+                      mylon=float(row[3])
+                      if (mylon < 0):
+                          mylon=360.0+float(row[3])
+                      lon.append(mylon)#append lat/lon for 2nd column from site3rd
+                      lat.append(float(row[4]))
+                      print(mylon)
+                lon.append(mylon)#append twice so that lon ahd lat has 3 elements
+                lat.append(float(row[4]))
+                print(mylon)
+                n_grids = 3
             startyear=int(row[6])
             endyear=int(row[7])
             alignyear = int(row[8])
@@ -248,6 +269,7 @@ ygrid_min=[]
 ygrid_max=[]
 for n in range(0,n_grids):
     if (issite):
+        print(len(lon))
         lon_bounds = [lon[n],lon[n]]
         lat_bounds = [lat[n],lat[n]]
     xgrid_min.append(-1)
@@ -563,11 +585,11 @@ for n in range(0,n_grids):
             npft_crop = 10
 
         #read file for site-specific PFT information
-        mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+        mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64)
         mypct_sand = 0.0 
         mypct_clay = 0.0
  
-        if (options.surfdata_grid == False and options.site != ''):
+        if (options.surfdata_grid == False and options.site != '' and not options.col3rd):
             #read file for site-specific PFT information
             AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
             for row in AFdatareader:
@@ -584,6 +606,43 @@ for n in range(0,n_grids):
                     mypct_clay = row[5]
             if (mypct_sand == 0.0 and mypct_clay == 0.0):
                 print('*** Warning:  Soil data NOT found.  Using gridded data ***')
+        elif (options.surfdata_grid == False and options.site != '' and options.col3rd):
+            if(n==1):
+                #read file for site-specific PFT information
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
+                for row in AFdatareader:
+                    if row[0] == options.site3rd:
+                       print('read from site3rd'+options.site3rd)
+                       for thispft in range(0,5):
+                           mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
+                if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
+                    print('*** Warning:  PFT data NOT found.  Using gridded data ***')
+                #read file for site-specific soil information
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
+                for row in AFdatareader:
+                    if row[0] == options.site3rd:
+                        print('read from site3rd'+options.site3rd)
+                        mypct_sand = row[4]
+                        mypct_clay = row[5]
+                if (mypct_sand == 0.0 and mypct_clay == 0.0):
+                    print('*** Warning:  Soil data NOT found.  Using gridded data ***')
+            else:
+                #read file for site-specific PFT information
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
+                for row in AFdatareader:
+                    if row[0] == options.site:
+                       for thispft in range(0,5):
+                           mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
+                if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
+                    print('*** Warning:  PFT data NOT found.  Using gridded data ***')
+                #read file for site-specific soil information
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
+                for row in AFdatareader:
+                    if row[0] == options.site:
+                        mypct_sand = row[4]
+                        mypct_clay = row[5]
+                if (mypct_sand == 0.0 and mypct_clay == 0.0):
+                    print('*** Warning:  Soil data NOT found.  Using gridded data ***')
         else:
           try:
             #mypft_frac[point_pfts[n]] = 100.0
@@ -682,10 +741,17 @@ for n in range(0,n_grids):
                        'EBF Temperate', 'DBF Tropical', 'DBF Temperate', 'DBF Boreal', 'EB Shrub' \
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
-            if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
+            #if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
+            if options.marsh and n==1 and not (options.col3rd): # # [Wei Huang 2022-07-11] Set tidal channel column in marsh mode to zero PFT area
                 print('Setting PFT area in tidal column to zero')
                 mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
                 mypft_frac[0]=100.0
+            # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
+            # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
+            if options.col3rd and n==2: # [Wei Huang 2022-07-11]
+                print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [Wei Huang 2022-07-11]
+                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [Wei Huang 2022-07-11]
+                mypft_frac[0]=100.0 # [Wei Huang 2022-07-11]
             if (options.mypft >= 0 and not (options.marsh and n==1)):
               print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
               pct_pft[:,0,0] = 0.0

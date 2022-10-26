@@ -89,6 +89,9 @@ parser.add_option("--notrans", action="store_true", dest="notrans", default=Fals
 # model input options
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
+# add site3rd for 3 columns run Wei Huang 2022-07-28
+parser.add_option("--site3rd", dest="site3rd", default='', \
+                  help = '6-character FLUXNET code to run (optional)')
 parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--ccsm_input", dest="ccsm_input", default='', \
@@ -136,6 +139,9 @@ parser.add_option("--siteparms",dest = "siteparms", default=False, action="store
                   help = 'Use default PFT parameters')
 parser.add_option("--parm_file", dest="parm_file", default="", \
                   help = 'parameter file to use')
+# added for 2nd plant by Wei Huang 2022-08-03
+parser.add_option("--parm_file_2nd", dest="parm_file_2nd", default="", \
+                  help = 'parameter file to use')
 parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
                   help = 'parameter file to use')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
@@ -160,6 +166,9 @@ parser.add_option("--humhol", dest="humhol", default=False, action="store_true",
                   help = 'Use hummock/hollow microtopography')
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
+parser.add_option("--col3rd", dest="col3rd", default=False, \
+                  help = 'Adding 3rd column/gridcell', action="store_true")
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
@@ -527,6 +536,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --caseidprefix '+mycaseid
         if (options.parm_file != ''):
             basecmd = basecmd+' --parm_file '+options.parm_file
+        if (options.parm_file_2nd != ''):
+            basecmd = basecmd+' --parm_file_2nd '+options.parm_file_2nd
         if (options.parm_file_P != ''):
             basecmd = basecmd+' --parm_file_P '+options.parm_file_P
         if (options.parm_vals != ''):
@@ -557,6 +568,11 @@ for row in AFdatareader:
             basecmd = basecmd+' --humhol'
         if (options.marsh):
             basecmd = basecmd+' --marsh'
+        # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
+        if(options.col3rd):
+            basecmd = basecmd + ' --col3rd'
+        if(options.site3rd != ''):
+            basecmd = basecmd + ' --site3rd '+options.site3rd
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
         if (options.tide_forcing_file != ''):
@@ -936,6 +952,10 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --humhol'
                 if (options.marsh):
                     ptcmd = ptcmd+' --marsh'
+                if (options.col3rd):
+                    ptcmd = ptcmd+' --col3rd'
+                if (options.site3rd != ''):
+                    ptcmd = ptcmd+' --site3rd '+options.site3rd
                 result = runcmd(ptcmd)
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)
@@ -1059,7 +1079,7 @@ for row in AFdatareader:
             mysubmit_type = 'qsub'
             groupnum = int(sitenum/npernode)
             if ('cades' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine or \
-                'compy' in options.machine or 'cori' in options.machine):
+                'compy' in options.machine or 'cori' in options.machine or 'stampede2' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
                 mysubmit_type = ''
@@ -1076,12 +1096,14 @@ for row in AFdatareader:
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
                     if ("perl" in s or "python" in s):
-                        if ('cades' in options.machine):
+                        if ('cades' in options.machine or 'stampede2' in options.machine):
                           output.write("#!/bin/bash -f\n")
                         else:
                           output.write("#!/bin/csh -f\n")
                         timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
                                      int(float(options.walltime)))*60))+':00'
+                        if ('stampede2' in options.machine):
+                            timestr = '3:00:00'
                         if (options.debug):
                             timestr = '00:30:00'
                             if ('compy' in options.machine):
@@ -1101,6 +1123,11 @@ for row in AFdatareader:
                                     output.write('#SBATCH --partition=debug\n')
                                 else:
                                     output.write('#SBATCH --partition=regular\n')
+                            if ('stampede2' in options.machine):
+                                output.write('#SBATCH -J CORIE # Job name\n')
+                                output.write('#SBATCH -p skx-normal\n')
+                                output.write('#SBATCH -N 1               # Total # of nodes\n')
+                                output.write('#SBATCH -A NOAA_CSDL_NWI_SCHISM  # Allocation name \n')
                             if ('cades' in options.machine):
                                 output.write('#SBATCH -A ccsi\n')
                                 output.write('#SBATCH -p batch\n')
@@ -1112,6 +1139,8 @@ for row in AFdatareader:
                             #    output.write("#PBS -l nodes=1:ppn=1\n")
                             #else:
                             output.write("#PBS -l nodes="+str(int(nnode))+":ppn="+str(int(npernode))+"\n")
+                        elif ('stampede2' in options.machine):
+                            output.write('#SBATCH -n 1               # Total # of mpi tasks (48 cores/node)\n')
                         else:
                             output.write("#PBS -l nodes="+str(int(nnode))+"\n")
                     elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
@@ -1153,6 +1182,9 @@ for row in AFdatareader:
                     output.write('source $MODULESHOME/init/bash\n')
                     output.write('module unload python\n')
                     output.write('module load python/2.7.12\n')
+                if ('stampede2' in options.machine):
+                    output.write('source $MODULESHOME/init/bash\n')
+                    output.write('module load nco\n')
             else:
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','a')   
                
@@ -1189,7 +1221,7 @@ for row in AFdatareader:
                 if options.batch_build and options.exeroot == '':
                     output.write('./xmlchange BUILD_COMPLETE=FALSE\n')
                     output.write("./case.build || exit 1\n")
-                output.write("./case.submit --no-batch &\n")
+                output.write("./case.submit --no-batch >& err2.out\n")
             elif ('ad_spinup' in c):
                 if (options.ad_Pinit):
                     output.write("cd "+runroot+'/'+basecase+"_"+modelst+"_ad_spinup/run\n")
@@ -1229,7 +1261,7 @@ for row in AFdatareader:
 
             if (sitenum == 0 and 'fn_spinup' in c):
                 output.write("cd "+caseroot+'/'+basecase+"_"+modelst+"\n")
-                output.write('./case.submit --no-batch &\n')
+                output.write('./case.submit --no-batch >& err2.out \n')
             elif ('fn_spinup' in c):
                 output.write("cd "+runroot+'/'+basecase+"_"+modelst+"/run\n")
                 output.write(runroot+'/'+ad_case_firstsite+'/bld/'+myexe+' &\n')
@@ -1241,7 +1273,7 @@ for row in AFdatareader:
 #                  output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','')+"_trans\n")
                 else:
                   output.write("cd "+caseroot+'/'+basecase+"_"+modelst.replace('1850','20TR')+"\n")
-                output.write('./case.submit --no-batch &\n')
+                output.write('./case.submit --no-batch >& err2.out \n')
             elif ('transient' in c):
                 if (options.crop):
                   output.write("cd "+runroot+'/'+basecase+"_"+modelst+"_trans/run\n")
@@ -1256,7 +1288,7 @@ for row in AFdatareader:
                 if (sitenum == 0):
                     simroot=caseroot
                     simsuffix=''
-                    simsubmit='./case.submit --no-batch &\n'
+                    simsubmit='./case.submit --no-batch >& err2.out \n'
                 else: 
                     simroot=runroot
                     simsuffix='/run'

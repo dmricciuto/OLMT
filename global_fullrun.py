@@ -97,6 +97,8 @@ parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
 parser.add_option("--parm_file", dest="parm_file", default="", \
                   help = 'parameter file to use')
+parser.add_option("--parm_file_2nd", dest="parm_file_2nd", default="", \
+                  help = 'parameter file to use')
 parser.add_option("--parm_file_P", dest="parm_file_P", default="", \
                   help = 'P parameter file to use')               
 parser.add_option("--parm_vals", dest="parm_vals", default="", \
@@ -533,6 +535,8 @@ if (options.archiveroot !=''):
     basecmd = basecmd+' --archiveroot '+options.archiveroot
 if (options.parm_file !=''):
     basecmd = basecmd+' --parm_file '+options.parm_file
+if (options.parm_file_2nd !=''):
+    basecmd = basecmd+' --parm_file_2nd '+options.parm_file_2nd
 if (options.parm_file_P !=''):
     basecmd = basecmd+' --parm_file_P '+options.parm_file_P
 if (options.mod_parm_file !=''):
