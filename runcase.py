@@ -44,6 +44,9 @@ parser.add_option("--pft", dest="mypft", default=-1, \
                   help = 'Use this PFT for all gridcells')
 parser.add_option("--parm_file", dest="parm_file", default='',
                   help = 'file for parameter modifications')
+# added by Wei Huang 2022-08-03 for 2nd plant species
+parser.add_option("--parm_file_2nd", dest="parm_file_2nd", default='',
+                  help = 'file for parameter modifications')
 parser.add_option("--parm_vals", dest="parm_vals", default="", \
                   help = 'User specified parameter values')
 parser.add_option("--parm_file_P", dest="parm_file_P", default='',
@@ -89,6 +92,9 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
+parser.add_option("--col3rd", dest="col3rd", default=False, \
+                  help = 'Adding 3rd column/gridcell', action="store_true")
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
@@ -122,6 +128,9 @@ parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
+#site3rd added by Wei Huang for 3 columns run
+parser.add_option("--site3rd", dest="site3rd", default='', \
+                  help = '6-character FLUXNET code to run (optional)')
 parser.add_option("--site_forcing", dest="site_forcing", default='', \
                   help = '6-character FLUXNET code for forcing data')
 parser.add_option("--metdir", dest="metdir", default="none", \
@@ -139,6 +148,8 @@ parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
 parser.add_option("--gswp3", dest="gswp3", default=False, \
                   help= "use GSWP3 forcing", action="store_true")
+parser.add_option("--gswp3_w5e5", dest="gswp3_w5e5", default=False, action="store_true", \
+                  help = 'Use GSWP3 w5e5 meteorology')
 parser.add_option("--princeton", dest="princeton", default=False, \
                   help= "use Princecton forcing", action="store_true")
 parser.add_option("--livneh", dest="livneh", default=False, \
@@ -392,6 +403,9 @@ elif ('anvil' in options.machine):
     ppn=36
 elif ('compy' in options.machine):
     ppn=40
+elif ('stampede2' in options.machine):
+    ppn=48
+    options.walltime=1
 if (options.ensemble_file == ''):
   ppn=min(ppn, int(options.np))
 
@@ -571,7 +585,7 @@ if (options.mycaseid != ""):
 if (options.metdir!='none'):# obviously user-provided met forcing is not reanalysis type
     use_reanalysis = False
 #CRU-NCEP 2 transient phases
-elif ('CRU' in compset or options.cruncep or options.gswp3 or \
+elif ('CRU' in compset or options.cruncep or options.gswp3 or options.gswp3_w5e5 or \
             options.crujra or options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
@@ -685,6 +699,11 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --nosurfdata '
     if(options.marsh):
         ptcmd = ptcmd + ' --marsh'
+    # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
+    if(options.col3rd):
+        ptcmd = ptcmd + ' --col3rd'
+    if(options.site3rd != ''):
+        ptcmd = ptcmd + ' --site3rd '+options.site3rd
     if(options.humhol):
         ptcmd = ptcmd + ' --humhol'
 
@@ -773,7 +792,7 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if (options.humhol or options.marsh):
+            if (options.humhol or options.marsh or options.col3rd):
                 numxpts=2
             else:
                 numxpts=1
@@ -820,25 +839,27 @@ else:
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
     if ('chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine \
-          or 'mymac' in options.machine or 'anvil' in options.machine):
+          or 'mymac' in options.machine or 'anvil' in options.machine or 'stampede2' in options.machine):
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-    if (options.humhol or options.marsh):
+    if (options.humhol or options.marsh or options.col3rd):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
     #   print('humhol_ht = 0.15m')
     #   print('humhol_dist = 1.0m')
       print('setting rsub_top_globalmax = 1.2e-5')
     #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if options.marsh:
+      if (options.col3rd):
+        os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      if (options.marsh or options.col3rd):
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.50')
       else:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.64')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if options.marsh:
+      if (options.marsh or options.col3rd):
         print('qflx_h2osfc_surfrate = 0.0')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       else:
@@ -849,7 +870,7 @@ else:
     #   flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     #   os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     #   ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    if (options.marsh and options.tide_components_file != ''):
+    if ((options.marsh or options.col3rd) and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
         print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
         print('Tide datum (tide_baseline parameter) needs to be specified separately. Default is 800 mm')
@@ -857,10 +878,12 @@ else:
         tidecomps=pandas.read_csv(options.tide_components_file)
         for comp in range(len(tidecomps)):
             os.system(myncap+' -O -s "tide_coeff_amp_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Amplitude'].iloc[comp]*1000)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-            os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,360*3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+            #os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,360*3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+            #editted by Wei Huang for the 1 line below to correct the tidal period
+            os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-        os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    elif options.marsh and options.tide_forcing_file == '':
+        os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    elif (options.marsh or options.col3rd) and options.tide_forcing_file == '':
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -907,7 +930,40 @@ if (options.parm_file != ''):
                         os.system(myncap+' -O -s "%s = q10_mr*0+%s" '%(values[0],values[2])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
                
     input.close()
+if (options.parm_file_2nd != ''):
+    pftfile = tmpdir+'/clm_params.nc'
+    if ('/' not in options.parm_file_2nd):
+       #assume in pointclm directory
+       input  = open(PTCLMdir+'/'+options.parm_file_2nd)
+    else:   #assume full path given
+       input   = open(os.path.abspath(options.parm_file_2nd))
+    for s in input:
+        if s[0:1] != '#':
+            values = s.split()
+            try:
+                thisvar = nffun.getvar(pftfile, values[0])
+                if (len(values) == 2):
+                    thisvar[...] = float(values[1])
+                elif (len(values) == 3):
+                    if (float(values[1]) > 0):
+                        thisvar[int(values[1])] = float(values[2])
+                    else:
+                        thisvar[...] = float(values[2])
+                ierr = nffun.putvar(pftfile, values[0], thisvar)
+            except ValueError:
+                print('Parameter %s not found in clm_params.nc. Adding.'%values[0])
+                if (len(values) == 2):
+                    print('No PFT specified. Assuming universal parameter')
+                    os.system(myncap+' -O -s "%s = q10_mr*0+%1.4e" '%(values[0],values[1])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+                elif (len(values) == 3):
+                    if (float(values[1]) > 0):
+                        print('PFT specified. Setting value for all PFTs')
+                        os.system(myncap+' -O -s "%s = flnr*0+%s" '%(values[0],values[2])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+                    else:
+                        print('No PFT specified. Assuming universal parameter')
+                        os.system(myncap+' -O -s "%s = q10_mr*0+%s" '%(values[0],values[2])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
 
+    input.close()
 if (options.parm_vals != ''):
     pftfile = tmpdir+'/clm_params.nc'
     parms = options.parm_vals.split('/')
@@ -1156,7 +1212,7 @@ for i in range(1,int(options.ninst)+1):
 
     #history file options
     #outputs for SPRUCE MiP and Jiafu's diagnostics code:
-    var_list_hourly = ['GPP', 'NEE', 'NEP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
+    var_list_hourly = ['GPP', 'NEE', 'NEP', 'NPP', 'SALINITY', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
             'CPOOL_TO_DEADSTEMC', 'LIVECROOTC_XFER_TO_LIVECROOTC', 'DEADCROOTC_XFER_TO_DEADCROOTC', \
             'CPOOL_TO_LIVECROOTC', 'CPOOL_TO_DEADCROOTC', 'FROOTC_ALLOC', 'AR', 'LEAF_MR', 'CPOOL_LEAF_GR',
             'TRANSFER_LEAF_GR', 'CPOOL_LEAF_STORAGE_GR', 'LIVESTEM_MR', 'CPOOL_LIVESTEM_GR', \
@@ -1175,7 +1231,7 @@ for i in range(1,int(options.ninst)+1):
             'TOTSOMC', 'ZWT', 'SNOWDP', 'TLAI','RH2M','QRUNOFF']
     #var_list_hourly_bgc   TODO:  Separate SP and BGC variables, 
     var_list_daily = ['TOTLITC', 'TOTSOMC', 'CWDC', 'LITR1C_vr', 'LITR2C_vr', 'LITR3C_vr', 'SOIL1C_vr', \
-                      'SOIL2C_vr', 'SOIL3C_vr', 'H2OSFC', 'ZWT', 'SNOWDP', 'TLAI', 'CPOOL','NPOOL','PPOOL', \
+                      'SOIL2C_vr', 'SOIL3C_vr','H2OSFC', 'ZWT', 'SNOWDP', 'TLAI', 'CPOOL','NPOOL','PPOOL', \
                       'FPI','FPI_P','FPG','FPG_P','FPI_vr','FPI_P_vr']
     var_list_pft = ['GPP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'CPOOL_TO_DEADSTEMC', \
                     'LIVECROOTC_XFER_TO_LIVECROOTC', 'DEADCROOTC_XFER_TO_DEADCROOTC', \
@@ -1497,6 +1553,10 @@ for i in range(1,int(options.ninst)+1):
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                           +"/atm_forcing.datm7.GSWP3.0.5d.v2.c180716/cpl_bypass_full'\n")
 #                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
+            elif (options.gswp3_w5e5):
+                output.write(" metdata_type = 'gswp3_w5e5'\n")
+                output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.GSWP3-w5e5.c/cpl_bypass_full'\n")
             elif (options.princeton):
                 if (options.livneh):
                     output.write(" metdata_type = 'princeton_livneh'\n")
@@ -1563,6 +1623,8 @@ for i in range(1,int(options.ninst)+1):
 
     if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
+    if (cpl_bypass and options.col3rd and options.tide_forcing_file != ''):
+        output.write(" tide_file = '%s'"%options.tide_forcing_file)
     output.close()
 
 
@@ -1587,6 +1649,10 @@ if (options.humhol):
 if (options.marsh):
     print("Turning on MARSH modification\n")
     os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+#Added option for COL3RD, 3rd column [Wei Huang 2022-07-11]
+if (options.col3rd):
+    print("Turning on COL3RD modification\n")
+    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL3RD'")
 if (options.alquimia != ""):
     print("Turning on alquimia interface for compilation and running")
     os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
@@ -1826,7 +1892,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             print('Error:  ensemble file does not exist')
             sys.exit(1)
 
-        samples=numpy.zeros((n_parameters,100000), dtype=numpy.float) 
+        samples=numpy.zeros((n_parameters,100000), dtype=numpy.float64) 
         #get parameter samples and information
         myinput=open(options.ensemble_file)
         nsamples = 0
@@ -1870,7 +1936,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
            timestr='00:30:00'
            if ('compy' in options.machine):
              timestr='02:00:00'
-        output_run.write("#!/bin/csh -f\n")
+        output_run.write("#!/bin/bash -f\n")
         if (mysubmit_type == 'qsub'):
             output_run.write('#PBS -l walltime='+timestr+'\n')
             output_run.write('#PBS -N ens_'+casename+'\n')
@@ -1902,7 +1968,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
               output_run.write('#SBATCH -A ccsi\n')
               output_run.write('#SBATCH -p batch\n')
               output_run.write('#SBATCH --mem=64G\n')
-              output_run.write('#SBATCH --ntasks-per-node 32\n')
+              output_run.write('#SBATCH --ntasks-per-node=32\n')
             if ('anvil' in options.machine):
               output_run.write('#SBATCH -A condo\n')
               output_run.write('#SBATCH -p acme-small\n')
@@ -1949,7 +2015,10 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
             mpicmd = 'mpirun'
             if ('cades' in options.machine):
-                mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
+                #mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
+                output_run.write('source ~/anaconda3/bin/activate\n') #[Wei Huang: activate conda installed by user under home dir: ~/anaconda3, 06-30-2023]
+                output_run.write('conda activate phpenv\n') #[Wei Huang: use mpi under conda environment installed by user, 06-27-2023]
+                mpicmd = 'mpirun' #[Wei Huang: use mpi under conda environment installed by user, 06-27-2023]
             cmd = mpicmd+' -np '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \

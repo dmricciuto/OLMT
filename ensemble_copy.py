@@ -255,7 +255,6 @@ for p in parm_names:
       #   param[parm_indices[pnum]]=1.0-parm_values[pnum]-parm_values[pnum-1]
       #   ierr = nffun.putvar(myfile, 'fr_fcel', param)
    pnum = pnum+1
-
 #ensure FATES seed allocation paramters sum to one
 #if (fates_seed_zeroed[0]):
 #  param = nffun.getvar(myfile,'fates_seed_alloc')
