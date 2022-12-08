@@ -186,6 +186,8 @@ parser.add_option("--fates", dest="fates", default=False, action="store_true", \
                   help = 'Use fates model')
 parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
                   help = 'Which version of fates_nutrient to use (RD or ECA)')
+parser.add_option("--fates_logging", dest="fates_logging", default=False, action="store_true", \
+                  help = 'Set fates logging to true')
 parser.add_option("--ECA", dest="eca", default=False, action="store_true", \
                   help = 'Use ECA compset')
 parser.add_option("--c_only", dest="c_only", default=False, action ="store_true",  \
@@ -590,6 +592,8 @@ for row in AFdatareader:
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
         if (options.fates_nutrient != ''):
             basecmd = basecmd+ ' --fates_nutrient '+options.fates_nutrient
+        if (options.fates_logging != ''):
+            basecmd = basecmd+ ' --fates_logging '
         if (options.surfdata_grid):
             basecmd = basecmd+' --surfdata_grid'
         if (options.ensemble_file != ''):   

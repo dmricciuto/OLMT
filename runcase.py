@@ -300,6 +300,8 @@ parser.add_option("--fates_hydro", dest="fates_hydro", default=False, action="st
                   help = 'Set fates hydro to true')
 parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
                   help = 'Which version of fates_nutrient to use (RD or ECA)')
+parser.add_option("--fates_logging", dest="fates_logging", default=False, action="store_true", \
+                  help = 'Set fates logging to true')
 parser.add_option("--fates_paramfile", dest="fates_paramfile", default="", \
                   help = 'Fates parameter file to use')
 parser.add_option("--var_soilthickness", dest="var_soilthickness", default=False, \
@@ -1403,6 +1405,8 @@ for i in range(1,int(options.ninst)+1):
       output.write(" fates_paramfile = '"+options.fates_paramfile+"'\n")
     if (('ED' in compset or 'FATES' in compset) and options.fates_hydro):
       output.write(" use_fates_planthydro = .true.\n")
+    if (('ED' in compset or 'FATES' in compset) and options.fates_logging):
+      output.write(" use_fates_logging = .true.\n")
 
     if ('CROP' in compset or 'RD' in compset or 'ECA' in compset or options.fates_nutrient != ''):
         #soil order parameter file
