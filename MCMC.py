@@ -52,7 +52,7 @@ def posterior(parms):
 
 #-------------------------------- MCMC ------------------------------------------------------
 
-def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10, default=[]):
+def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10, default_output=[]):
     #Metropolis-Hastings Markov Chain Monte Carlo with adaptive sampling
     post_best = -99999
     post_last = -99999
@@ -66,7 +66,6 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10, default=[]):
     chain_burn = np.zeros((nparms,nevals))
     output     = np.zeros((model.nobs,nevals))
     mycov      = np.zeros((nparms,nparms))
-
     for p in range(0,nparms):
         #Starting step size = 1% of prior range
         #parm_step[p] = 2.4**2/nparms * (model.pmax[p]-model.pmin[p])
@@ -162,14 +161,14 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10, default=[]):
                 post_best = post
                 parms_best = parms
                 print(post_best)
-                output_best = model.output
+                output_best = model.output.flatten()
 
         #populate the chain matrix
         for j in range(0,nparms):
             chain[j][i] = parms[j]
         chain[nparms][i] = post_last
         for j in range(0,model.nobs):
-            output[j,i] = model.output[j]
+            output[j,i] = model.output[0,j]
 
         if (i % 1000 == 0):
             print(' -- '+str(i)+' --\n')
@@ -249,19 +248,18 @@ def MCMC(parms, nevals, type='uniform', nburn=1000, burnsteps=10, default=[]):
 
     #make prediction plots
     obs_set = list(set(model.obs_name))
-    print(obs_set)
     for s in range(0,len(obs_set)):
       thisob = [ix for ix, value in enumerate(model.obs_name) if value == obs_set[s]]
       fig = plt.figure()
       ax=fig.add_subplot(111)
-      x = np.cumsum(np.ones([len(thisob)],np.float))
+      x = np.cumsum(np.ones([len(thisob)],float))
       ax.errorbar(x,model.obs[thisob], yerr=model.obs_err[thisob], label='Observations')
       ax.plot(x,output_best[thisob],'r', label = 'Model best')
       ax.plot(x,output_sorted[thisob,int(0.025*(nevals-nburn*burnsteps))], \
                  'k--', label='Model 95% CI')
       ax.plot(x,output_sorted[thisob,int(0.975*(nevals-nburn*burnsteps))],'k--')
       if (options.parm_default != ''):
-        ax.plot(x,default, 'g', label='Default')
+        ax.plot(x,default_output[thisob], 'g', label='Default')
         #plt.xlabel(model.xlabel)
         #plt.ylabel(model.ylabel)
       box = ax.get_position()
@@ -280,10 +278,9 @@ if (options.parm_default != ''):
   parms_default = np.loadtxt(options.parm_default)
   model.run(parms_default)
   default_output = model.output.flatten()
-
   parms = MCMC(model.pdef, int(options.nevals), burnsteps=int(options.burnsteps), \
                           nburn=int(options.nevals)/(2*int(options.burnsteps)), \
-                          default=default_output)
+                          default_output=default_output)
 else:
   #run MCMC
   parms = MCMC(model.pdef, int(options.nevals), burnsteps=int(options.burnsteps), \

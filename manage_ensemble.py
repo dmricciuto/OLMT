@@ -156,6 +156,7 @@ def postproc(myvars, myyear_start, myyear_end, myday_start, myday_end, myavg, \
         pnum=pnum+1
     else:
       pfname = baserundir+'clm_params_'+str(100000+thisjob)[1:]+'.nc'
+      #pfname_def = baserundir+'clm_params.nc'
       fpfname = baserundir+'fates_params_'+str(100000+thisjob)[1:]+'.nc'
       sfname = baserundir+'surfdata_'+str(100000+thisjob)[1:]+'.nc'
       pnum=0
@@ -376,20 +377,25 @@ if (rank == 0):
         myoutput = open(UQ_output+'/data/outnames.txt', 'w')
         vlast=''
         for v in myvars:
-          if v != vlast:
-            vcount=0
-            vlast=v
-          if (myvars.count(v) > 1):
-            myoutput.write(v+'_'+str(vcount)+'\n')
-            vcount=vcount+1
-          else:
-            myoutput.write(v+'\n')
+          #if v != vlast:
+          #  vcount=0
+          #  vlast=v
+          #if (myvars.count(v) > 1):
+          #  myoutput.write(v+'_'+str(vcount)+'\n')
+          #  vcount=vcount+1
+          #else:
+          myoutput.write(v+'\n')
           eden_header=eden_header+v+','
         myoutput.close()
+
+        os.system('mkdir -p '+UQ_output+'/GSA')
         myoutput = open(UQ_output+'/data/param_range.txt', 'w')
+        myoutput2 = open(UQ_output+'/GSA/param_range.txt', 'w')
         for p in range(0,len(pmin)):
           myoutput.write(pmin[p]+' '+pmax[p]+'\n')
+          myoutput2.write(pnames[p]+' '+pmin[p]+' '+pmax[p]+'\n')
         myoutput.close()
+        myoutput2.close()
         print(np.hstack((parm_out,data_out)))
         np.savetxt(UQ_output+'/data/foreden.csv', np.hstack((parm_out,data_out)), delimiter=',', header=eden_header[:-1])
         if (options.run_uq):
@@ -406,6 +412,8 @@ if (rank == 0):
           #os.chdir('../..')
           #Create the surrogate model
           os.system('python surrogate_NN.py --case '+options.casename)
+          #Run the senstivity analysis using SALib
+          os.system('python run_GSA.py --case '+options.casename)
           if (max(myobs_err) > 0):
             #Run the MCMC calibration on surrogate model if data provided
             os.system('python MCMC.py --case '+options.casename+' --parm_list '+options.parm_list)
@@ -457,13 +465,15 @@ else:
                       lnd_in_new=open('lnd_in','w')
                       pst = str(100+plots[t])[1:]
                       for s in lnd_in_old:
-                        if ('finidat' in s):
+                        if ('finidat =' in s):
                           lnd_in_new.write(" finidat = './"+c+"."+options.model_name+".r.2015-01-01-00000.nc'\n")
                         elif ('metdata_bypass' in s):
                           lnd_in_new.write(s[:-2]+'/plot'+pst+"'\n")
                           if ('CO2' in treatments[t]):
                             lnd_in_new.write(' add_co2 = 500\n')
                             lnd_in_new.write(" startdate_add_co2 = '20160315'\n") 
+                        elif ('landuse_timeseries' in s):
+                          lnd_in_new.write(s.replace('plot07','plot'+pst))
                         else:
                           lnd_in_new.write(s)
                       lnd_in_old.close()

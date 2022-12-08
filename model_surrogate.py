@@ -38,8 +38,8 @@ class MyModel(object):
         obsfile = open(UQdir+'/data/obs.dat')
         i=0
         for s in obsfile:
-          self.obs[i] = np.float(s.split()[0])
-          self.obs_err[i] = np.float(s.split()[1])
+          self.obs[i] = float(s.split()[0])
+          self.obs_err[i] = float(s.split()[1])
           i=i+1
         obsfile.close()
         outnamesfile = open(UQdir+'/data/outnames.txt')
@@ -52,15 +52,24 @@ class MyModel(object):
         self.qoi_good = np.loadtxt(UQdir+'/NN_surrogate/qoi_good.txt').astype(int)
 
     def run(self,parms):
-        parms_nn = np.zeros([1,self.nparms],float)
-        for p in range(0,self.nparms):
-          parms_nn[0,p] = (parms[p]-self.pmin[p])/(self.pmax[p]-self.pmin[p])
-        self.output = np.zeros([self.nobs])
-        output_temp = self.nnmodel.predict(parms_nn).flatten()
+        if ((parms).ndim == 1):
+            nsamples=1
+            theseparms=parms
+        else:
+            nsamples=parms.shape[0]
+        parms_nn = np.zeros([nsamples,self.nparms],float)
+        for n in range(0,nsamples):
+          if nsamples > 1:
+              theseparms = parms[n,:]
+          for p in range(0,self.nparms):
+            parms_nn[n,p] = (theseparms[p]-self.pmin[p])/(self.pmax[p]-self.pmin[p])
+        self.output = np.zeros([nsamples,self.nobs])
+        output_temp = self.nnmodel.predict(parms_nn)
+
         qgood=0
         for q in range(0,self.nobs):
           if (q in self.qoi_good):
-            self.output[q] = output_temp[qgood]*(self.yrange[1,q]-self.yrange[0,q])+self.yrange[0,q]
+            self.output[:,q] = output_temp[:,qgood]*(self.yrange[1,q]-self.yrange[0,q])+self.yrange[0,q]
             qgood=qgood+1
           else:
-            self.output[q] = self.yrange[1,q]
+            self.output[:,q] = self.yrange[1,q]
