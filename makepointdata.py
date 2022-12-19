@@ -1071,7 +1071,7 @@ if myrank==0:
       if(ierr!=0): raise RuntimeError('Error: ncks to extract constants')
       #os.system('ncecat '+surffile_list+' '+surffile_new) # not works with too long '_list'
       ierr = os.system('find ./temp/ -name "'+surffile_tmp+ \
-        '" | xargs ls | sort | ncecat -O -h -x -v mxsoil_color,mxsoil_order -o' \
+        '" | xargs ls | sort | ncecat -O -h -x -v mxsoil_color,mxsoil_order -o ' \
         +surffile_new) # must exclude 'mxsoil_color, mxsoil_order', which are scalars and to be added back afterwards
       if(ierr!=0): raise RuntimeError('Error: ncecat '); #os.sys.exit()
       # append back 'constants.nc'
