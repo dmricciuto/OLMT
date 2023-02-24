@@ -206,7 +206,7 @@ elif (options.site != ''):
             lon.append(mylon)
             lat.append(float(row[4]))
             if ('US-SPR' in options.site or 
-                (options.marsh or options.humhol)):
+                (options.humhol)):
                 lon.append(mylon)
                 lat.append(float(row[4]))
                 n_grids = 2
@@ -682,11 +682,11 @@ for n in range(0,n_grids):
                        'EBF Temperate', 'DBF Tropical', 'DBF Temperate', 'DBF Boreal', 'EB Shrub' \
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
-            if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
-                print('Setting PFT area in tidal column to zero')
-                mypft_frac = numpy.zeros([npft+npft_crop], float)
-                mypft_frac[0]=100.0
-            if (options.mypft >= 0 and not (options.marsh and n==1)):
+            # if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
+            #     print('Setting PFT area in tidal column to zero')
+            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+            #     mypft_frac[0]=100.0
+            if (options.mypft >= 0):
               print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
               pct_pft[:,0,0] = 0.0
               pct_pft[int(options.mypft),0,0] = 100.0
