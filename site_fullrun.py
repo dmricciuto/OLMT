@@ -111,6 +111,8 @@ parser.add_option("--cruncepv8", dest="cruncepv8", default=False, action="store_
                   help = 'Use CRU-NCEP meteorology')
 parser.add_option("--gswp3", dest="gswp3", default=False, action="store_true", \
                   help = 'Use GSWP3 meteorology')
+parser.add_option("--gswp3_w5e5", dest="gswp3_w5e5", default=False, action="store_true", \
+                  help = 'Use GSWP3 meteorology')
 parser.add_option("--princeton", dest="princeton", default=False, action="store_true", \
                   help = 'Use Princeton meteorology')
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
@@ -463,13 +465,15 @@ for row in AFdatareader:
             firstsite=site
         site_lat  = row[4]
         site_lon  = row[3]
-        if (options.cruncepv8 or options.cruncep or options.gswp3 or options.princeton):
+        if (options.cruncepv8 or options.cruncep or options.gswp3 or options.gswp3_w5e5 or options.princeton):
           startyear = 1901
           endyear = 1920
           if (options.cruncepv8):
             endyear_trans=2016
           elif (options.gswp3):
             endyear_trans=2014
+          elif (options.gswp3_w5e5):
+            endyear_trans=2019
           elif (options.princeton):
             endyear_trans=2012
           else:
@@ -498,7 +502,7 @@ for row in AFdatareader:
             if (options.eco2_file != ''):
                 translen = translen - ncycle     # if experiment sim, stop first transient at exp start yr - 1
             if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
-                options.princeton or options.cruncepv8)):
+                options.princeton or options.cruncepv8 or options.gswp3_w5e5)):
                 print(endyear_trans, site_endyear)
                 translen = min(site_endyear,endyear_trans)-1850+1
 
@@ -599,6 +603,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --cruncepv8'
         if (options.gswp3):
             basecmd = basecmd+' --gswp3'
+        if (options.gswp3_w5e5):
+            basecmd = basecmd+' --gswp3_w5e5' 
         if (options.princeton):
             basecmd = basecmd+' --princeton'
         if (options.daymet):
@@ -888,7 +894,8 @@ for row in AFdatareader:
 
         #transient phase 2 
         #(CRU-NCEP only, without coupler bypass)
-        if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
+        if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton \
+                 or options.gswp3_w5e5) and not options.cpl_bypass):
             basecase=basecase.replace('1850','20TR')+'_phase1'
             thistranslen = site_endyear - 1921 + 1
             cmd_trns2 = basecmd+' --trans2 --finidat_case '+basecase+ \

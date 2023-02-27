@@ -148,6 +148,8 @@ parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
 parser.add_option("--gswp3", dest="gswp3", default=False, \
                   help= "use GSWP3 forcing", action="store_true")
+parser.add_option("--gswp3_w5e5", dest="gswp3_w5e5", default=False, action="store_true", \
+                  help = 'Use GSWP3 w5e5 meteorology')
 parser.add_option("--princeton", dest="princeton", default=False, \
                   help= "use Princecton forcing", action="store_true")
 parser.add_option("--livneh", dest="livneh", default=False, \
@@ -583,7 +585,7 @@ if (options.mycaseid != ""):
 if (options.metdir!='none'):# obviously user-provided met forcing is not reanalysis type
     use_reanalysis = False
 #CRU-NCEP 2 transient phases
-elif ('CRU' in compset or options.cruncep or options.gswp3 or \
+elif ('CRU' in compset or options.cruncep or options.gswp3 or options.gswp3_w5e5 or \
             options.crujra or options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
@@ -1551,6 +1553,10 @@ for i in range(1,int(options.ninst)+1):
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                           +"/atm_forcing.datm7.GSWP3.0.5d.v2.c180716/cpl_bypass_full'\n")
 #                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
+            elif (options.gswp3_w5e5):
+                output.write(" metdata_type = 'gswp3_w5e5'\n")
+                output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.GSWP3-w5e5.c/cpl_bypass_full'\n")
             elif (options.princeton):
                 if (options.livneh):
                     output.write(" metdata_type = 'princeton_livneh'\n")
