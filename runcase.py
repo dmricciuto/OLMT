@@ -397,6 +397,8 @@ elif ('compy' in options.machine):
     ppn=40
 elif ('chrysalis' in options.machine):
     ppn=64
+elif ('pm-cpu' in options.machine):
+    ppn=128
 if (options.ensemble_file == ''):
   ppn=min(ppn, int(options.np))
 
@@ -684,10 +686,10 @@ if (options.nopointdata == False):
     else:
         ptcmd = ptcmd + ' --site '+options.site+' --sitegroup '+options.sitegroup
 
-    if(options.domainfile != ''):
-        ptcmd = ptcmd + ' --nodomain '
-    if(options.surffile !=''):
-        ptcmd = ptcmd + ' --nosurfdata '
+    #if(options.domainfile != ''):
+    #    ptcmd = ptcmd + ' --nodomain '
+    #if(options.surffile !=''):
+    #    ptcmd = ptcmd + ' --nosurfdata '
     if(options.marsh):
         ptcmd = ptcmd + ' --marsh'
     if(options.humhol):
@@ -974,10 +976,11 @@ elif (options.exit_spinup):
     options.run_n = 1
 
 #create new case
+timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
+                                     int(float(options.walltime)))*60))+':00'
 cmd = './create_newcase --case '+casedir+' --mach '+options.machine+' --compset '+ \
 	   options.compset+' --res '+options.res+' --mpilib '+ \
-           options.mpilib+' --walltime '+str(options.walltime)+ \
-          ':00:00 '+'--handle-preexisting-dirs u'
+           options.mpilib+' --walltime '+timestr+' --handle-preexisting-dirs u'
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
 if (options.project != ''):
