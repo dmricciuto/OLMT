@@ -396,7 +396,7 @@ if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton o
         endyear = 2010
     if (options.daymet4):
         startyear = 1980
-        endyear = 2014
+        endyear = 1999
     if (options.crujra):
         site_endyear = 2017
 

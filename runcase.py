@@ -1177,7 +1177,7 @@ for i in range(1,int(options.ninst)+1):
                       'FSA','FSDS','FLDS','TBOT','RAIN','SNOW','WIND','PBOT','QBOT','QVEGT','QVEGE','QSOIL', \
                       'QH2OSFC','H2OSOI','ZWT','SNOWDP','TLAI','RH2M','QRUNOFF']
     if ('RD' in compset or 'ECA' in compset):
-      var_list_hourly.append(['GPP', 'NEE', 'NEP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
+      var_list_hourly.extend(['GPP', 'NEE', 'NEP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
             'CPOOL_TO_DEADSTEMC', 'LIVECROOTC_XFER_TO_LIVECROOTC', 'DEADCROOTC_XFER_TO_DEADCROOTC', \
             'CPOOL_TO_LIVECROOTC', 'CPOOL_TO_DEADCROOTC', 'FROOTC_ALLOC', 'AR', 'LEAF_MR', 'CPOOL_LEAF_GR',
             'TRANSFER_LEAF_GR', 'CPOOL_LEAF_STORAGE_GR', 'LIVESTEM_MR', 'CPOOL_LIVESTEM_GR', \
@@ -1193,11 +1193,11 @@ for i in range(1,int(options.ninst)+1):
     #var_list_hourly_bgc 
     var_list_daily = ['TLAI','SNOWDP','H2OSFC','ZWT']
     if ('RD' in compset or 'ECA' in compset):
-      var_list_daily.append(['TOTLITC', 'TOTSOMC', 'CWDC', 'LITR1C_vr', 'LITR2C_vr', 'LITR3C_vr', 'SOIL1C_vr', \
+      var_list_daily.extend(['TOTLITC', 'TOTSOMC', 'CWDC', 'LITR1C_vr', 'LITR2C_vr', 'LITR3C_vr', 'SOIL1C_vr', \
                       'SOIL2C_vr', 'SOIL3C_vr', 'CPOOL','NPOOL','PPOOL','FPI','FPI_P','FPG','FPG_P','FPI_vr','FPI_P_vr'])
     var_list_pft = ['FPSN','TLAI','QVEGE','QVEGT']
     if ('RD' in compset or 'ECA' in compset):
-      var_list_pft.append(['GPP', 'NPP', 'LEAF_MR', 'LEAFC_ALLOC', 'AGNPP', 'CPOOL_TO_DEADSTEMC', \
+      var_list_pft.extend(['GPP', 'NPP', 'LEAF_MR', 'LEAFC_ALLOC', 'AGNPP', 'CPOOL_TO_DEADSTEMC', \
                     'LIVECROOTC_XFER_TO_LIVECROOTC', 'DEADCROOTC_XFER_TO_DEADCROOTC', \
                     'CPOOL_TO_LIVECROOTC', 'CPOOL_TO_DEADCROOTC', 'FROOTC_ALLOC', 'AR', 'MR', \
                     'CPOOL_LEAF_GR', 'TRANSFER_LEAF_GR', 'CPOOL_LEAF_STORAGE_GR', \
@@ -1273,11 +1273,11 @@ for i in range(1,int(options.ninst)+1):
                 h1varst = "hist_fincl2 = "
                 h2varst = "hist_fincl3 = "
                 for v in var_list_hourly:
-                    h1varst = h1varst+"'"+v+"',"
+                    h1varst = h1varst+"'"+str(v)+"',"
                 for v in var_list_daily:
-                    h1varst = h1varst+"'"+v+"',"
+                    h1varst = h1varst+"'"+str(v)+"',"
                 for v in var_list_pft:
-                    h2varst = h2varst+"'"+v+"',"
+                    h2varst = h2varst+"'"+str(v)+"',"
                 output.write(h1varst[:-1]+"\n")
                 output.write(h2varst[:-1]+"\n")
             elif (options.dailyrunoff):
@@ -1312,7 +1312,7 @@ for i in range(1,int(options.ninst)+1):
         output.write(" hist_empty_htapes = .true.\n")
         h0varst = " hist_fincl1 = "
         for v in var_list_spinup:
-            h0varst = h0varst+"'"+v+"',"
+            h0varst = h0varst+"'"+str(v)+"',"
         h0varst = h0varst[:-1]+"\n"
         output.write(h0varst)
 
@@ -1325,14 +1325,14 @@ for i in range(1,int(options.ninst)+1):
         h3varst = " hist_fincl4 = "
         h4varst = " hist_fincl5 = "
         for v in var_list_hourly:
-            h1varst = h1varst+"'"+v+"',"
-            h2varst = h2varst+"'"+v+"',"
-            h4varst = h4varst+"'"+v+"',"
+            h1varst = h1varst+"'"+str(v)+"',"
+            h2varst = h2varst+"'"+str(v)+"',"
+            h4varst = h4varst+"'"+str(v)+"',"
         for v in var_list_daily:
-            h2varst = h2varst+"'"+v+"',"
-            h4varst = h4varst+"'"+v+"',"
+            h2varst = h2varst+"'"+str(v)+"',"
+            h4varst = h4varst+"'"+str(v)+"',"
         for v in var_list_pft:
-            h3varst = h3varst+"'"+v+"',"
+            h3varst = h3varst+"'"+str(v)+"',"
         h1varst = h1varst[:-1]+"\n"
         h2varst = h2varst[:-1]+"\n"
         h3varst = h3varst[:-1]+"\n"
@@ -1348,7 +1348,7 @@ for i in range(1,int(options.ninst)+1):
         output.write(" hist_empty_htapes = .true.\n")
         h0varst = " hist_fincl1 = "
         for v in trans_varlist:
-            h0varst = h0varst+"'"+v+"',"
+            h0varst = h0varst+"'"+str(v)+"',"
         h0varst = h0varst[:-1]+"\n"
         output.write(h0varst)
 
