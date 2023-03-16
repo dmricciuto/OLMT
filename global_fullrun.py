@@ -774,9 +774,9 @@ if (options.mc_ensemble <= 0):
                       output.write('#SBATCH --account=condo\n')
                     if ('pm-cpu' in options.machine or 'cori' in options.machine or 'edison' in options.machine):
                          if (options.debug):
-                             output.write('#SBATCH --partition=debug\n')
+                             output.write('#SBATCH --qos=debug\n')
                          else:
-                             output.write('#SBATCH --partition=regular\n')
+                             output.write('#SBATCH --qos=regular\n')
                     if ('compy' in options.machine and options.debug):
                       output.write('#SBATCH -p short\n')
                     if ('cades' in options.machine):
@@ -785,7 +785,7 @@ if (options.mc_ensemble <= 0):
                       output.write('#SBATCH --mem=64G\n')
                       output.write('#SBATCH --ntasks-per-node 32\n')
             elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
-                output.write(s)
+              output.write(s)
         input.close()
         output.write("\n")
    
