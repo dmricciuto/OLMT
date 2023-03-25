@@ -171,7 +171,8 @@ elif (options.point_list != ''):
         for isurfvar in mysurfvar:
             point_mysurf[isurfvar] = {}
         if('PCT_URBAN' in mysurfvar or 'PCT_LAKE' in mysurfvar \
-            or 'PCT_WETLAND' in mysurfvar or 'PCT_GLACIER' in mysurfvar):
+            or 'PCT_WETLAND' in mysurfvar or 'PCT_GLACIER' in mysurfvar \
+            or 'PCT_NATVEG' in mysurfvar):
             point_mysurf['PCT_NATVEG'] = {}
         
         # URBAN relvant variable names
@@ -860,7 +861,7 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
                 point_mysurf['PCT_LAKE'][n] = pct_lake
               if('PCT_GLACIER' in mysurfvar):
                 point_mysurf['PCT_GLACIER'][n] = pct_glacier
-              if('PCT_URBAN' in mysurfvar or 'LAKE' in mysurfvar \
+              if('PCT_URBAN' in mysurfvar or 'PCT_LAKE' in mysurfvar \
                  or 'PCT_WETLAND' in mysurfvar or 'PCT_GLACIER' in mysurfvar):
                 point_mysurf['PCT_NATVEG'][n] = pct_nat_veg
  
@@ -1325,8 +1326,9 @@ if (options.nopftdyn == False):
             if('PCT_WETLAND' in mysurfvar):
                 pct_wetland[:,] = point_mysurf['PCT_WETLAND'][n]
                 ierr = nffun.putvar(pftdyn_new, 'PCT_WETLAND', pct_wetland)
-            if('PCT_URBAN' in mysurfvar or 'LAKE' in mysurfvar \
-                 or 'PCT_WETLAND' in mysurfvar or 'PCT_GLACIER' in mysurfvar):
+            if('PCT_URBAN' in mysurfvar or 'PCT_LAKE' in mysurfvar \
+                 or 'PCT_WETLAND' in mysurfvar or 'PCT_GLACIER' in mysurfvar \
+                 or 'PCT_NATVEG' in mysurfvar):
                 pct_nat_veg[:,] = point_mysurf['PCT_NATVEG'][n]
                 ierr = nffun.putvar(pftdyn_new, 'PCT_NATVEG', pct_nat_veg)
 
