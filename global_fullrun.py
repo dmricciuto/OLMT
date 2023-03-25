@@ -398,7 +398,7 @@ if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton o
         endyear = 2010
     if (options.daymet4):
         startyear = 1980
-        endyear = 2014
+        endyear = 1999
     if (options.crujra):
         site_endyear = 2017
 
@@ -739,9 +739,9 @@ if (options.mc_ensemble <= 0):
     n_submits = int(math.ceil(run_n_total / float(runblock)))
 
 
-    mysubmit_type = 'qsub'
-    if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
-        mysubmit_type = 'sbatch'
+    mysubmit_type = 'sbatch'
+    #if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
+    #    mysubmit_type = 'sbatch'
     #Create a .PBS site fullrun script to launch the full job 
 
     for n in range(0,n_submits):
@@ -776,11 +776,11 @@ if (options.mc_ensemble <= 0):
                     if ('anvil' in options.machine):
                       output.write('#SBATCH --partition=acme-centos6\n')
                       output.write('#SBATCH --account=condo\n')
-                    if ('cori' in options.machine or 'edison' in options.machine):
+                    if ('pm-cpu' in options.machine or 'cori' in options.machine or 'edison' in options.machine):
                          if (options.debug):
-                             output.write('#SBATCH --partition=debug\n')
+                             output.write('#SBATCH --qos=debug\n')
                          else:
-                             output.write('#SBATCH --partition=regular\n')
+                             output.write('#SBATCH --qos=regular\n')
                     if ('compy' in options.machine and options.debug):
                       output.write('#SBATCH -p short\n')
                     if ('cades' in options.machine):
@@ -789,7 +789,7 @@ if (options.mc_ensemble <= 0):
                       output.write('#SBATCH --mem=64G\n')
                       output.write('#SBATCH --ntasks-per-node 32\n')
             elif ("#!" in s or "#PBS" in s or "#SBATCH" in s):
-                output.write(s)
+              output.write(s)
         input.close()
         output.write("\n")
    
