@@ -191,6 +191,7 @@ def submit(fname, submit_type='qsub', job_depend=''):
     else:
         os.system(submit_type+' '+fname+' > temp/jobinfo')
     myinput = open('temp/jobinfo')
+    thisjob=''
     for s in myinput:
         thisjob = re.search('[0-9]+', s).group(0)
     myinput.close()
@@ -396,7 +397,7 @@ if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton o
         endyear = 2010
     if (options.daymet4):
         startyear = 1980
-        endyear = 1999
+        endyear = 2014
     if (options.crujra):
         site_endyear = 2017
 
@@ -736,6 +737,8 @@ if (options.mc_ensemble <= 0):
 
 
     mysubmit_type = 'sbatch'
+    if ('docker' in options.machine):
+        mysubmit_type=''
     #if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
     #    mysubmit_type = 'sbatch'
     #Create a .PBS site fullrun script to launch the full job 
@@ -847,18 +850,19 @@ if (options.mc_ensemble <= 0):
         model_startdate = model_startdate + runblock          
         output.write("./case.submit --no-batch\n")
         output.write("cd "+os.path.abspath(".")+'\n')
-        if ('ad_spinup' in c and n == (n_submits-1)):
-            if (options.bgc):
-                output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
-                                 '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
-                             str(int(ny_ad)+1)+' --BGC\n')
-            else:
-                output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
-                                 '/'+ad_case+'/run/ --casename '+ad_case+' --restart_year '+ \
-                                 str(int(ny_ad)+1)+'\n')
+        #if ('ad_spinup' in c and n == (n_submits-1)):
+        #    if (options.bgc):
+        #        output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
+        #                         '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \
+        #                     str(int(ny_ad)+1)+' --BGC\n')
+        #    else:
+        #        output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
+        #                         '/'+ad_case+'/run/ --casename '+ad_case+' --restart_year '+ \
+        #                         str(int(ny_ad)+1)+'\n')
         output.close()
 
         if not options.no_submit:
+            os.system('chmod u+x temp/global_'+c+'_'+str(n)+'.pbs') 
             job_depend_run = submit('temp/global_'+c+'_'+str(n)+'.pbs',job_depend=job_depend_run, \
                                     submit_type=mysubmit_type)
         

@@ -399,6 +399,8 @@ elif ('chrysalis' in options.machine):
     ppn=64
 elif ('pm-cpu' in options.machine):
     ppn=128
+elif ('docker' in options.machine):
+    ppn=4
 if (options.ensemble_file == ''):
   ppn=min(ppn, int(options.np))
 
@@ -645,9 +647,9 @@ if (options.rmold):
 
 #------Make domain, surface data and pftdyn files ------------------
 mysimyr=1850
-if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset or 'FATES' in compset):
-    #note - spinup with 2000 conditions for FATES
-    mysimyr=2000
+#if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset or 'FATES' in compset):
+#    #note - spinup with 2000 conditions for FATES
+#    mysimyr=2000
 
 if (options.nopointdata == False):
     ptcmd = 'python makepointdata.py --ccsm_input '+options.ccsm_input+ \
@@ -851,7 +853,7 @@ else:
       else:
         print('qflx_h2osfc_surfrate = 1.0e-7')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      os.system(myncap+' -O -s "moss_swc_adjust = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      os.system(myncap+' -O -s "moss_swc_adjust=scalar(0)" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "h2osoi_offset = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
@@ -981,6 +983,7 @@ timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- 
 cmd = './create_newcase --case '+casedir+' --mach '+options.machine+' --compset '+ \
 	   options.compset+' --res '+options.res+' --mpilib '+ \
            options.mpilib+' --walltime '+timestr+' --handle-preexisting-dirs u'
+
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
 if (options.project != ''):
@@ -1011,8 +1014,8 @@ result = os.system('./xmlchange PIO_VERSION=%s'%options.pio_version)
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
 
-#if (options.debug):
-#    result = os.system('./xmlchange DEBUG=TRUE')
+if (options.debug):
+    result = os.system('./xmlchange DEBUG=TRUE')
 
 #clm 4_5 cn config options
 #clmcn_opts = "'-phys clm4_5 -cppdefs -DMODAL_AER'"
@@ -1097,10 +1100,10 @@ if ('20TR' in compset or options.istrans):
         os.system('./xmlchange RUN_STARTDATE=1850-01-01')
     
 #No pnetcdf for small cases on compy
-if ('compy' in options.machine and int(options.np) < 80):
+if (('docker' in options.machine or 'compy' in options.machine) and int(options.np) < 80):
   os.system('./xmlchange PIO_TYPENAME=netcdf')
 
-comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV']
+comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV','ESP','IAC']
 for c in comps:
     print('Setting NTASKS_'+c+' to '+str(options.np))
     os.system('./xmlchange NTASKS_'+c+'='+str(options.np))
@@ -1620,8 +1623,10 @@ if (cpl_bypass):
       if ('CPPDEFS' in s and cpl_bypass):
          stemp = s[:-1]+' -DCPL_BYPASS\n'
          outfile.write(stemp)
+      elif ('llapack' in s):
+         outfile.write(s.replace('llapack','llapack -lgfortran'))
       else:
-         outfile.write(s)
+         outfile.write(s.replace('mcmodel=medium','mcmodel=small'))
     infile.close()
     outfile.close()
     os.system('mv Macros.make.tmp Macros.make')
@@ -1634,8 +1639,10 @@ if (cpl_bypass):
       if ('CPPDEFS' in s and cpl_bypass):
        stemp = s[:-3]+' -DCPL_BYPASS")\n'
        outfile.write(stemp)
+      elif ('llapack' in s):
+        outfile.write(s.replace('llapack','llapack -lgfortran'))
       else:
-       outfile.write(s)
+        outfile.write(s.replace('mcmodel=medium','mcmodel=small'))
     infile.close()
     outfile.close()
     os.system('mv Macros.cmake.tmp Macros.cmake')
@@ -1957,7 +1964,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         cnp = 'True'
         if (options.cn_only or options.c_only):
             cnp= 'False'
-        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
+        if ('docker' in options.machine or 'oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
             mpicmd = 'mpirun'
             if ('cades' in options.machine):
                 mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'

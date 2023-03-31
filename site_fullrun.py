@@ -1064,6 +1064,8 @@ for row in AFdatareader:
                 mysubmit_type = ''
             if ('mac' in options.machine):
                 mysubmit_type = ''
+            if ('docker' in options.machine):
+                mysubmit_type = ''
             if ((sitenum % npernode) == 0):
                 if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
                     input = open(caseroot+'/'+ad_case_firstsite+'/case.run')
@@ -1075,7 +1077,7 @@ for row in AFdatareader:
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
                     if ("perl" in s or "python" in s):
-                        if ('cades' in options.machine):
+                        if ('cades' in options.machine or 'docker' in options.machine):
                           output.write("#!/bin/bash -f\n")
                         else:
                           output.write("#!/bin/csh -f\n")
