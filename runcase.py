@@ -859,8 +859,8 @@ else:
       flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
       os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    os.system(myncap+' -O -s "vcmaxse = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','vcmaxse', flnr*0.0+670)
+    #os.system(myncap+' -O -s "vcmaxse = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','vcmaxse', flnr*0.0+670)
 
     if (options.marsh and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
@@ -875,13 +875,13 @@ else:
             os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     elif options.marsh:
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
-    os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    os.system(myncap+' -O -s "crit_onset_gdd = ndays_on" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
-    ndays_on = nffun.getvar(tmpdir+'/clm_params.nc','ndays_on')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_onset_gdd', ndays_on*0.0+200.0)
+    #os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "crit_onset_gdd = ndays_on" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
+    #ndays_on = nffun.getvar(tmpdir+'/clm_params.nc','ndays_on')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_onset_gdd', ndays_on*0.0+200.0)
 
     # BSulman: These Nfix constants can break the model if they don't have the right length.
     #os.system(myncap+' -O -s "Nfix_NPP_c1 = br_mr*+1.8" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -1260,7 +1260,7 @@ for i in range(1,int(options.ninst)+1):
             if (options.dailyrunoff):
                 #include daily variables related to runoff only
                 output.write(" hist_mfilt = "+ str(options.hist_mfilt)+",365\n")
-            if (options.dailyvars):
+            elif (options.dailyvars):
                 #include daily column and PFT level output
                 output.write(" hist_dov2xy = .true., .true., .false.\n")
                 output.write(" hist_mfilt = "+ str(options.hist_mfilt)+",365,365\n")

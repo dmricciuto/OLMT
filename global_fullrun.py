@@ -27,6 +27,8 @@ parser.add_option("--debugq", dest="debug", default=False, \
                  action="store_true", help='Use debug queue and options')
 parser.add_option("--dailyrunoff", dest="dailyrunoff", default=False, \
                  action="store_true", help="Write daily output for hydrology")
+parser.add_option("--finidat", dest="finidat", default='', \
+                  help = 'Full path of ELM restart file to use (for transient only)')
 parser.add_option("--ilambvars", dest="ilambvars", default=False, \
                  action="store_true", help="Write special outputs for diagnostics")
 parser.add_option("--dailyvars", dest="dailyvars", default=False, \
@@ -397,7 +399,7 @@ if (options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton o
         endyear = 2010
     if (options.daymet4):
         startyear = 1980
-        endyear = 2014
+        endyear = 1999
     if (options.crujra):
         site_endyear = 2017
 
@@ -427,9 +429,9 @@ if (translen == -1):
         translen = site_endyear-1850+1
 
 fsplen = int(ny_fin)
-if (options.sp):
-    #no spinup, just run over 
-    fsplen = site_endyear-startyear+1
+#if (options.sp):
+#    #no spinup, just run over 
+#    fsplen = site_endyear-startyear+1
  
 #get align_year
 year_align = (endyear-1850+1) % ncycle
@@ -582,7 +584,7 @@ mymodel_fnsp = compset_type+'1850'+mymodel+'BC'
 mymodel_adsp = mymodel_fnsp.replace('CNP','CN')
 mymodel_trns = mymodel_fnsp.replace('1850','20TR')
 if (options.sp):
-    mymodel_fnsp = compset_type+'CLM45BC'
+    mymodel_fnsp = compset_type+'ELMBC'
     options.noad = True
     options.notrans = True
 
@@ -619,7 +621,7 @@ else:
     basecase=res+'_'+mymodel_fnsp
 if (options.noad):
     if (options.sp):
-        if (options.run_startyear < 0):
+        if (int(options.run_startyear) < 0):
             options.run_startyear = startyear
         cmd_fnsp = basecmd+' --run_units nyears --run_n '+str(fsplen)+' --align_year '+ \
             str(year_align+1)+' --coldstart --run_startyear '+str(options.run_startyear)
@@ -647,9 +649,22 @@ if (options.spinup_vars):
     cmd_fnsp = cmd_fnsp+' --spinup_vars'
 if (options.dailyrunoff):
     cmd_fnsp = cmd_fnsp+' --dailyrunoff'
+if (options.notrans and options.dailyvars):
+    cmd_fnsp = cmd_fnsp+' --dailyvars'
 
 #transient
-cmd_trns = basecmd+' --finidat_case '+basecase+ \
+if (options.finidat != ''):   #transient simulation only, must provide restart
+  cmd_trns = basecmd+' --finidat '+options.finidat+' --run_units nyears' \
+    +' --run_n '+str(translen)+' --hist_nhtfrq '+ \
+    options.hist_nhtfrq+' --hist_mfilt '+options.hist_mfilt+' ' + \
+    ' --nopointdata --compset '+mymodel_trns+' --run_startyear '+str(options.run_startyear)
+  if (options.exeroot != ''):
+      cmd_trns = cmd_trns+' --no_build --exeroot '+os.path.abspath(options.exeroot)
+      ad_exeroot = os.path.abspath(options.exeroot)
+  else:
+      ad_exeroot = os.path.abspath(runroot+'/'+basecase)
+else:
+  cmd_trns = basecmd+' --finidat_case '+basecase+ \
     ' --finidat_year '+str(fsplen+1)+' --run_units nyears' \
     +' --run_n '+str(translen)+' --align_year '+ \
     str(year_align+1850)+' --hist_nhtfrq '+ \
@@ -721,9 +736,12 @@ if (options.mc_ensemble <= 0):
     elif ('1850' in c):
         run_n_total = int(fsplen)
     elif ('20TR' in c):
-        model_startdate=1850
+        if (options.finidat == ''):
+          model_startdate=1850
+        else:
+          model_startdate=int(options.run_startyear)
         run_n_total = int(translen)
-    elif ('ICBCLM45' in c):
+    elif ('ICBELM' in c):
         if (int(options.run_startyear) > 0):
           model_startdate = int(options.run_startyear)
           run_n_total = int(fsplen)
