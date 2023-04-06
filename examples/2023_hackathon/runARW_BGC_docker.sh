@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export inputdata=/inputdata                                    #location of input data directory
-export model_root=/E3SM                                        #location of model code (E3SM directory)
+export model_root=/code/E3SM                                   #location of model code (E3SM directory)
 export run_root=/output/cime_run_dirs                          #desired location of model output (scratch)
 export case_root=/output/cime_case_dirs                        #Location of model case directories
 export np=4                                                    #Number of processors
