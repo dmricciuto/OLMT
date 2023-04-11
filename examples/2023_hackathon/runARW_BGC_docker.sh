@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export inputdata=/inputdata                                    #location of input data directory
-export model_root=/code/E3SM                                   #location of model code (E3SM directory)
+export model_root=/E3SM                                   #location of model code (E3SM directory)
 export run_root=/output/cime_run_dirs                          #desired location of model output (scratch)
 export case_root=/output/cime_case_dirs                        #Location of model case directories
 export np=4                                                    #Number of processors
@@ -13,8 +13,8 @@ python global_fullrun.py --walltime 6 --machine docker --mpilib openmpi --np $np
 	--domainfile $inputdata/share/domains/domain.clm/domain_1175x1_sparse_grid_American_230201.nc \
 	--ccsm_input $inputdata --caseroot $case_root --model_root $model_root --runroot $run_root \
        	--tstep 1 --gswp3 --daymet4 --metdir $metdir --cpl_bypass --nopftdyn --dailyrunoff \
-	--nyears_ad_spinup 200 --nyears_final_spinup 400 \
-	--caseidprefix 20230403 
+	--nyears_ad_spinup 200 --nyears_final_spinup 400 --srcmods_loc /tools/OLMT/examples/2023_hackathon/srcmods \
+	--caseidprefix $(date '+%Y%m%d')
 
 #Explanation of options:
 #--walltime     Walltime in hours to assign to this job

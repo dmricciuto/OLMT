@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export inputdata=/inputdata                                    #location of input data directory
-export model_root=/code/E3SM                                   #location of model code (E3SM directory)
+export model_root=/E3SM                                   #location of model code (E3SM directory)
 export run_root=/output/cime_run_dirs                          #desired location of model output (scratch)
 export case_root=/output/cime_case_dirs                        #directory in which to create cases
 export metdir=/inputdata/atm/datm7/cpl_bypass_AmericanRiverWatershed/
@@ -14,8 +14,8 @@ python global_fullrun.py --walltime 6 --machine docker --mpilib openmpi --np $np
 	--ccsm_input $inputdata --caseroot $case_root --model_root $model_root --runroot $run_root \
        	--tstep 1 --gswp3 --daymet4 --metdir $metdir --cpl_bypass --nopftdyn --dailyrunoff \
 	--SP --notrans --noad --run_startyear 1945 --nyears_final_spinup 70 \
-	--hist_mfilt_spinup 1 --hist_nhtfrq_spinup 0 \
-	--caseidprefix 20230403 --project e3sm
+	--hist_mfilt_spinup 1 --hist_nhtfrq_spinup 0 --srcmods_loc /tools/OLMT/examples/2023_hackathon/srcmods \
+	--caseidprefix $(date '+%Y%m%d')
 
 #Explanation of options:
 #--walltime     Walltime in hours to assign to this job

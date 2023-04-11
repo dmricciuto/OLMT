@@ -194,8 +194,9 @@ def submit(fname, submit_type='qsub', job_depend=''):
         os.system(submit_type+' '+fname+' > temp/jobinfo')
     myinput = open('temp/jobinfo')
     thisjob=''
-    for s in myinput:
-        thisjob = re.search('[0-9]+', s).group(0)
+    if (submit_type != ''):
+      for s in myinput:
+          thisjob = re.search('[0-9]+', s).group(0)
     myinput.close()
     os.system('rm temp/jobinfo')
     return thisjob

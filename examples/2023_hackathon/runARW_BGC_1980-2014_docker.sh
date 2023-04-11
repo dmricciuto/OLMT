@@ -14,9 +14,9 @@ python global_fullrun.py --walltime 6 --machine docker --mpilib openmpi --np $np
 	--domainfile $inputdata/share/domains/domain.clm/domain_1175x1_sparse_grid_American_230201.nc \
 	--ccsm_input $inputdata --caseroot $case_root --model_root $model_root --runroot $run_root \
        	--tstep 1 --gswp3 --daymet4 --metdir $metdir --cpl_bypass --nopftdyn --dailyrunoff \
-	--noad --nofn --run_startyear 1980 --nyears_transient 35 \
+	--noad --nofn --run_startyear 1980 --nyears_transient 35 --srcmods_loc /tools/OLMT/examples/2023_hackathon/srcmods \
 	--finidat /inputdata/lnd/clm2/initdata/20230315_ARW_ICB20TRCNPRDCTCBC.elm.r.1980-01-01-00000.nc  \
-	--caseidprefix 20230403_ini  
+	--caseidprefix $(date '+%Y%m%d')_ini  
 
 #Explanation of options:
 #--walltime     Walltime in hours to assign to this job
