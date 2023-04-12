@@ -3,42 +3,25 @@
 import os, sys, csv, glob
 import numpy, scipy, math
 from netCDF4 import Dataset
-#from scipy.io import netcdf
 from optparse import OptionParser
 import matplotlib as mpl
 
 def getvar(fname, varname, npf, index, scale_factor):
-    usescipy = False
-    #try:
-    #    import Scientific.IO.NetCDF as netcdf
-    #except ImportError:
-    #    import scipy
-    #    from scipy.io import netcdf
-    #    usescipy = True
-    from netCDF4 import Dataset
-    if (usescipy):
-        print('Scipy not supported')
-        #nffile = netcdf.netcdf_file(fname,"r",mmap=False)
-        #var = nffile.variables[varname]
-        #if index < 0:  #average over all 
-        #    varvals = numpy.mean(var[0:npf,:].copy(),axis=1) * scale_factor
-        #else:
-        #    varvals = var[0:npf,index].copy() * scale_factor    #works for vector only?
-        #nffile.close()
+    nffile = Dataset(fname,"r")
+    var = nffile.variables[varname]
+    if (index < 0):  #average over all sites/PFTs (not weighted) 
+         varvals = numpy.nanmean(var[0:npf,:], axis=1) * scale_factor
     else:
-        nffile = Dataset(fname,"r")
-        var = nffile.variables[varname]
-        if (index < 0):  #average over all 
-            varvals = numpy.mean(var[0:npf,:], axis=1) * scale_factor
-        else:
-            varvals = var[0:npf,index] * scale_factor
-        nffile.close()
+         varvals = var[0:npf,index] * scale_factor
+    nffile.close()
     return varvals
 
 
 parser = OptionParser()
 parser.add_option("--csmdir", dest="mycsmdir", default='', \
                   help = 'Base CESM directory (default = ..)')
+parser.add_option("--runnames",dest="runnames",default='', \
+                 help = "full case names (overrides prefix, site and compsets)")
 parser.add_option("--cases", dest="mycase", default='', \
                   help = "name of case id prefixs to plot (comma delmited)")
 parser.add_option("--compset", dest="compset", default="I20TRCLM45CN", \
@@ -120,92 +103,73 @@ if (options.pdf or options.png):
     mpl.use('Agg')	
 import matplotlib.pyplot as plt
 
-mycases = options.mycase.split(',')
-mysites = options.site.split(',')
-mycompsets = options.compset.split(',')
 
-print('')
-print(mycases)
-print(mysites)
-print(mycompsets)
+if (options.runnames != ''):
+    #User provides full case names
+    runnames = options.runnames.split(',')
+    mycases=[]
+    mysites=[]
+    mycompsets=[]
+    for i in runnames:
+        mycases.append(i.split('_')[0])
+        mysites.append('_'.join(i.split('_')[1:len(i.split('_'))-1]))
+        mycompsets.append(i.split('_')[-1])
+    mysites1=mysites
+    mycases1=mycases
+    mycompsets1=mycompsets
+    ncases = len(runnames)
+else:
+  #User provides case prefix(es), site(s) and compset(s)
+  #Set up a factorial across these
+  mycases = options.mycase.split(',')
+  mysites = options.site.split(',')
+  mycompsets = options.compset.split(',')
 
-ncases = 1
-#if (len(mycases) > 1):
-#  ncases = len(mycases)
-#  mysites=[]
-#  for c in range(0,ncases):
-#    mysites.append(options.site)
-#    #if (len(mycompsets) == 1):
-#    mycompsets.append(options.compset)
-#  mytitles = mycases
-#elif (len(mysites) > 1):
-#  ncases = len(mysites)
-#  mycases=[]
-#  mycompsets=[]
-#  for c in range(0,ncases):
-#    mycases.append(options.mycase)
-#    mycompsets.append(options.compset)
-#  mytitles = mysites
-#elif (len(mycompsets) > 1):
-#  ncases = len(mycompsets)
-#  mycases=[]
-#  mysites=[]
-#  for c in range(0,ncases):
-#    mycases.append(options.mycase)
-#    mysites.append(options.site)  
-#  mytitles = mycompsets
-#else:
-#  mytitles=[]
-#  mytitles.append(mysites[0])
-#
-#if (options.titles != ''):
-#  mytitles = options.titles.split(',')
+  mysites1 = numpy.char.add(mysites,'_')
+  mysites2 = mysites1
+  if (len(mycompsets) > 1):
+    for c in range(1,len(mycompsets)):
+      mysites2 = numpy.concatenate((mysites2,mysites1))
+  mycompsets1 = numpy.repeat(mycompsets, len(mysites) )
+  runnames = numpy.char.add(mysites2,mycompsets1)
+  mysites1 = mysites2
 
-mysites1 = numpy.char.add(mysites,'_')
-mysites2 = mysites1
-if (len(mycompsets) > 1):
-  for c in range(1,len(mycompsets)):
-    mysites2 = numpy.concatenate((mysites2,mysites1))
-mycompsets1 = numpy.repeat(mycompsets, len(mysites) )
-runnames = numpy.char.add(mysites2,mycompsets1)
-mysites1 = mysites2
-
-if (len(mycases) == 0):
-  if (mycases[0] != ''):
+  if (len(mycases) == 0):
+   if (mycases[0] != ''):
     mycases1 = numpy.char.add(mycases,'_') 
     mycases2 = mycases1
     for c in range(1,len(runnames)):
       mycases2 = numpy.concatenate((mycases2,mycases1))
     runnames = numpy.concatenate((mycases2,runnames))
     mycases1 = mycases2
-  else:
+   else:
     mycases1 = mycases
     for c in range(1,len(runnames)):
       mycases1 = numpy.concatenate((mycases1,mycases))
 
-else:
-  runnames1 = runnames 
-  mysites3  = mysites2
-  mycompsets2 = mycompsets1
-  #print(mycases)
-  for c in range(1,len(mycases)):
-    runnames1   = numpy.concatenate((runnames1,runnames))
-    mysites3    = numpy.concatenate((mysites3,mysites2))
-    mycompsets2 = numpy.concatenate((mycompsets2,mycompsets1))
-  mysites1  = mysites3
-  mycompsets1 = mycompsets2
-  mycases1 = mycases
-  #print(mycases)
-  for c in range(0,len(mycases1)):
-    if (mycases1[c] != ''):
-      mycases1[c] = mycases1[c]+'_'
-      #print(mycases)
-  mycases1 = numpy.repeat(mycases1, len(runnames) )
-  runnames = numpy.char.add(mycases1,runnames1) 
-  #print(mycases)
+  else:
+    runnames1 = runnames 
+    mysites3  = mysites2
+    mycompsets2 = mycompsets1
+    #print(mycases)
+    for c in range(1,len(mycases)):
+      runnames1   = numpy.concatenate((runnames1,runnames))
+      mysites3    = numpy.concatenate((mysites3,mysites2))
+      mycompsets2 = numpy.concatenate((mycompsets2,mycompsets1))
+    mysites1  = mysites3
+    mycompsets1 = mycompsets2
+    mycases1 = mycases
+    #print(mycases)
+    for c in range(0,len(mycases1)):
+      if (mycases1[c] != ''):
+        mycases1[c] = mycases1[c]+'_'
+        #print(mycases)
+    mycases1 = numpy.repeat(mycases1, len(runnames) )
+    runnames = numpy.char.add(mycases1,runnames1) 
+    #print(mycases)
 
-mycases = options.mycase.split(',') # APW: IDK why but this is necessary as the above code is adding _ to mycases
-ncases = len(runnames)
+  mycases = options.mycase.split(',') # APW: IDK why but this is necessary as the above code is adding _ to mycases
+  ncases = len(runnames)
 
 if (options.titles != ''):
   mytitles = options.titles.split(',')
@@ -217,13 +181,6 @@ print('')
 print('Simulations that will be plotted:')
 print(runnames)
 print('')
-#print(mycases1)
-#print('')
-#print(mysites1)
-#print('')
-#print(mycompsets1)
-#print('')
-#sys.exit(0)
 
 obs     = options.myobs
 myobsdir = '/home/ac.ricciuto/fluxnet'
@@ -625,7 +582,6 @@ for c in range(0,ncases):
                     err_toplot[c, v, snum[c]]  = sum(myerr[v,s*avpd:(s+1)*avpd])/avpd
                 snum[c] = snum[c]+1
           
-
     #diurnal average (must have hourly output)
     if (avtype == 'diurnal'):
         snum[c]=24
@@ -818,6 +774,10 @@ for v in range(0,len(myvars)):
           fig_filename = mydir+'/../plots/'+analysis_type+'/'+myvars[v]
         else:
           fig_filename = mydir+'/../plots/'+analysis_type+'/figure'+str(fignum+1)
+        if (int(options.index) < 0):
+            fig_filename = fig_filename+'_allindices'
+        elif (int(options.index) > 0):
+            fig_filename = fig_filename+'_index'+str(options.index)
         if (options.pdf):
             fig.savefig(fig_filename+'.pdf')
         if (options.png):
