@@ -13,7 +13,7 @@ python global_fullrun.py --walltime 6 --machine docker --mpilib openmpi --np $np
 	--domainfile $inputdata/share/domains/domain.clm/domain_1175x1_sparse_grid_American_230201.nc \
 	--ccsm_input $inputdata --caseroot $case_root --model_root $model_root --runroot $run_root \
        	--tstep 1 --gswp3 --daymet4 --metdir $metdir --cpl_bypass --nopftdyn --dailyrunoff \
-	--SP --notrans --noad --run_startyear 1945 --nyears_final_spinup 70 \
+	--SP --notrans --noad --run_startyear 1980 --nyears_final_spinup 35 \
 	--hist_mfilt_spinup 1 --hist_nhtfrq_spinup 0 --srcmods_loc /tools/OLMT/examples/2023_hackathon/srcmods \
 	--caseidprefix $(date '+%Y%m%d')
 

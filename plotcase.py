@@ -2,28 +2,37 @@
 
 import os, sys, csv, glob
 import numpy, scipy, math
-from scipy.io import netcdf
+from netCDF4 import Dataset
+#from scipy.io import netcdf
 from optparse import OptionParser
 import matplotlib as mpl
 
 def getvar(fname, varname, npf, index, scale_factor):
     usescipy = False
-    try:
-        import Scientific.IO.NetCDF as netcdf
-    except ImportError:
-        import scipy
-        from scipy.io import netcdf
-        usescipy = True
+    #try:
+    #    import Scientific.IO.NetCDF as netcdf
+    #except ImportError:
+    #    import scipy
+    #    from scipy.io import netcdf
+    #    usescipy = True
+    from netCDF4 import Dataset
     if (usescipy):
-        nffile = netcdf.netcdf_file(fname,"r",mmap=False)
-        var = nffile.variables[varname]
-        varvals = var[0:npf,index].copy() * scale_factor    #works for vector only?
-        nffile.close()
-    else:
-        nffile = netcdf.NetCDFFile(fname,"r")
-        var = nffile.variables[varname]
-        varvals = var.getValue()[0:npf,index] * scale_factor
+        print('Scipy not supported')
+        #nffile = netcdf.netcdf_file(fname,"r",mmap=False)
+        #var = nffile.variables[varname]
+        #if index < 0:  #average over all 
+        #    varvals = numpy.mean(var[0:npf,:].copy(),axis=1) * scale_factor
+        #else:
+        #    varvals = var[0:npf,index].copy() * scale_factor    #works for vector only?
         #nffile.close()
+    else:
+        nffile = Dataset(fname,"r")
+        var = nffile.variables[varname]
+        if (index < 0):  #average over all 
+            varvals = numpy.mean(var[0:npf,:], axis=1) * scale_factor
+        else:
+            varvals = var[0:npf,index] * scale_factor
+        nffile.close()
     return varvals
 
 
@@ -261,7 +270,7 @@ x_toplot    = numpy.zeros([ncases, 2000000], float)
 data_toplot = numpy.zeros([ncases, nvar, 2000000], float)
 obs_toplot  = numpy.zeros([ncases, nvar, 2000000], float)+numpy.NaN
 err_toplot  = numpy.zeros([ncases, nvar, 2000000], float)+numpy.NaN
-snum        = numpy.zeros([ncases], numpy.int)
+snum        = numpy.zeros([ncases], int)
 
 for c in range(0,ncases):
     mydir = cesmdir+'/'+runnames[c]+'/run/'
@@ -447,23 +456,26 @@ for c in range(0,ncases):
                     #get units/long names from first file
                     if (os.path.exists(myfile)):
                         if (y == ystart and m == 0 and c == 0):
-                            nffile = netcdf.netcdf_file(myfile,"r")
+                            nffile = Dataset(myfile,"r")
                             varout=nffile.variables[myvars[v]]
-                            var_long_names.append(varout.long_name.decode('utf_8'))
-                            nffile.close()
+                            var_long_names.append(varout.long_name) #.decode('utf_8'))
                             if (float(options.scale_factor) < -900):
-                                if ('gC/m^2/s' in varout.units):
+                                if ('gC/m^2/s' in str(varout.units)):
                                     myscalefactors.append(3600*24)
                                     var_units.append('g.C/m2/day')
+                                elif ('mm/s' in str(varout.units)):
+                                    myscalefactors.append(3600*24)
+                                    var_units.append('mm/day')
                                 else:
                                     myscalefactors.append(1.0)
-                                    var_units.append(varout.units.decode('utf_8').replace('^',''))
+                                    var_units.append(varout.units.replace('^',''))
                             else:
                                 myscalefactors.append(float(options.scale_factor))
-                                var_units.append(varout.units.decode('utf_8').replace('^',''))
-                        
+                                var_units.append(varout.units.replace('^',''))
+                            nffile.close()
+
                         if (y == ystart and m == 0 and v == 0):      # get lat/lon info
-                            nffile = netcdf.netcdf_file(myfile,"r")
+                            nffile = Dataset(myfile,"r")
                             mylat_vals.append(nffile.variables['lat'][0])
                             mylon_vals.append(nffile.variables['lon'][0])
                             nffile.close()
@@ -543,11 +555,11 @@ for c in range(0,ncases):
                         if (n == 0):
                             ylast = y
                         if (y == starti and n == 0 and c == 0):
-                            nffile = netcdf.netcdf_file(myfile,"r")
+                            nffile = Dataset(myfile,"r")
                             varout=nffile.variables[myvars[v]]
-                            var_long_names.append(varout.long_name.decode('utf_8'))
+                            var_long_names.append(varout.long_name) #.decode('utf_8'))
                             if (float(options.scale_factor) < -900):
-                                if ('gC/m^2/s' in varout.units.decode('utf_8')):
+                                if ('gC/m^2/s' in varout.units): #.decode('utf_8')):
                                     if (npf >= 365):
                                         myscalefactors.append(3600*24)
                                         var_units.append('g.C/m2/day')
@@ -556,13 +568,13 @@ for c in range(0,ncases):
                                         var_units.append('g.C/m2/yr')
                                 else:
                                     myscalefactors.append(1.0)
-                                    var_units.append(varout.units.decode('utf_8').replace('^',''))
+                                    var_units.append(varout.units.replace('^',''))
                             else:
                                  myscalefactors.append(float(options.scale_factor))
-                                 var_units.append(varout.units.decode('utf_8').replace('^',''))
+                                 var_units.append(varout.units.replace('^',''))
                             nffile.close()
                         if (y == starti and n == 0 and v == 0):      # get lat/lon info
-                            nffile = netcdf.netcdf_file(myfile,"r")
+                            nffile = Dataset(myfile,"r")
                             mylat_vals.append(nffile.variables['lat'][0])
                             mylon_vals.append(nffile.variables['lon'][0])
                             nffile.close()
@@ -708,7 +720,7 @@ for v in range(0,len(myvars)):
                 ftype_suffix=['model','obs']
                 os.system('mkdir -p ./plots/'+mycases[0]+'/'+analysis_type)
                 for ftype in range(0,2):
-                    outdata = netcdf.netcdf_file('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","w",mmap=False)
+                    outdata = Dataset('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","w",mmap=False)
                     outdata.createDimension('time',snum[c])
                     #outdata.createDimension('lat',ncases)
                     #outdata.createDimension('lon',ncases)
@@ -730,12 +742,12 @@ for v in range(0,len(myvars)):
                     myname[:,:] = ' '   #changed for gridcell
                     outdata.close()
         for ftype in range(0,2):
-            outdata = netcdf.netcdf_file('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","a",mmap=False)
+            outdata = Dataset('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","a",mmap=False)
             if (c == 0):
                 #myvar = outdata.createVariable(myvars[v],'f',('time','lat','lon'))
                 myvar = outdata.createVariable(myvars[v],'f',('time','gridcell'))
                 myvar.units=var_units[v]
-                myvar.missing_value=1e36
+                myvar.missing_value=1.0e36
                 myvar[:,:]=myvar.missing_value   #changed for gridcell
             else:
                 myvar=outdata.variables[myvars[v]]
@@ -795,17 +807,17 @@ for v in range(0,len(myvars)):
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         if (v % options.nperpage == options.nperpage-1):
           ax.legend(loc='center left', bbox_to_anchor=(1, 0.5),prop={'size': 10})
-        if (v % options.nperpage == 0):
-          ax.legend(loc='upper left', bbox_to_anchor=(0, 1.3), prop={'size': 8}, ncol=2)
+        #if (v % options.nperpage == 0):
+        #  ax.legend(loc='upper left', bbox_to_anchor=(0, 1.3), prop={'size': 8}, ncol=2)
         plt.title(var_long_names[v]) #+' at '+mysites[0])
         if (options.ylog):
             plt.yscale('log')
 
-        os.system('mkdir -p ./plots/'+mycases[0]+'/'+analysis_type)
+        os.system('mkdir -p '+mydir+'/../plots/'+analysis_type)
         if (options.nperpage == 1):
-          fig_filename = './plots/'+mycases[0]+'/'+analysis_type+'/'+mysites[0]+'_'+mycompsets[0]+'_'+myvars[v]+'_'+analysis_type
+          fig_filename = mydir+'/../plots/'+analysis_type+'/'+myvars[v]
         else:
-          fig_filename = './plots/'+mycases[0]+'/'+analysis_type+'/'+mysites[0]+'_'+mycompsets[0]+'_fig'+str(fignum)+'_'+analysis_type
+          fig_filename = mydir+'/../plots/'+analysis_type+'/figure'+str(fignum+1)
         if (options.pdf):
             fig.savefig(fig_filename+'.pdf')
         if (options.png):

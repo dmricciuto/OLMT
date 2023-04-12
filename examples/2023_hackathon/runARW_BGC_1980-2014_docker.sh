@@ -16,7 +16,7 @@ python global_fullrun.py --walltime 6 --machine docker --mpilib openmpi --np $np
        	--tstep 1 --gswp3 --daymet4 --metdir $metdir --cpl_bypass --nopftdyn --dailyrunoff \
 	--noad --nofn --run_startyear 1980 --nyears_transient 35 --srcmods_loc /tools/OLMT/examples/2023_hackathon/srcmods \
 	--finidat /inputdata/lnd/clm2/initdata/20230315_ARW_ICB20TRCNPRDCTCBC.elm.r.1980-01-01-00000.nc  \
-	--caseidprefix $(date '+%Y%m%d')_ini  
+	--caseidprefix $(date '+%Y%m%d')  
 
 #Explanation of options:
 #--walltime     Walltime in hours to assign to this job

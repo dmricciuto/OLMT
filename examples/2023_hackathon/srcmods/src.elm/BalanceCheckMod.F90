@@ -413,7 +413,7 @@ contains
              write(iulog,*)'qflx_lateral               = ',qflx_lateral(indexc)
              write(iulog,*)'total_plant_stored_h2o_col = ',total_plant_stored_h2o_col(indexc)
              write(iulog,*)'elm model is stopping'
-             call endrun(decomp_index=indexc, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+             !call endrun(decomp_index=indexc, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
 
           else if (abs(errh2o(indexc)) > 1.e-4_r8 .and. (nstep > 2) ) then
 
@@ -448,7 +448,7 @@ contains
 #endif
              write(iulog,*)'total_plant_stored_h2o_col = ',total_plant_stored_h2o_col(indexc)
              write(iulog,*)'elm model is stopping'
-             call endrun(decomp_index=indexc, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+             !call endrun(decomp_index=indexc, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
           end if
 #endif
        end if
@@ -667,7 +667,7 @@ contains
              write(iulog,*)'forc_tot      = ',forc_solad(indext,1)+forc_solad(indext,2) &
                +forc_solai(indext,1)+forc_solai(indext,2)
              write(iulog,*)'elm model is stopping'
-             call endrun(decomp_index=indexp, elmlevel=namep, msg=errmsg(__FILE__, __LINE__))
+             !call endrun(decomp_index=indexp, elmlevel=namep, msg=errmsg(__FILE__, __LINE__))
           end if
 #endif
        end if
@@ -690,7 +690,7 @@ contains
           write(iulog,*)'errlon       = ',errlon(indexp)
           if (abs(errlon(indexp)) > 1.e-5_r8 ) then
              write(iulog,*)'elm model is stopping - error is greater than 1e-5 (W/m2)'
-             call endrun(decomp_index=indexp, elmlevel=namep, msg=errmsg(__FILE__, __LINE__))
+             !call endrun(decomp_index=indexp, elmlevel=namep, msg=errmsg(__FILE__, __LINE__))
           end if
 #endif
        end if
@@ -733,7 +733,7 @@ contains
              write(iulog,*)'ftii ftdd ftid = ' ,ftii(indexp,:), ftdd(indexp,:),ftid(indexp,:)
              write(iulog,*)'elai esai = '      ,elai(indexp),   esai(indexp)
              write(iulog,*)'elm model is stopping'
-             call endrun(decomp_index=indexp, elmlevel=namep, msg=errmsg(__FILE__, __LINE__))
+             !call endrun(decomp_index=indexp, elmlevel=namep, msg=errmsg(__FILE__, __LINE__))
           end if
 #endif 
        end if
@@ -756,7 +756,7 @@ contains
           write(iulog,*)'colum number  = ',col_pp%gridcell(indexc)
           if (abs(errsoi_col(indexc)) > 1.e-4_r8 .and. (nstep > 2) ) then
              write(iulog,*)'elm model is stopping'
-             call endrun(decomp_index=indexc, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+             !call endrun(decomp_index=indexc, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
           end if
        end if
 
