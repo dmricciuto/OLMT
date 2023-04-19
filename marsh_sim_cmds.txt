@@ -11,8 +11,8 @@ python site_fullrun.py --site US-PHM --caseidprefix test_marsh \
 python site_fullrun.py --site US-PHM --caseidprefix test_alquimia     --nyears_ad_spinup 100 --nyears_final_spinup 100 --tstep 1 --cpl_bypass --machine cades --no_dynroot --spinup_vars --sitegroup Wetland --gswp3 --nyears_transient 51 --parm_file ~/parm_PIE.txt --nofire --model_root /home/b0u/models/E3SM_wetland --nopftdyn --ccsm_input /nfs/data/ccsi/proj-shared/E3SM/inputdata --caseroot ~/cases --runroot /lustre/or-scratch/cades-ccsi/b0u/  --mpilib openmpi --pio_version 1 --hist_nhtfrq_trans 0 --hist_mfilt_trans 12 --hist_mfilt_spinup 12 --hist_nhtfrq_spinup 0 --cn_only --alquimia /home/b0u/models/PFLOTRAN/REDOX-PFLOTRAN/CTC_alquimia_forELM.in --alquimia_ad /home/b0u/models/PFLOTRAN/REDOX-PFLOTRAN/CTC_alquimia_forELM_adspinup.in
 
 # Coastal alquimia simulation:
-python site_fullrun.py --site US-PHM --caseidprefix test_alquimia_salinity_onecoltide  \
-                       --nyears_ad_spinup 50 --nyears_final_spinup 50 --nyears_transient 51 --tstep 1 \
+python site_fullrun.py --site US-PHM --caseidprefix test_alquimia_salinity  \
+                       --nyears_ad_spinup 50 --nyears_final_spinup 50 --nyears_transient 151 --tstep 1 \
                        --cpl_bypass --machine cades --no_dynroot --spinup_vars --sitegroup Wetland \
                        --gswp3 --nofire --nopftdyn --ccsm_input /nfs/data/ccsi/proj-shared/E3SM/inputdata \
                        --caseroot ~/cases --runroot /home/b0u/ELM_outputs --walltime 10 \
@@ -20,12 +20,38 @@ python site_fullrun.py --site US-PHM --caseidprefix test_alquimia_salinity_oneco
                        --hist_mfilt_spinup 0 --hist_nhtfrq_spinup 12 --hist_nhtfrq_trans -1 --hist_mfilt_trans 8760 --cn_only \
                        --alquimia $HOME/ELM-alquimia/REDOX-PFLOTRAN/ELM_decks/CTC_alquimia_forELM_O2consuming.in \
                        --alquimia_ad $HOME/ELM-alquimia/REDOX-PFLOTRAN/ELM_decks/CTC_alquimia_forELM_O2consuming_adspinup.in \
-                       --trans_varlist "TOTVEGC,TOTSOMC,TOTLITC,SOIL1C_vr,SOIL2C_vr,SOIL3C_vr,SOIL4C_vr,LITR1C_vr,LITR2C_vr,LITR3C_vr,soil_O2,HR,GPP,NEE,NPP,SMINN,SMINN_TO_PLANT,DIC_vr,SIC_vr,H2OSOI,H2OSFC,ZWT,QFLX_ADV,QFLX_LAT_AQU,QFLX_EVAP_TOT,QVEGT,watsat,chem_dt,soil_salinity,SALINITY,soil_pH,DOC_vr,DIC_vr,DOC_RUNOFF,DIC_RUNOFF,soil_sulfate,soil_sulfide,CH4_vr,CH4FLUX_ALQUIMIA,QDRAI,QDRAI_VR,H2OSFC_TIDE" \
+                       --trans_varlist "TOTVEGC,TOTSOMC,TOTLITC,SOIL1C_vr,SOIL2C_vr,SOIL3C_vr,SOIL4C_vr,LITR1C_vr,LITR2C_vr,LITR3C_vr,soil_O2,HR,GPP,NEE,NPP,SMINN,SMINN_TO_PLANT,DIC_vr,SIC_vr,H2OSOI,H2OSFC,SOILLIQ,SOILICE,ZWT,QFLX_ADV,QFLX_LAT_AQU,QFLX_EVAP_TOT,QVEGT,watsat,chem_dt,soil_salinity,SALINITY,soil_pH,DOC_vr,DIC_vr,DOC_RUNOFF,DIC_RUNOFF,soil_sulfate,soil_sulfide,CH4_vr,CH4FLUX_ALQUIMIA,QDRAI,QDRAI_VR,H2OSFC_TIDE,TSOI" \
                        --marsh --tide_forcing_file ~/tidesPLM_2018_gapfill.nc  --parm_file /home/b0u/parms_PLM_20221114
+
+# Coastal alquimia simulation without plant salinity response:
+python site_fullrun.py --site US-PHM --caseidprefix test_alquimia_salinity_noplantsal  \
+                       --nyears_ad_spinup 50 --nyears_final_spinup 50 --nyears_transient 151 --tstep 1 \
+                       --cpl_bypass --machine cades --no_dynroot --spinup_vars --sitegroup Wetland \
+                       --gswp3 --nofire --nopftdyn --ccsm_input /nfs/data/ccsi/proj-shared/E3SM/inputdata \
+                       --caseroot ~/cases --runroot /home/b0u/ELM_outputs --walltime 10 \
+                       --model_root /home/b0u/models/E3SM_main --mpilib openmpi --pio_version 2 \
+                       --hist_mfilt_spinup 0 --hist_nhtfrq_spinup 12 --hist_nhtfrq_trans -1 --hist_mfilt_trans 8760 --cn_only \
+                       --alquimia $HOME/ELM-alquimia/REDOX-PFLOTRAN/ELM_decks/CTC_alquimia_forELM_O2consuming.in \
+                       --alquimia_ad $HOME/ELM-alquimia/REDOX-PFLOTRAN/ELM_decks/CTC_alquimia_forELM_O2consuming_adspinup.in \
+                       --trans_varlist "TOTVEGC,TOTSOMC,TOTLITC,SOIL1C_vr,SOIL2C_vr,SOIL3C_vr,SOIL4C_vr,LITR1C_vr,LITR2C_vr,LITR3C_vr,soil_O2,HR,GPP,NEE,NPP,SMINN,SMINN_TO_PLANT,DIC_vr,SIC_vr,H2OSOI,H2OSFC,SOILLIQ,SOILICE,ZWT,QFLX_ADV,QFLX_LAT_AQU,QFLX_EVAP_TOT,QVEGT,watsat,chem_dt,soil_salinity,SALINITY,soil_pH,DOC_vr,DIC_vr,DOC_RUNOFF,DIC_RUNOFF,soil_sulfate,soil_sulfide,CH4_vr,CH4FLUX_ALQUIMIA,QDRAI,QDRAI_VR,H2OSFC_TIDE,TSOI" \
+                       --marsh --tide_forcing_file ~/tidesPLM_2018_gapfill.nc  --parm_file /home/b0u/parms_PLM_nosalinityresponse
+
+# Tides but no salinity coastal simulation
+python site_fullrun.py --site US-PHM --caseidprefix test_alquimia_nosalinity  \
+                       --nyears_ad_spinup 50 --nyears_final_spinup 50 --nyears_transient 151 --tstep 1 \
+                       --cpl_bypass --machine cades --no_dynroot --spinup_vars --sitegroup Wetland \
+                       --gswp3 --nofire --nopftdyn --ccsm_input /nfs/data/ccsi/proj-shared/E3SM/inputdata \
+                       --caseroot ~/cases --runroot /home/b0u/ELM_outputs --walltime 10 \
+                       --model_root /home/b0u/models/E3SM_main --mpilib openmpi --pio_version 2 \
+                       --hist_mfilt_spinup 0 --hist_nhtfrq_spinup 12 --hist_nhtfrq_trans -1 --hist_mfilt_trans 8760 --cn_only \
+                       --alquimia $HOME/ELM-alquimia/REDOX-PFLOTRAN/ELM_decks/CTC_alquimia_forELM_O2consuming.in \
+                       --alquimia_ad $HOME/ELM-alquimia/REDOX-PFLOTRAN/ELM_decks/CTC_alquimia_forELM_O2consuming_adspinup.in \
+                       --trans_varlist "TOTVEGC,TOTSOMC,TOTLITC,SOIL1C_vr,SOIL2C_vr,SOIL3C_vr,SOIL4C_vr,LITR1C_vr,LITR2C_vr,LITR3C_vr,soil_O2,HR,GPP,NEE,NPP,SMINN,SMINN_TO_PLANT,DIC_vr,SIC_vr,H2OSOI,H2OSFC,SOILLIQ,SOILICE,ZWT,QFLX_ADV,QFLX_LAT_AQU,QFLX_EVAP_TOT,QVEGT,watsat,chem_dt,soil_salinity,SALINITY,soil_pH,DOC_vr,DIC_vr,DOC_RUNOFF,DIC_RUNOFF,soil_sulfate,soil_sulfide,CH4_vr,CH4FLUX_ALQUIMIA,QDRAI,QDRAI_VR,H2OSFC_TIDE,soil_Fe2,soil_FeOxide,TSOI" \
+                       --marsh --tide_forcing_file ~/tidesPLM_2018_gapfill_zerosalinity.nc  --parm_file /home/b0u/parms_PLM_20221114
 
 # SETx coastal marsh
 python site_fullrun.py --site US-SETX --caseidprefix marsh_alquimia  \
-                       --nyears_ad_spinup 50 --nyears_final_spinup 50 --nyears_transient 51 --tstep 1 \
+                       --nyears_ad_spinup 50 --nyears_final_spinup 50 --nyears_transient 151 --tstep 1 \
                        --cpl_bypass --machine cades --no_dynroot --spinup_vars --sitegroup Wetland \
                        --gswp3 --nofire --nopftdyn --ccsm_input /nfs/data/ccsi/proj-shared/E3SM/inputdata \
                        --caseroot ~/cases --runroot /home/b0u/ELM_outputs --walltime 10 \
@@ -33,7 +59,7 @@ python site_fullrun.py --site US-SETX --caseidprefix marsh_alquimia  \
                        --hist_mfilt_spinup 0 --hist_nhtfrq_spinup 12 --hist_nhtfrq_trans -1 --hist_mfilt_trans 8760 --cn_only \
                        --alquimia $HOME/ELM-alquimia/REDOX-PFLOTRAN/ELM_decks/CTC_alquimia_forELM_O2consuming.in \
                        --alquimia_ad $HOME/ELM-alquimia/REDOX-PFLOTRAN/ELM_decks/CTC_alquimia_forELM_O2consuming_adspinup.in \
-                       --trans_varlist "TOTVEGC,TOTSOMC,TOTLITC,SOIL1C_vr,SOIL2C_vr,SOIL3C_vr,SOIL4C_vr,LITR1C_vr,LITR2C_vr,LITR3C_vr,soil_O2,HR,GPP,NEE,NPP,SMINN,SMINN_TO_PLANT,DIC_vr,SIC_vr,H2OSOI,H2OSFC,ZWT,QFLX_ADV,QFLX_LAT_AQU,QFLX_EVAP_TOT,QVEGT,watsat,chem_dt,soil_salinity,SALINITY,soil_pH,DOC_vr,DIC_vr,DOC_RUNOFF,DIC_RUNOFF,soil_sulfate,soil_sulfide,CH4_vr,CH4FLUX_ALQUIMIA,QDRAI,QDRAI_VR,H2OSFC_TIDE" \
+                       --trans_varlist "TOTVEGC,TOTSOMC,TOTLITC,SOIL1C_vr,SOIL2C_vr,SOIL3C_vr,SOIL4C_vr,LITR1C_vr,LITR2C_vr,LITR3C_vr,soil_O2,HR,GPP,NEE,NPP,SMINN,SMINN_TO_PLANT,DIC_vr,SIC_vr,H2OSOI,H2OSFC,ZWT,QFLX_ADV,QFLX_LAT_AQU,QFLX_EVAP_TOT,QVEGT,watsat,chem_dt,soil_salinity,SALINITY,soil_pH,DOC_vr,DIC_vr,DOC_RUNOFF,DIC_RUNOFF,soil_sulfate,soil_sulfide,CH4_vr,CH4FLUX_ALQUIMIA,QDRAI,QDRAI_VR,H2OSFC_TIDE,soil_Fe2,soil_FeOxide,TSOI" \
                        --marsh --tide_forcing_file /home/b0u/SETx/SETx_tides.nc  --parm_file /home/b0u/SETx/parms_SETx_marsh.txt
 
 
@@ -44,7 +70,7 @@ domain=/nfs/data/ccsi/proj-shared/E3SM/pt-e3sm-inputdata/atm/datm7/GSWP3_daymet/
 surf=/nfs/data/ccsi/proj-shared/E3SM/pt-e3sm-inputdata/atm/datm7/GSWP3_daymet/cpl_bypass_$site/surfdata.nc
 landuse=/nfs/data/ccsi/proj-shared/E3SM/pt-e3sm-inputdata/atm/datm7/GSWP3_daymet/cpl_bypass_$site/surfdata.pftdyn.nc
 python site_fullrun.py --site AK-BEO --sitegroup NGEEArctic --caseidprefix Alaska_alquimia  \
-                       --nyears_ad_spinup 100 --nyears_final_spinup 100 --tstep 1 --nyears_transient 51 \
+                       --nyears_ad_spinup 100 --nyears_final_spinup 100 --tstep 1 --nyears_transient 151 \
                        --cpl_bypass --machine cades --no_dynroot --spinup_vars --gswp3 --daymet4 --nofire --nopftdyn --nopointdata \
                        --model_root /home/b0u/models/E3SM_main --ccsm_input /nfs/data/ccsi/proj-shared/E3SM/pt-e3sm-inputdata \
                        --metdir $metdir \
