@@ -1516,8 +1516,8 @@ for i in range(1,int(options.ninst)+1):
                 else:
                     output.write(" metdata_type = 'gswp3'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-#                          +"/atm_forcing.datm7.GSWP3.0.5d.v2.c180716/cpl_bypass_full'\n")
-                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
+                          +"/atm_forcing.datm7.GSWP3.0.5d.v2.c180716/cpl_bypass_full'\n")
+#                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
             elif (options.gswp3_w5e5):
                 output.write(" metdata_type = 'gswp3_w5e5'\n")
                 output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
