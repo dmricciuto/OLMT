@@ -37,7 +37,7 @@ parser.add_option("--varfile", dest="myvarfile", default='varfile', \
 parser.add_option("--vars", dest="myvar", default='', \
                   help="variable to plot (overrides varfile, " \
                   +"sends plot to screen")
-parser.add_option("--model_name", dest="model_name", default='clm2', \
+parser.add_option("--model_name", dest="model_name", default='elm', \
                   help = 'model name in model output nc files')
 
 # output timing
@@ -94,6 +94,8 @@ parser.add_option("--noplot", dest="noplot", help="Do not make plots", \
                   action="store_true", default=False)
 parser.add_option("--nperpage", dest="nperpage", default=1, \
                   help = 'number of plots per page')
+parser.add_option("--outputdir", dest="outputdir", default='', \
+                  help = 'location for plots directory')
 (options,args) = parser.parse_args()
                
 
@@ -106,18 +108,14 @@ import matplotlib.pyplot as plt
 
 if (options.runnames != ''):
     #User provides full case names
-    runnames = options.runnames.split(',')
+    myrunnames = options.runnames.split(',')
     mycases=[]
     mysites=[]
     mycompsets=[]
-    for i in runnames:
+    for i in myrunnames:
         mycases.append(i.split('_')[0])
         mysites.append('_'.join(i.split('_')[1:len(i.split('_'))-1]))
         mycompsets.append(i.split('_')[-1])
-    mysites1=mysites
-    mycases1=mycases
-    mycompsets1=mycompsets
-    ncases = len(runnames)
 else:
   #User provides case prefix(es), site(s) and compset(s)
   #Set up a factorial across these
@@ -125,51 +123,46 @@ else:
   mysites = options.site.split(',')
   mycompsets = options.compset.split(',')
 
-  mysites1 = numpy.char.add(mysites,'_')
-  mysites2 = mysites1
-  if (len(mycompsets) > 1):
-    for c in range(1,len(mycompsets)):
-      mysites2 = numpy.concatenate((mysites2,mysites1))
-  mycompsets1 = numpy.repeat(mycompsets, len(mysites) )
-  runnames = numpy.char.add(mysites2,mycompsets1)
-  mysites1 = mysites2
+mysites1 = numpy.char.add(mysites,'_')
+mysites2 = mysites1
+if (len(mycompsets) > 1):
+  for c in range(1,len(mycompsets)):
+    mysites2 = numpy.concatenate((mysites2,mysites1))
+mycompsets1 = numpy.repeat(mycompsets, len(mysites) )
+runnames = numpy.char.add(mysites2,mycompsets1)
+mysites1 = mysites2
 
-  if (len(mycases) == 0):
-   if (mycases[0] != ''):
+if (len(mycases) == 0):
+  if (mycases[0] != ''):
     mycases1 = numpy.char.add(mycases,'_') 
     mycases2 = mycases1
     for c in range(1,len(runnames)):
       mycases2 = numpy.concatenate((mycases2,mycases1))
     runnames = numpy.concatenate((mycases2,runnames))
     mycases1 = mycases2
-   else:
+  else:
     mycases1 = mycases
     for c in range(1,len(runnames)):
       mycases1 = numpy.concatenate((mycases1,mycases))
 
-  else:
-    runnames1 = runnames 
-    mysites3  = mysites2
-    mycompsets2 = mycompsets1
-    #print(mycases)
-    for c in range(1,len(mycases)):
-      runnames1   = numpy.concatenate((runnames1,runnames))
-      mysites3    = numpy.concatenate((mysites3,mysites2))
-      mycompsets2 = numpy.concatenate((mycompsets2,mycompsets1))
-    mysites1  = mysites3
-    mycompsets1 = mycompsets2
-    mycases1 = mycases
-    #print(mycases)
-    for c in range(0,len(mycases1)):
-      if (mycases1[c] != ''):
+else:
+  runnames1 = runnames 
+  mysites3  = mysites2
+  mycompsets2 = mycompsets1
+  for c in range(1,len(mycases)):
+    runnames1   = numpy.concatenate((runnames1,runnames))
+    mysites3    = numpy.concatenate((mysites3,mysites2))
+    mycompsets2 = numpy.concatenate((mycompsets2,mycompsets1))
+  mysites1  = mysites3
+  mycompsets1 = mycompsets2
+  mycases1 = mycases.copy()
+  for c in range(0,len(mycases1)):
+    if (mycases1[c] != ''):
         mycases1[c] = mycases1[c]+'_'
-        #print(mycases)
-    mycases1 = numpy.repeat(mycases1, len(runnames) )
-    runnames = numpy.char.add(mycases1,runnames1) 
-    #print(mycases)
+  mycases1 = numpy.repeat(mycases1, len(runnames) )
+  runnames = numpy.char.add(mycases1,runnames1) 
 
-  mycases = options.mycase.split(',') # APW: IDK why but this is necessary as the above code is adding _ to mycases
-  ncases = len(runnames)
+ncases = len(runnames)
 
 if (options.titles != ''):
   mytitles = options.titles.split(',')
@@ -506,7 +499,7 @@ for c in range(0,ncases):
 #                    else:
 #                        myfile = os.path.abspath(mydir+'/'+mycases[c]+"_"+mysites[c]+'_'+thiscompset+ \
 #                                                 ".clm2."+hst+"."+yst+"-01-01-00000.nc")
-                    myfile = os.path.abspath(mydir+'/'+mycases1[c]+mysites1[c]+thiscompset+ \
+                    myfile = os.path.abspath(mydir+'/'+runnames[c]+ \
                                              "."+options.model_name+"."+hst+"."+yst+"-01-01-00000.nc")
                     if (os.path.exists(myfile)):
                         if (n == 0):
@@ -674,9 +667,14 @@ for v in range(0,len(myvars)):
         if (c == 0):
             if (v == 0):
                 ftype_suffix=['model','obs']
-                os.system('mkdir -p ./plots/'+mycases[0]+'/'+analysis_type)
+                if (options.outputdir == ''):
+                  outputdir = cesmdir+'/'+runnames[0]+'/plots/'+analysis_type
+                else:
+                  outputdir = options.outputdir+'/'+runnames[0]+'/'+analysis_type
+                os.system('mkdir -p '+outputdir)
+                print('Creating plots and output in '+outputdir)
                 for ftype in range(0,2):
-                    outdata = Dataset('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","w",mmap=False)
+                    outdata = Dataset(outputdir+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","w",mmap=False)
                     outdata.createDimension('time',snum[c])
                     #outdata.createDimension('lat',ncases)
                     #outdata.createDimension('lon',ncases)
@@ -698,7 +696,7 @@ for v in range(0,len(myvars)):
                     myname[:,:] = ' '   #changed for gridcell
                     outdata.close()
         for ftype in range(0,2):
-            outdata = Dataset('./plots/'+mycases[0]+'/'+analysis_type+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","a",mmap=False)
+            outdata = Dataset(outputdir+'/'+mycases[0]+"_"+mysites[0]+'_'+mycompsets[0]+'_'+ftype_suffix[ftype]+".nc","a",mmap=False)
             if (c == 0):
                 #myvar = outdata.createVariable(myvars[v],'f',('time','lat','lon'))
                 myvar = outdata.createVariable(myvars[v],'f',('time','gridcell'))
@@ -769,11 +767,10 @@ for v in range(0,len(myvars)):
         if (options.ylog):
             plt.yscale('log')
 
-        os.system('mkdir -p '+mydir+'/../plots/'+analysis_type)
         if (options.nperpage == 1):
-          fig_filename = mydir+'/../plots/'+analysis_type+'/'+myvars[v]
+          fig_filename = outputdir+'/'+myvars[v]
         else:
-          fig_filename = mydir+'/../plots/'+analysis_type+'/figure'+str(fignum+1)
+          fig_filename = outputdir+'/figure'+str(fignum+1)
         if (int(options.index) < 0):
             fig_filename = fig_filename+'_allindices'
         elif (int(options.index) > 0):
