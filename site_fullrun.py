@@ -189,6 +189,8 @@ parser.add_option("--fates", dest="fates", default=False, action="store_true", \
                   help = 'Use fates model')
 parser.add_option("--fates_nutrient", dest="fates_nutrient", default="", \
                   help = 'Which version of fates_nutrient to use (RD or ECA)')
+parser.add_option("--fates_logging", dest="fates_logging", default=False, action="store_true", \
+                  help = 'Set fates logging to true')
 parser.add_option("--ECA", dest="eca", default=False, action="store_true", \
                   help = 'Use ECA compset')
 parser.add_option("--c_only", dest="c_only", default=False, action ="store_true",  \
@@ -591,6 +593,8 @@ for row in AFdatareader:
             if (not options.gswp3): basecmd = basecmd+' --gswp3'
         if (options.fates_paramfile != ''):
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
+        if (options.fates_logging):     
+            basecmd = basecmd+ ' --fates_logging '
         if (options.fates_nutrient != ''):
             basecmd = basecmd+ ' --fates_nutrient '+options.fates_nutrient
         if (options.surfdata_grid):
@@ -1346,6 +1350,9 @@ for row in AFdatareader:
         #if ensemble simulations requested, submit jobs created by runcase.py in correct order
         if (options.no_submit == False and options.ensemble_file != ''):
             cases=[]
+            if (options.eco2_file):
+                 cases.append(basecase+'_'+modelst.replace('1850','20TR')+'_aCO2')
+                 cases.append(basecase+'_'+modelst.replace('1850','20TR')+'_eCO2')
             #build list of cases for fullrun
             if (options.noad == False):
                  if (options.ad_Pinit):
@@ -1384,6 +1391,7 @@ if (options.no_submit == False and options.ensemble_file == ''):
     for g in range(0,int(groupnum)+1):
         job_depend_run=''
         for thiscase in case_list:
+            print (f"Currently running {thiscase}....")
             output = open('./scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs','a')
             output.write('wait\n')
             if ('trans_diags' in thiscase and options.machine == 'cades'):
