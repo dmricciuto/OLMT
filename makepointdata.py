@@ -87,7 +87,7 @@ if ('hcru' in options.res):
         surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_24pfts_simyr2000_c150227.nc'
     else:
         if (mysimyr == 2000):
-            surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr2000_c160307.nc' #TAO from 160307 to 180216
+            surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr2000_c180216.nc'
         else:
             #CMIP6 stype (Hurtt v2)
             surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr1850_c180216.nc'
@@ -957,7 +957,7 @@ if (options.nopftdyn == False):
                 #use time-varying files from gridded file
                 #print('using '+surffile_new+' for 1850 information') # too much printing if long list points
                 nonpft = float(pct_lake_1850[n]+pct_glacier_1850[n]+ \
-                               pct_wetland_1850[n]+pct_urban_1850[n])
+                               pct_wetland_1850[n]+pct_urban_1850[0:3,n])
                 if (options.mymodel == 'CLM5'):
                     nonpft = nonpft+float(pct_crop_1850[n])
                 sumpft = 0.0

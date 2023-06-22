@@ -1191,7 +1191,7 @@ for i in range(1,int(options.ninst)+1):
                        'MR', 'GR', 'ER', 'NPP', 'TLAI', 'SOIL3C', 'TOTSOMC', 'TOTSOMC_1m', 'LEAFC', \
                        'DEADSTEMC', 'DEADCROOTC', 'FROOTC', 'LIVESTEMC', 'LIVECROOTC', 'TOTVEGC', 'N_ALLOMETRY','P_ALLOMETRY',\
                        'TOTCOLC', 'TOTLITC', 'BTRAN', 'SCALARAVG_vr', 'CWDC', 'QVEGE', 'QVEGT', 'QSOIL', 'QDRAI', \
-                       'QRUNOFF', 'FPI', 'FPI_vr', 'FPG', 'FPI_P','FPI_P_vr', 'FPG_P', 'CPOOL','NPOOL', 'PPOOL', 'SMINN', 'HR_vr']
+                       'QRUNOFF', 'FPI', 'FPI_vr', 'FPG', 'FPI_P','FPI_P_vr', 'FPG_P', 'CPOOL','NPOOL', 'PPOOL', 'SMINN', 'HR_vr', 'H2OSFC']
     if ('ICBCLM45CB' in compset):
       var_list_spinup = ['FPSN','TLAI','QVEGT','QVEGE','QSOIL','EFLX_LH_TOT','FSH','RH2M','TSA','FSDS','FLDS','PBOT', \
                          'WIND','BTRAN','DAYL','T10','QBOT']
@@ -1570,9 +1570,9 @@ if (options.marsh):
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
     os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
-if ('elmpf' in options.machine):
-    print('Running ELM-PFLOTRAN interface\n')
-    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DCLM_PFLOTRAN'")
+#if ('elmpf' in options.machine):
+#    print('Running ELM-PFLOTRAN interface\n')
+#    os.system("./xmlchange -id CLM_CONFIG_OPTS --append --val '-cppdefs -DCLM_PFLOTRAN'")
 
 xval = subprocess.check_output('./xmlquery --value CLM_CONFIG_OPTS', cwd=casedir, shell=True)
 xval = xval.decode()
@@ -1583,8 +1583,8 @@ if (options.clmpf_source_dir!=''):
     os.system("export CLM_PFLOTRAN_SOURCE_DIR="+options.clmpf_source_dir)
     print('Building CLM with PFLOTRAN coupling codes from: ')
     os.system("echo $CLM_PFLOTRAN_SOURCE_DIR")
-    #building CPPDEFS
-    cppdefs = cppdefs + ' -DCLM_PFLOTRAN -DCOLUMN_MODE'
+#    building CPPDEFS
+#    cppdefs = cppdefs + ' -DCLM_PFLOTRAN -DCOLUMN_MODE'
     if (options.clmpf_mode):
        #running option
        print('PFLOTRAN coupled run is ON! \n')
