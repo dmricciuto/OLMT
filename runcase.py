@@ -1892,7 +1892,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             print('Error:  ensemble file does not exist')
             sys.exit(1)
 
-        samples=numpy.zeros((n_parameters,100000), dtype=numpy.float) 
+        samples=numpy.zeros((n_parameters,100000), dtype=numpy.float64) 
         #get parameter samples and information
         myinput=open(options.ensemble_file)
         nsamples = 0
