@@ -778,8 +778,14 @@ for n in range(0,n_grids):
                     #monthly_height_top[t][p][j][i] = monthly_height_top[t][p][0][0]
                     #monthly_height_bot[t][p][j][i] = monthly_height_bot[t][p][0][0]
 
-
-
+        if (options.col3rd and n==0):
+            for k in range(0,10): #[Wei Huang 05/26/2023]:change organic for soil characteristics at high marsh
+             #organic[k][0][0] = 1.6 #39.0 #1.6 #max/min for upland at CB
+             organic[k][0][0] = 0.5 #44.9 #0.5 #max/min for upland at GL
+        if (options.col3rd and n>0):
+            for k in range(0,10):#[Wei Huang 05/26/2023]:change organic for soil characteristics at low marsh
+             #organic[k][0][0] = 2.1 #43.0 #2.1 #max/min for wetland at CB
+             organic[k][0][0] = 2.6 #31.6 #2.6 #max/min for wetland at GL
         ierr = nffun.putvar(surffile_new, 'LANDFRAC_PFT', landfrac_pft)
         ierr = nffun.putvar(surffile_new, 'PFTDATA_MASK', pftdata_mask)
         ierr = nffun.putvar(surffile_new, 'LONGXY', longxy)

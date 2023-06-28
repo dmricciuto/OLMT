@@ -510,7 +510,9 @@ for row in AFdatareader:
  
         #get align_year
         year_align = (endyear-1850+1) % ncycle
-
+        print('[Wei] endyear='+str(endyear))
+        print('[Wei] startyear='+str(startyear))
+        print('[Wei] ncycle='+str(ncycle))
         #use site parameter file if it exists
         if (options.siteparms):
             if (os.path.exists(PTCLMfiledir+'/parms_'+site)):
@@ -733,6 +735,8 @@ for row in AFdatareader:
         # AD spinup
         cmd_adsp = basecmd+' --ad_spinup --nyears_ad_spinup '+ \
             str(ny_ad)+' --align_year '+str(year_align+1)
+        print('[Wei] ny_ad='+str(ny_ad))#Wei
+        print('[Wei] year_align (adsp)='+str(year_align+1))#Wei
         if (int(options.hist_mfilt_spinup) == -999):
             cmd_adsp = cmd_adsp+' --hist_mfilt 1 --hist_nhtfrq -'+ \
             str((endyear-startyear+1)*8760)
@@ -868,7 +872,7 @@ for row in AFdatareader:
             str(year_align+1850)+' --hist_nhtfrq '+ \
             options.hist_nhtfrq+' --hist_mfilt '+options.hist_mfilt+' --no_build' + \
             ' --exeroot '+ad_exeroot+' --nopointdata'
-        
+        print('[Wei] year_align (trns)='+str(year_align+1850)) 
         if (options.cpl_bypass):
             if (options.crop or options.fates):
               cmd_trns = cmd_trns+' --istrans --compset ICB'+mycompset
