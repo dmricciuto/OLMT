@@ -1968,7 +1968,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
               output_run.write('#SBATCH -A ccsi\n')
               output_run.write('#SBATCH -p batch\n')
               output_run.write('#SBATCH --mem=64G\n')
-              output_run.write('#SBATCH --ntasks-per-node 32\n')
+              output_run.write('#SBATCH --ntasks-per-node=32\n')
             if ('anvil' in options.machine):
               output_run.write('#SBATCH -A condo\n')
               output_run.write('#SBATCH -p acme-small\n')
