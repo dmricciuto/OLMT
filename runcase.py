@@ -1936,7 +1936,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
            timestr='00:30:00'
            if ('compy' in options.machine):
              timestr='02:00:00'
-        output_run.write("#!/bin/csh -f\n")
+        output_run.write("#!/bin/bash -f\n")
         if (mysubmit_type == 'qsub'):
             output_run.write('#PBS -l walltime='+timestr+'\n')
             output_run.write('#PBS -N ens_'+casename+'\n')
@@ -2016,6 +2016,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             mpicmd = 'mpirun'
             if ('cades' in options.machine):
                 #mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
+                output_run.write('source ~/anaconda3/bin/activate\n') #[Wei Huang: activate conda installed by user under home dir: ~/anaconda3, 06-30-2023]
                 output_run.write('conda activate phpenv\n') #[Wei Huang: use mpi under conda environment installed by user, 06-27-2023]
                 mpicmd = 'mpirun' #[Wei Huang: use mpi under conda environment installed by user, 06-27-2023]
             cmd = mpicmd+' -np '+str(np_total)+' python manage_ensemble.py ' \

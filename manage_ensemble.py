@@ -400,7 +400,8 @@ else:
   for thisiter in range(0,niter):
     status=0
     while status == 0:
-        myjob = comm.recv(source=0, tag=1)
+      myjob = comm.recv(source=0, tag=1)
+      while myjob <= options.n: #limit myjob
         status = comm.recv(source=0, tag=2) 
 
         if (status == 0):
