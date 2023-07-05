@@ -455,6 +455,8 @@ elif (int(options.ppn)>1):
     ppn=int(options.ppn)
 elif ('pm-cpu' in options.machine):
     ppn=128
+elif ('docker' in options.machine):
+    ppn=4
 if (options.ensemble_file == ''):
   ppn=min(ppn, int(options.np))
 
@@ -702,9 +704,9 @@ if (options.rmold):
 
 #------Make domain, surface data and pftdyn files ------------------
 mysimyr=1850
-if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset or 'FATES' in compset):
-    #note - spinup with 2000 conditions for FATES
-    mysimyr=2000
+#if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset or 'FATES' in compset):
+#    #note - spinup with 2000 conditions for FATES
+#    mysimyr=2000
 
 if (options.nopointdata == False):
     ptcmd = 'python makepointdata.py --ccsm_input '+options.ccsm_input+ \
@@ -909,14 +911,14 @@ else:
       else:
         print('qflx_h2osfc_surfrate = 1.0e-7')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      os.system(myncap+' -O -s "moss_swc_adjust = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      os.system(myncap+' -O -s "moss_swc_adjust=scalar(0)" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "h2osoi_offset = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
       os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    os.system(myncap+' -O -s "vcmaxse = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','vcmaxse', flnr*0.0+670)
+    #os.system(myncap+' -O -s "vcmaxse = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','vcmaxse', flnr*0.0+670)
 
     if (options.marsh and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
@@ -931,13 +933,13 @@ else:
             os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     elif options.marsh:
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
-    os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    os.system(myncap+' -O -s "crit_onset_gdd = ndays_on" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
-    ndays_on = nffun.getvar(tmpdir+'/clm_params.nc','ndays_on')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_onset_gdd', ndays_on*0.0+200.0)
+    #os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "crit_onset_gdd = ndays_on" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
+    #ndays_on = nffun.getvar(tmpdir+'/clm_params.nc','ndays_on')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_onset_gdd', ndays_on*0.0+200.0)
 
     # BSulman: These Nfix constants can break the model if they don't have the right length.
     #os.system(myncap+' -O -s "Nfix_NPP_c1 = br_mr*+1.8" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -1039,6 +1041,7 @@ timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- 
 cmd = './create_newcase --case '+casedir+' --mach '+options.machine+' --compset '+ \
 	   options.compset+' --res '+options.res+' --mpilib '+ \
            options.mpilib+' --walltime '+timestr+' --handle-preexisting-dirs u'
+
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
 if (options.project != ''):
@@ -1069,8 +1072,8 @@ result = os.system('./xmlchange PIO_VERSION=%s'%options.pio_version)
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
 
-#if (options.debug):
-#    result = os.system('./xmlchange DEBUG=TRUE')
+if (options.debug):
+    result = os.system('./xmlchange DEBUG=TRUE')
 
 #clm 4_5 cn config options
 #clmcn_opts = "'-phys clm4_5 -cppdefs -DMODAL_AER'"
@@ -1155,10 +1158,10 @@ if ('20TR' in compset or options.istrans):
         os.system('./xmlchange RUN_STARTDATE=1850-01-01')
     
 #No pnetcdf for small cases on compy
-if ('compy' in options.machine and int(options.np) < 80):
+if (('docker' in options.machine or 'compy' in options.machine) and int(options.np) < 80):
   os.system('./xmlchange PIO_TYPENAME=netcdf')
 
-comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV']
+comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV','ESP','IAC']
 for c in comps:
     print('Setting NTASKS_'+c+' to '+str(options.np))
     os.system('./xmlchange NTASKS_'+c+'='+str(options.np))
@@ -1334,7 +1337,7 @@ for i in range(1,int(options.ninst)+1):
             if (options.dailyrunoff):
                 #include daily variables related to runoff only
                 output.write(" hist_mfilt = "+ str(options.hist_mfilt)+",365\n")
-            if (options.dailyvars):
+            elif (options.dailyvars):
                 #include daily column and PFT level output
                 output.write(" hist_dov2xy = .true., .true., .false.\n")
                 output.write(" hist_mfilt = "+ str(options.hist_mfilt)+",365,365\n")
@@ -1689,7 +1692,7 @@ for i in range(1,int(options.ninst)+1):
 
 #configure case
 #if (isglobal):
-os.system("./xmlchange -id BATCH_SYSTEM --val none")
+os.system("./xmlchange --id BATCH_SYSTEM --val none")
 if (options.no_config == False):
     print('Running case.setup')
     result = os.system('./case.setup > case_setup.log')
@@ -1706,15 +1709,15 @@ xval = xval.decode()
 cppdefs = ''
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    #os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'") # this appending not works if already having '-cppdef ...'
+    #os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'") # this appending not works if already having '-cppdef ...'
     cppdefs = cppdefs + ' -DHUM_HOL'
 if (options.marsh):
     print("Turning on MARSH modification\n")
-    #os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'") # this appending not works if already having '-cppdef ...'
+    #os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'") # this appending not works if already having '-cppdef ...'
     cppdefs = cppdefs + ' -DMARSH'
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    #os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'") # this appending not works if already having '-cppdef ...'
+    #os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'") # this appending not works if already having '-cppdef ...'
     cppdefs = cppdefs + ' -DHARVMOD'
 #clm-pflotran coupled build/run is ON -----------------
 if (options.clmpf_source_dir!=''):
@@ -1727,7 +1730,7 @@ if (options.clmpf_source_dir!=''):
     if (options.clmpf_mode):
        #running option
        print('PFLOTRAN coupled run is ON! \n')
-       os.system("./xmlchange -id "+mylsm+"_INTERFACE_MODE --val pflotran")
+       os.system("./xmlchange --id "+mylsm+"_INTERFACE_MODE --val pflotran")
 #------------------------------------------------
 if (cppdefs!=''):
     if ('-cppdefs' in xval): 
@@ -1755,8 +1758,10 @@ if (cpl_bypass):
           and options.pio_version=='2'):
          stemp = s.replace('FORTRAN', 'CXX')
          outfile.write(stemp)
+      elif ('llapack' in s):
+         outfile.write(s.replace('llapack','llapack -lgfortran'))
       else:
-         outfile.write(s)
+         outfile.write(s.replace('mcmodel=medium','mcmodel=small'))
     infile.close()
     outfile.close()
     os.system('mv Macros.make.tmp Macros.make')
@@ -1775,8 +1780,10 @@ if (cpl_bypass):
           and options.pio_version=='2'):
        stemp = s.replace('FORTRAN', 'CXX')
        outfile.write(stemp)
+      elif ('llapack' in s):
+        outfile.write(s.replace('llapack','llapack -lgfortran'))
       else:
-       outfile.write(s)
+        outfile.write(s.replace('mcmodel=medium','mcmodel=small'))
     infile.close()
     outfile.close()
     os.system('mv Macros.cmake.tmp Macros.cmake')
@@ -2098,7 +2105,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         cnp = 'True'
         if (options.cn_only or options.c_only):
             cnp= 'False'
-        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine or 'docker' in options.machine):
+        if ('docker' in options.machine or 'oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
             mpicmd = 'mpirun'
             if ('cades' in options.machine):
                 mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
