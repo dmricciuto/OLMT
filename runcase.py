@@ -1048,16 +1048,16 @@ if (options.project != ''):
    cmd = cmd+' --project '+options.project
 if (options.compiler != ''):
    cmd = cmd+' --compiler '+options.compiler
-cmd = cmd+' > create_newcase.log'
+cmd = cmd+' > '+tmpdir+'/create_newcase.log'
 print(cmd)
 result = os.system(cmd)
 
 if (os.path.isdir(casedir)):
     print(casename+' created.  See create_newcase.log for details')
     #os.system('mv create_newcase.log '+casename)
-    os.system('mv create_newcase.log '+casedir)
+    os.system('mv '+tmpdir+'/create_newcase.log '+casedir)
 else:
-    print('Error:  runcase.py Failed to create case.  See create_newcase.log for details')
+    print('Error:  runcase.py Failed to create case.  See '+tmpdir+'/create_newcase.log for details')
     sys.exit(1)
 
 os.chdir(casedir)
