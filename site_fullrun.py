@@ -210,7 +210,8 @@ parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False,
 parser.add_option("--no_budgets", dest="no_budgets", default=False, \
                   help = 'Turn off CNP budget calculations', action='store_true')
 parser.add_option("--alquimia", dest="alquimia",default='',  help="Compile model with alquimia BGC interface using specified input file")
-parser.add_option("--alquimia_ad",dest='alquimia_ad',default='',help='Alquimia input file for ad spinup')parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
+parser.add_option("--alquimia_ad",dest='alquimia_ad',default='',help='Alquimia input file for ad spinup')
+parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
                   help = 'Turn on hydraulic stress', action='store_true')
 parser.add_option("--spruce_treatments", dest="spruce_treatments", default=False, \
                   help = 'Run SPRUCE treatment simulations (ensemble mode)', action='store_true')
@@ -372,7 +373,7 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
     if (options.machine == 'titan' or options.machine == 'eos'):
         myinput = open('/ccs/home/'+myuser+'/.cesm_proj','r')
         for s in myinput:
-    	    myproject=s[:-1]
+            myproject=s[:-1]
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
     elif (options.machine == 'cades'):
         runroot='/lustre/or-scratch/cades-ccsi/scratch/'+myuser
