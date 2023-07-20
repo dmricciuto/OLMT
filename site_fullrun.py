@@ -257,9 +257,9 @@ def runcmd(cmd,echo=True):
 #----------------------------------------------------------
 # define function for pbs submission
 def submit(fname, submit_type='qsub', job_depend=''):
-    job_depend_flag = ' -W depend=afterok:'
+    job_depend_flag = ' -W depend=afterany:'
     if ('sbatch' in submit_type):
-        job_depend_flag = ' --dependency=afterok:'
+        job_depend_flag = ' --dependency=afterany:'
     if (job_depend != '' and submit_type != ''):
         runcmd(submit_type+job_depend_flag+job_depend+' '+fname+' > temp/jobinfo')
     else:
