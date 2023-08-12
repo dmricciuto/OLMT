@@ -1,13 +1,13 @@
 #!/bin/sh -f
 
 python ./site_fullrun.py \
-      --site US-GC4 --site3rd US-GC3 --sitegroup Wetland --caseidprefix ADDS02 \
+      --site US-GC4 --site3rd US-GC3 --sitegroup Wetland --caseidprefix ADDS03 \
       --nyears_ad_spinup 200 --nyears_final_spinup 600 --nyears_transient 169 --tstep 1 \
       --cpl_bypass --machine cades --compiler gnu --mpilib openmpi \
       --walltime 9 \
       --hist_nhtfrq_trans -1 \
       --hist_mfilt_trans 8760 \
-      --diags \
+      --hist_vars SALINITY \
       --gswp3_w5e5 \
       --model_root /home/whuang611/E3SM_WH \
       --caseroot /home/whuang611/work/cases \

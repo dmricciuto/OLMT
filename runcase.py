@@ -1212,7 +1212,7 @@ for i in range(1,int(options.ninst)+1):
 
     #history file options
     #outputs for SPRUCE MiP and Jiafu's diagnostics code:
-    var_list_hourly = ['GPP', 'NEE', 'NEP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
+    var_list_hourly = ['GPP', 'NEE', 'NEP', 'NPP', 'SALINITY', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
             'CPOOL_TO_DEADSTEMC', 'LIVECROOTC_XFER_TO_LIVECROOTC', 'DEADCROOTC_XFER_TO_DEADCROOTC', \
             'CPOOL_TO_LIVECROOTC', 'CPOOL_TO_DEADCROOTC', 'FROOTC_ALLOC', 'AR', 'LEAF_MR', 'CPOOL_LEAF_GR',
             'TRANSFER_LEAF_GR', 'CPOOL_LEAF_STORAGE_GR', 'LIVESTEM_MR', 'CPOOL_LIVESTEM_GR', \
@@ -1231,7 +1231,7 @@ for i in range(1,int(options.ninst)+1):
             'TOTSOMC', 'ZWT', 'SNOWDP', 'TLAI','RH2M','QRUNOFF']
     #var_list_hourly_bgc   TODO:  Separate SP and BGC variables, 
     var_list_daily = ['TOTLITC', 'TOTSOMC', 'CWDC', 'LITR1C_vr', 'LITR2C_vr', 'LITR3C_vr', 'SOIL1C_vr', \
-                      'SOIL2C_vr', 'SOIL3C_vr', 'H2OSFC', 'ZWT', 'SNOWDP', 'TLAI', 'CPOOL','NPOOL','PPOOL', \
+                      'SOIL2C_vr', 'SOIL3C_vr','H2OSFC', 'ZWT', 'SNOWDP', 'TLAI', 'CPOOL','NPOOL','PPOOL', \
                       'FPI','FPI_P','FPG','FPG_P','FPI_vr','FPI_P_vr']
     var_list_pft = ['GPP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'CPOOL_TO_DEADSTEMC', \
                     'LIVECROOTC_XFER_TO_LIVECROOTC', 'DEADCROOTC_XFER_TO_DEADCROOTC', \

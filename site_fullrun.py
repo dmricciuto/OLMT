@@ -45,6 +45,9 @@ parser.add_option("--ensemble_file", dest="ensemble_file", default='', \
                   help = 'Parameter sample file to generate ensemble')
 parser.add_option("--postproc_file", dest="postproc_file", default="postproc_vars", \
                   help = 'File for ensemble post processing')
+#Added for postproc_only, same lines as defined in manage_ensemble.py [Wei Huang 2023/7/27]
+parser.add_option("--postproc_only", dest="postproc_only", default=False, \
+                  action="store_true", help='Only do post-processing')
 parser.add_option("--nopftdyn", dest="nopftdyn", default=False, action="store_true", \
                   help='Do not use dynamic PFT file')
 
