@@ -79,7 +79,7 @@ if ('r05' in options.res):
     #For TGU testing
     resx = 0.5
     resy = 0.5
-    domainfile_orig = '/lcrc/group/e3sm/data/inputdata/share/domains/domain.lnd.r05_EC30to60E2r2.201005.nc'
+    domainfile_orig = ccsm_input+'/share/domains/domain.lnd.r05_EC30to60E2r2.201005.nc'
     surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/topounit_based_half_degree_merge_surfdata_0.5x0.5_simyr1850_c211019.20211108_ed20220204.nc'
     pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_0.5x0.5_HIST_simyr1850-2015_c211019_TGU_with_surf_mask.20220312.nc'
     #non TGU version
