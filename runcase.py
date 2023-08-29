@@ -476,7 +476,7 @@ surfdir = 'surfdata_map'
 if (options.mymodel == 'ELM'):
     if ('ECA' in compset or 'ECA' in options.fates_nutrient):
         parm_file = 'clm_params.c180713.nc'
-    elif('RD' in compset or 'RD' in options.fates_nutrient):
+    elif('RD' in compset or 'RD' in options.fates_nutrient or 'TGU' in compset):
         parm_file = 'clm_params_c180524.nc'
     else:
         parm_file = 'clm_params_c180301.nc'   #FATES/CROP
@@ -573,10 +573,10 @@ casename    = options.site+"_"+compset
 if (options.mycaseid != ""):
     casename = options.mycaseid+'_'+casename
 
-if (options.metdir!='none'):# obviously user-provided met forcing is not reanalysis type
-    use_reanalysis = False
+#if (options.metdir!='none'):# obviously user-provided met forcing is not reanalysis type
+#    use_reanalysis = False
 #CRU-NCEP 2 transient phases
-elif ('CRU' in compset or options.cruncep or options.gswp3 or options.gswp3_w5e5 or \
+if ('CRU' in compset or options.cruncep or options.gswp3 or options.gswp3_w5e5 or \
             options.crujra or options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
@@ -651,8 +651,8 @@ if (options.nopointdata == False):
     ptcmd = 'python makepointdata.py --ccsm_input '+options.ccsm_input+ \
         ' --keep_duplicates --lat_bounds '+options.lat_bounds+' --lon_bounds '+ \
         options.lon_bounds+' --mysimyr '+str(mysimyr)+' --model '+options.mymodel
-    if (options.metdir != 'none'):
-        ptcmd = ptcmd + ' --metdir '+options.metdir
+    #if (options.metdir != 'none'):
+    #    ptcmd = ptcmd + ' --metdir '+options.metdir
     if (options.makemet):
         ptcmd = ptcmd + ' --makemetdata'
     if (options.surfdata_grid):
@@ -1037,8 +1037,8 @@ if (options.ad_spinup):
     elif (options.mymodel == 'CLM5'):
         os.system('./xmlchange CLM_ACCELERATED_SPINUP=on')
         os.system('./xmlchange CLM_FORCE_COLDSTART=on')
-#if (options.use_hydrstress):
-#    os.system("./xmlchange --append "+mylsm+"_BLDNML_OPTS='-hydrstress'")
+if (options.use_hydrstress):
+    os.system("./xmlchange --append "+mylsm+"_BLDNML_OPTS='-hydrstress'")
 
 if (int(options.run_startyear) > -1):
     os.system('./xmlchange RUN_STARTDATE='+str(options.run_startyear)+'-01-01')
@@ -1469,49 +1469,49 @@ for i in range(1,int(options.ninst)+1):
             output.write(" nu_com = 'ECA'\n")
         elif ('RD' in options.fates_nutrient):
             output.write(" nu_com = 'RD'\n")
-    if (options.use_hydrstress):
-      output.write(" use_hydrstress = .true.\n")
+    #if (options.use_hydrstress):
+    #  output.write(" use_hydrstress = .true.\n")
 
     if (cpl_bypass):
         if (use_reanalysis):
             if (options.cruncepv8):
                     output.write(" metdata_type = 'cru-ncep'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
                          +"atm_forcing.datm7.cruncep_qianFill.0.5d.v8.c180815" + \
-                         "/cpl_bypass_full'\n")
+                         "/cpl_bypass_full"
             elif (options.cruncep):
                 if (options.livneh):
                     output.write(" metdata_type = 'cru-ncep_livneh'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
                          +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715.CONUS_Livneh" + \
-                         "/cpl_bypass_full'\n")
+                         "/cpl_bypass_full"
                 elif (options.daymet):
                     output.write(" metdata_type = 'cru-ncep_daymet'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
                          +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715.CONUS_Daymet3" + \
-                         "/cpl_bypass_full'\n")
+                         "/cpl_bypass_full"
                 else:
                     output.write(" metdata_type = 'cru-ncep'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715/cpl_bypass_full'\n")
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715/cpl_bypass_full"
             elif (options.crujra):
                     output.write(" metdata_type = 'crujra'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.CRUJRA.0.5d.v1.c190604/cpl_bypass_full'\n")
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                            +"atm_forcing.datm7.CRUJRA.0.5d.v1.c190604/cpl_bypass_full"
             elif (options.gswp3):
                 if (options.livneh):
                     output.write(" metdata_type = 'gswp3_livneh'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516.CONUS_Livneh/cpl_bypass_full'\n")
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516.CONUS_Livneh/cpl_bypass_full"
                 elif (options.daymet):
                     output.write(" metdata_type = 'gswp3_daymet'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516.CONUS_Daymet3/cpl_bypass_full'\n")
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516.CONUS_Daymet3/cpl_bypass_full"
                 else:
                     output.write(" metdata_type = 'gswp3'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                          +"/atm_forcing.datm7.GSWP3.0.5d.v2.c180716/cpl_bypass_full'\n")
-#                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full'\n")
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                          +"/atm_forcing.datm7.GSWP3.0.5d.v2.c180716/cpl_bypass_full"
+#                         +"atm_forcing.datm7.GSWP3.0.5d.v1.c170516/cpl_bypass_full"
             elif (options.gswp3_w5e5):
                 output.write(" metdata_type = 'gswp3_w5e5'\n")
                 output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
@@ -1519,21 +1519,25 @@ for i in range(1,int(options.ninst)+1):
             elif (options.princeton):
                 if (options.livneh):
                     output.write(" metdata_type = 'princeton_livneh'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.Princeton.0.5d.v1.c180222.CONUS_Livneh/cpl_bypass_full'\n")
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.Princeton.0.5d.v1.c180222.CONUS_Livneh/cpl_bypass_full"
                 elif (options.daymet):
                     output.write(" metdata_type = 'princeton_daymet'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.Princeton.0.5d.v1.c180222.CONUS_Daymet3/cpl_bypass_full'\n")
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.Princeton.0.5d.v1.c180222.CONUS_Daymet3/cpl_bypass_full"
                 else:
                     output.write(" metdata_type = 'princeton'\n")
-                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.Princeton.0.5d.v1.c180222/cpl_bypass_full'\n")
+                    metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.Princeton.0.5d.v1.c180222/cpl_bypass_full"
             elif (options.cplhist):
                 output.write(" metdata_type = 'cplhist'\n")
-                output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                          +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full'\n")
-#                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full'\n")
+                metdata_bypass = options.ccsm_input+"/atm/datm7/" \
+                          +"atm_forcing.cpl.CBGC1850S.ne30.c181011/cpl_bypass_full"
+#                         +"atm_forcing.cpl.WCYCL1850S.ne30.c171204/cpl_bypass_full"
+            if (options.metdir != 'none'):
+                output.write(" metdata_bypass = '%s'\n"%options.metdir)
+            else:
+                output.write(" metdata_bypass = '%s'\n"%metdata_bypass)
         elif options.metdir != 'none':
             if (options.daymet4 and options.gswp3):
                 output.write(" metdata_type = 'gswp3_daymet4'\n")

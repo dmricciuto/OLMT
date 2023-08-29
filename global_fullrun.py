@@ -166,6 +166,10 @@ parser.add_option("--spinup_vars", dest = "spinup_vars", default=False, \
 parser.add_option("--trans_varlist", dest = "trans_varlist", default='', help = "Transient outputs")
 parser.add_option("--cn_only", dest="cn_only", default=False, \
                   help='Carbon/Nitrogen only (saturated P)', action ="store_true")
+parser.add_option("--tgu", dest="tgu", default=False, \
+                  action="store_true", help = "Enable topographic nunits")
+parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
+                  help = 'Turn on hydraulic stress', action='store_true')
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
@@ -368,6 +372,8 @@ if (options.runroot == ''):
         runroot="/lcrc/group/acme/"+myuser
     elif ('compy' in options.machine):
         runroot='/compyfs/'+myuser+'/e3sm_scratch'
+    elif ('chrysalis' in options.machine):
+        runroot='/lcrc/group/e3sm/'+myuser
     else:
         runroot = csmdir+'/run'
 else:
@@ -490,6 +496,8 @@ if (options.monthly_metdata != ''):
     basecmd = basecmd+' --monthly_metdata '+options.monthly_metdata
 if (options.nofire):
     basecmd = basecmd+' --nofire'
+if (options.use_hydrstress):
+    basecmd = basecmd+' --use_hydrstress'
 if (options.harvmod):
     basecmd = basecmd+' --harvmod'
 if (int(options.mypft) >= 0):
@@ -578,13 +586,16 @@ if (options.cpl_bypass):
 else:
     compset_type = 'I'
 mymodel_fnsp = compset_type+'1850'+mymodel+'BC'
+if (options.tgu):
+    mymodel_fnsp = compset_type+'1850GSWCNPTGU'
+
 mymodel_adsp = mymodel_fnsp.replace('CNP','CN')
 mymodel_trns = mymodel_fnsp.replace('1850','20TR')
 if (options.sp):
     mymodel_fnsp = compset_type+'CLM45BC'
     options.noad = True
     options.notrans = True
-
+    
 #AD spinup
 res=options.res
 
@@ -736,7 +747,7 @@ if (options.mc_ensemble <= 0):
 
 
     mysubmit_type = 'qsub'
-    if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
+    if ('chrysalis' in options.machine or 'cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
         mysubmit_type = 'sbatch'
     #Create a .PBS site fullrun script to launch the full job 
 
@@ -847,7 +858,7 @@ if (options.mc_ensemble <= 0):
         model_startdate = model_startdate + runblock          
         output.write("./case.submit --no-batch\n")
         output.write("cd "+os.path.abspath(".")+'\n')
-        if ('ad_spinup' in c and n == (n_submits-1)):
+        if ('ad_spinup' in c and n == (n_submits-1) and not options.tgu):
             if (options.bgc):
                 output.write("python adjust_restart.py --rundir "+os.path.abspath(runroot)+ \
                                  '/'+ad_case+'/run/ --casename '+ ad_case+' --restart_year '+ \

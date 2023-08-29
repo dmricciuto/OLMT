@@ -16,7 +16,7 @@ parser.add_option('--BGC', dest='bgc', default=False, action="store_true", \
                     help='Flag to set for BGC compsets')
 parser.add_option('--harvest', dest='harvest', default=False, action="store_true", \
                     help='Add a 95% above ground harvest')
-parser.add_option('--model_name', dest='model_name', default="clm2", \
+parser.add_option('--model_name', dest='model_name', default="elm", \
                     help='Model name used in restart file (clm2 or elm)')
 (options,args)=parser.parse_args()
 

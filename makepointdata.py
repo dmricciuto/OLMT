@@ -75,7 +75,18 @@ lon_bounds = [float(l) for l in lon_bounds]
 
 mysimyr=int(options.mysimyr)
 
-if ('hcru' in options.res):
+if ('r05' in options.res):
+    #For TGU testing
+    resx = 0.5
+    resy = 0.5
+    domainfile_orig = '/lcrc/group/e3sm/data/inputdata/share/domains/domain.lnd.r05_EC30to60E2r2.201005.nc'
+    surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/topounit_based_half_degree_merge_surfdata_0.5x0.5_simyr1850_c211019.20211108_ed20220204.nc'
+    pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_0.5x0.5_HIST_simyr1850-2015_c211019_TGU_with_surf_mask.20220312.nc'
+    #non TGU version
+    surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_0.5x0.5_simyr1850_c211019.nc'
+    #pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_0.5x0.5_HIST_simyr1850-2015_c211019.nc'
+    pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_0.5x0.5_HIST_simyr1850-2015_c230722_noC3grass_2cells.nc'
+elif ('hcru' in options.res):
     resx = 0.5
     resy = 0.5
     domainfile_orig = ccsm_input+'/share/domains/domain.clm/domain.lnd.360x720_cruncep.100429.nc'
@@ -89,7 +100,6 @@ if ('hcru' in options.res):
         else:
             #CMIP6 stype (Hurtt v2)
             surffile_orig = ccsm_input+'/lnd/clm2/surfdata_map/surfdata_360x720cru_simyr1850_c180216.nc'
-
     pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_360x720cru_hist_simyr1850-2015_c180220.nc'
     nyears_landuse=166
 elif ('f19' in options.res):
@@ -220,6 +230,9 @@ else:
 if (options.res == 'hcru_hcru'):
      longxy = (numpy.cumsum(numpy.ones([721]))-1)*0.5
      latixy = (numpy.cumsum(numpy.ones([361]))-1)*0.5 -90.0
+elif ('r05' in options.res):
+     longxy = (numpy.cumsum(numpy.ones([721]))-1)*0.5 -180
+     latixy = (numpy.cumsum(numpy.ones([361]))-1)*0.5 -90.0
 elif ('f19' in options.res):
     longxy = (numpy.cumsum(numpy.ones([145]))-1)*2.5-1.25
     latixy_centers = (numpy.cumsum(numpy.ones([96]))-1)*(180.0/95) - 90.0
@@ -254,7 +267,7 @@ for n in range(0,n_grids):
     xgrid_max.append(-1)
     ygrid_min.append(-1)
     ygrid_max.append(-1)
-    if ('ne' in options.res):
+    if (not 'r05' in options.res and 'ne' in options.res):
       if (lon_bounds[0] != lon_bounds[1] or lat_bounds[0] != lat_bounds[1]):
         print('Regional subsets not allowed for ne resolutions.  Use point lists instead')
         sys.exit()
@@ -479,10 +492,10 @@ else:
 if(ierr==0): 
     # NC-4 classic better for either NC-4 or NC-3 tools, 
     # but 'ncrename' not good with NC-4
-    ierr = os.system('nccopy -7 -u '+domainfile_new+' '+domainfile_new+'.tmp')
+    ierr = os.system('nccopy -3 -u '+domainfile_new+' '+domainfile_new+'.tmp')
     if(ierr!=0):
-        print('nccopy -7 -u '+domainfile_new+' '+domainfile_new+'.tmp')
-        raise RuntimeError('Error: nccopy -7 -u ');# os.sys.exit()
+        print('nccopy -3 -u '+domainfile_new+' '+domainfile_new+'.tmp')
+        raise RuntimeError('Error: nccopy -3 -u ');# os.sys.exit()
     else:
         ierr = os.system('mv '+domainfile_new+'.tmp '+domainfile_new)
 
@@ -505,7 +518,7 @@ for n in range(0,n_grids):
     if (isglobal):
         os.system('cp '+surffile_orig+' '+surffile_new)
     else:
-        if ('ne' in options.res):
+        if (not 'r05' in options.res and 'ne' in options.res):
           os.system('ncks -h -O --fix_rec_dmn time -d gridcell,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
             ' '+surffile_orig+' '+surffile_new)
         else:
@@ -781,13 +794,14 @@ else:
 
 # NC-4 classic better for either NC-4 or NC-3 tools (though not writable as NC-4), 
 # but 'ncrename' used above may not works with NC-4
-ierr = os.system('nccopy -7 -u '+surffile_new+' '+surffile_new+'.tmp')
-if(ierr!=0): 
-    raise RuntimeError('Error: nccopy -7 -u ');# os.sys.exit()
-else:
-    ierr = os.system('mv '+surffile_new+'.tmp '+surffile_new)
+if (not isglobal):
+  ierr = os.system('nccopy -3 -u '+surffile_new+' '+surffile_new+'.tmp')
+  if(ierr!=0): 
+      raise RuntimeError('Error: nccopy -3 -u ');# os.sys.exit()
+  else:
+      ierr = os.system('mv '+surffile_new+'.tmp '+surffile_new)
 
-print("INFO: Extracted and Compiled '"+ surffile_new + "' FROM: '" + surffile_orig+"'! \n")
+  print("INFO: Extracted and Compiled '"+ surffile_new + "' FROM: '" + surffile_orig+"'! \n")
 
 #-------------------- create pftdyn surface data ----------------------------------
 
@@ -805,7 +819,7 @@ if (options.nopftdyn == False):
     if (isglobal):
         os.system('cp '+pftdyn_orig+' '+pftdyn_new)
     else:
-        if ('ne' in options.res):
+        if (not 'r05' in options.res and 'ne' in options.res):
           os.system('ncks -h -O --fix_rec_dmn time -d gridcell,'+str(xgrid_min[n])+','+str(xgrid_max[n])+ \
                   ' '+pftdyn_orig+' '+pftdyn_new)
         else:
@@ -1019,11 +1033,12 @@ if (options.nopftdyn == False):
   
   # NC-4 classic better for either NC-4 or NC-3 tools, 
   # but 'ncrename' used above may not works with NC-4
-  ierr = os.system('nccopy -7 -u '+pftdyn_new+' '+pftdyn_new+'.tmp')
-  if(ierr!=0):    
-      raise RuntimeError('Error: nccopy -7 -u '); #os.sys.exit()
-  else:
-      ierr = os.system('mv '+pftdyn_new+'.tmp '+pftdyn_new)
+  if (not isglobal):
+    ierr = os.system('nccopy -3 -u '+pftdyn_new+' '+pftdyn_new+'.tmp')
+    if(ierr!=0):    
+      raise RuntimeError('Error: nccopy -3 -u '); #os.sys.exit()
+    else:
+        ierr = os.system('mv '+pftdyn_new+'.tmp '+pftdyn_new)
 
-  print("INFO: Extracted and Compiled '"+ pftdyn_new + "' FROM: '" + pftdyn_orig+"'! \n")
+    print("INFO: Extracted and Compiled '"+ pftdyn_new + "' FROM: '" + pftdyn_orig+"'! \n")
 
