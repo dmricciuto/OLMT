@@ -1588,7 +1588,7 @@ for i in range(1,int(options.ninst)+1):
 
 #configure case
 #if (isglobal):
-os.system("./xmlchange -id BATCH_SYSTEM --val none")
+os.system("./xmlchange --id BATCH_SYSTEM --val none")
 if (options.no_config == False):
     print('Running case.setup')
     result = os.system('./case.setup > case_setup.log')
@@ -1602,14 +1602,14 @@ else:
 #Land CPPDEF modifications
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
 
 if (options.marsh):
     print("Turning on MARSH modification\n")
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
 
 #Global CPPDEF modifications
 if (cpl_bypass):
@@ -1765,6 +1765,7 @@ if (not cpl_bypass and not isglobal):
                 temp  =s.replace('TEMPSTRING', str(numxpts)+'x'+str(numypts)+'pt'+'_'+options.site)
                 myoutput.write(temp)
             elif (('ED' in compset or 'FATES' in compset) and 'FLDS' in s):
+#            if (('ED' in compset or 'FATES' in compset) and 'FLDS' in s):
                 print('Not including FLDS in atm stream file')
             else:
                 myoutput.write(s)
