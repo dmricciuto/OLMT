@@ -399,6 +399,10 @@ elif ('compy' in options.machine):
     ppn=40
 elif ('chrysalis' in options.machine):
     ppn=64
+elif ('pm-cpu' in options.machine):
+    ppn=128
+elif ('docker' in options.machine):
+    ppn=4
 if (options.ensemble_file == ''):
   ppn=min(ppn, int(options.np))
 
@@ -645,9 +649,9 @@ if (options.rmold):
 
 #------Make domain, surface data and pftdyn files ------------------
 mysimyr=1850
-if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset or 'FATES' in compset):
-    #note - spinup with 2000 conditions for FATES
-    mysimyr=2000
+#if (('1850' not in compset and '20TR' not in compset) or 'ED' in compset or 'FATES' in compset):
+#    #note - spinup with 2000 conditions for FATES
+#    mysimyr=2000
 
 if (options.nopointdata == False):
     ptcmd = 'python makepointdata.py --ccsm_input '+options.ccsm_input+ \
@@ -686,10 +690,10 @@ if (options.nopointdata == False):
     else:
         ptcmd = ptcmd + ' --site '+options.site+' --sitegroup '+options.sitegroup
 
-    if(options.domainfile != ''):
-        ptcmd = ptcmd + ' --nodomain '
-    if(options.surffile !=''):
-        ptcmd = ptcmd + ' --nosurfdata '
+    #if(options.domainfile != ''):
+    #    ptcmd = ptcmd + ' --nodomain '
+    #if(options.surffile !=''):
+    #    ptcmd = ptcmd + ' --nosurfdata '
     if(options.marsh):
         ptcmd = ptcmd + ' --marsh'
     if(options.humhol):
@@ -851,14 +855,14 @@ else:
       else:
         print('qflx_h2osfc_surfrate = 1.0e-7')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+1.0e-7" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      os.system(myncap+' -O -s "moss_swc_adjust = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      os.system(myncap+' -O -s "moss_swc_adjust=scalar(0)" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "h2osoi_offset = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
       os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    os.system(myncap+' -O -s "vcmaxse = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','vcmaxse', flnr*0.0+670)
+    #os.system(myncap+' -O -s "vcmaxse = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','vcmaxse', flnr*0.0+670)
 
     if (options.marsh and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
@@ -873,13 +877,13 @@ else:
             os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     elif options.marsh:
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
-    os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    os.system(myncap+' -O -s "crit_onset_gdd = ndays_on" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
-    ndays_on = nffun.getvar(tmpdir+'/clm_params.nc','ndays_on')
-    ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_onset_gdd', ndays_on*0.0+200.0)
+    #os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #os.system(myncap+' -O -s "crit_onset_gdd = ndays_on" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd1', flnr*0.0+4.8)
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_gdd2', flnr*0.0+0.13)
+    #ndays_on = nffun.getvar(tmpdir+'/clm_params.nc','ndays_on')
+    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','crit_onset_gdd', ndays_on*0.0+200.0)
 
     # BSulman: These Nfix constants can break the model if they don't have the right length.
     #os.system(myncap+' -O -s "Nfix_NPP_c1 = br_mr*+1.8" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -976,10 +980,12 @@ elif (options.exit_spinup):
     options.run_n = 1
 
 #create new case
+timestr=str(int(float(options.walltime)))+':'+str(int((float(options.walltime)- \
+                                     int(float(options.walltime)))*60))+':00'
 cmd = './create_newcase --case '+casedir+' --mach '+options.machine+' --compset '+ \
 	   options.compset+' --res '+options.res+' --mpilib '+ \
-           options.mpilib+' --walltime '+str(options.walltime)+ \
-          ':00:00 '+'--handle-preexisting-dirs u'
+           options.mpilib+' --walltime '+timestr+' --handle-preexisting-dirs u'
+
 if (options.mymodel == 'CLM5'):
    cmd = cmd+' --run-unsupported'
 if (options.project != ''):
@@ -1010,8 +1016,8 @@ result = os.system('./xmlchange PIO_VERSION=%s'%options.pio_version)
 if (options.mymodel == 'ELM'):
     result = os.system('./xmlchange MOSART_MODE=NULL')
 
-#if (options.debug):
-#    result = os.system('./xmlchange DEBUG=TRUE')
+if (options.debug):
+    result = os.system('./xmlchange DEBUG=TRUE')
 
 #clm 4_5 cn config options
 #clmcn_opts = "'-phys clm4_5 -cppdefs -DMODAL_AER'"
@@ -1096,10 +1102,10 @@ if ('20TR' in compset or options.istrans):
         os.system('./xmlchange RUN_STARTDATE=1850-01-01')
     
 #No pnetcdf for small cases on compy
-if ('compy' in options.machine and int(options.np) < 80):
+if (('docker' in options.machine or 'compy' in options.machine) and int(options.np) < 80):
   os.system('./xmlchange PIO_TYPENAME=netcdf')
 
-comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV']
+comps = ['ATM','LND','ICE','OCN','CPL','GLC','ROF','WAV','ESP','IAC']
 for c in comps:
     print('Setting NTASKS_'+c+' to '+str(options.np))
     os.system('./xmlchange NTASKS_'+c+'='+str(options.np))
@@ -1176,7 +1182,7 @@ for i in range(1,int(options.ninst)+1):
                       'FSA','FSDS','FLDS','TBOT','RAIN','SNOW','WIND','PBOT','QBOT','QVEGT','QVEGE','QSOIL', \
                       'QH2OSFC','H2OSOI','ZWT','SNOWDP','TLAI','RH2M','QRUNOFF']
     if ('RD' in compset or 'ECA' in compset):
-      var_list_hourly.append(['GPP', 'NEE', 'NEP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
+      var_list_hourly.extend(['GPP', 'NEE', 'NEP', 'NPP', 'LEAFC_ALLOC', 'AGNPP', 'MR', \
             'CPOOL_TO_DEADSTEMC', 'LIVECROOTC_XFER_TO_LIVECROOTC', 'DEADCROOTC_XFER_TO_DEADCROOTC', \
             'CPOOL_TO_LIVECROOTC', 'CPOOL_TO_DEADCROOTC', 'FROOTC_ALLOC', 'AR', 'LEAF_MR', 'CPOOL_LEAF_GR',
             'TRANSFER_LEAF_GR', 'CPOOL_LEAF_STORAGE_GR', 'LIVESTEM_MR', 'CPOOL_LIVESTEM_GR', \
@@ -1192,11 +1198,11 @@ for i in range(1,int(options.ninst)+1):
     #var_list_hourly_bgc 
     var_list_daily = ['TLAI','SNOWDP','H2OSFC','ZWT']
     if ('RD' in compset or 'ECA' in compset):
-      var_list_daily.append(['TOTLITC', 'TOTSOMC', 'CWDC', 'LITR1C_vr', 'LITR2C_vr', 'LITR3C_vr', 'SOIL1C_vr', \
+      var_list_daily.extend(['TOTLITC', 'TOTSOMC', 'CWDC', 'LITR1C_vr', 'LITR2C_vr', 'LITR3C_vr', 'SOIL1C_vr', \
                       'SOIL2C_vr', 'SOIL3C_vr', 'CPOOL','NPOOL','PPOOL','FPI','FPI_P','FPG','FPG_P','FPI_vr','FPI_P_vr'])
     var_list_pft = ['FPSN','TLAI','QVEGE','QVEGT']
     if ('RD' in compset or 'ECA' in compset):
-      var_list_pft.append(['GPP', 'NPP', 'LEAF_MR', 'LEAFC_ALLOC', 'AGNPP', 'CPOOL_TO_DEADSTEMC', \
+      var_list_pft.extend(['GPP', 'NPP', 'LEAF_MR', 'LEAFC_ALLOC', 'AGNPP', 'CPOOL_TO_DEADSTEMC', \
                     'LIVECROOTC_XFER_TO_LIVECROOTC', 'DEADCROOTC_XFER_TO_DEADCROOTC', \
                     'CPOOL_TO_LIVECROOTC', 'CPOOL_TO_DEADCROOTC', 'FROOTC_ALLOC', 'AR', 'MR', \
                     'CPOOL_LEAF_GR', 'TRANSFER_LEAF_GR', 'CPOOL_LEAF_STORAGE_GR', \
@@ -1256,7 +1262,7 @@ for i in range(1,int(options.ninst)+1):
             if (options.dailyrunoff):
                 #include daily variables related to runoff only
                 output.write(" hist_mfilt = "+ str(options.hist_mfilt)+",365\n")
-            if (options.dailyvars):
+            elif (options.dailyvars):
                 #include daily column and PFT level output
                 output.write(" hist_dov2xy = .true., .true., .false.\n")
                 output.write(" hist_mfilt = "+ str(options.hist_mfilt)+",365,365\n")
@@ -1272,11 +1278,11 @@ for i in range(1,int(options.ninst)+1):
                 h1varst = "hist_fincl2 = "
                 h2varst = "hist_fincl3 = "
                 for v in var_list_hourly:
-                    h1varst = h1varst+"'"+v+"',"
+                    h1varst = h1varst+"'"+str(v)+"',"
                 for v in var_list_daily:
-                    h1varst = h1varst+"'"+v+"',"
+                    h1varst = h1varst+"'"+str(v)+"',"
                 for v in var_list_pft:
-                    h2varst = h2varst+"'"+v+"',"
+                    h2varst = h2varst+"'"+str(v)+"',"
                 output.write(h1varst[:-1]+"\n")
                 output.write(h2varst[:-1]+"\n")
             elif (options.dailyrunoff):
@@ -1311,7 +1317,7 @@ for i in range(1,int(options.ninst)+1):
         output.write(" hist_empty_htapes = .true.\n")
         h0varst = " hist_fincl1 = "
         for v in var_list_spinup:
-            h0varst = h0varst+"'"+v+"',"
+            h0varst = h0varst+"'"+str(v)+"',"
         h0varst = h0varst[:-1]+"\n"
         output.write(h0varst)
 
@@ -1324,14 +1330,14 @@ for i in range(1,int(options.ninst)+1):
         h3varst = " hist_fincl4 = "
         h4varst = " hist_fincl5 = "
         for v in var_list_hourly:
-            h1varst = h1varst+"'"+v+"',"
-            h2varst = h2varst+"'"+v+"',"
-            h4varst = h4varst+"'"+v+"',"
+            h1varst = h1varst+"'"+str(v)+"',"
+            h2varst = h2varst+"'"+str(v)+"',"
+            h4varst = h4varst+"'"+str(v)+"',"
         for v in var_list_daily:
-            h2varst = h2varst+"'"+v+"',"
-            h4varst = h4varst+"'"+v+"',"
+            h2varst = h2varst+"'"+str(v)+"',"
+            h4varst = h4varst+"'"+str(v)+"',"
         for v in var_list_pft:
-            h3varst = h3varst+"'"+v+"',"
+            h3varst = h3varst+"'"+str(v)+"',"
         h1varst = h1varst[:-1]+"\n"
         h2varst = h2varst[:-1]+"\n"
         h3varst = h3varst[:-1]+"\n"
@@ -1347,7 +1353,7 @@ for i in range(1,int(options.ninst)+1):
         output.write(" hist_empty_htapes = .true.\n")
         h0varst = " hist_fincl1 = "
         for v in trans_varlist:
-            h0varst = h0varst+"'"+v+"',"
+            h0varst = h0varst+"'"+str(v)+"',"
         h0varst = h0varst[:-1]+"\n"
         output.write(h0varst)
 
@@ -1621,8 +1627,10 @@ if (cpl_bypass):
       if ('CPPDEFS' in s and cpl_bypass):
          stemp = s[:-1]+' -DCPL_BYPASS\n'
          outfile.write(stemp)
+      elif ('llapack' in s):
+         outfile.write(s.replace('llapack','llapack -lgfortran'))
       else:
-         outfile.write(s)
+         outfile.write(s.replace('mcmodel=medium','mcmodel=small'))
     infile.close()
     outfile.close()
     os.system('mv Macros.make.tmp Macros.make')
@@ -1635,8 +1643,10 @@ if (cpl_bypass):
       if ('CPPDEFS' in s and cpl_bypass):
        stemp = s[:-3]+' -DCPL_BYPASS")\n'
        outfile.write(stemp)
+      elif ('llapack' in s):
+        outfile.write(s.replace('llapack','llapack -lgfortran'))
       else:
-       outfile.write(s)
+        outfile.write(s.replace('mcmodel=medium','mcmodel=small'))
     infile.close()
     outfile.close()
     os.system('mv Macros.cmake.tmp Macros.cmake')
@@ -1959,7 +1969,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         cnp = 'True'
         if (options.cn_only or options.c_only):
             cnp= 'False'
-        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
+        if ('docker' in options.machine or 'oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
             mpicmd = 'mpirun'
             if ('cades' in options.machine):
                 mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'

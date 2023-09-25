@@ -85,6 +85,9 @@ parser.add_option("--nofnsp", action="store_true", dest="nofnsp", default=False,
                   help='Do not perform final spinup simulation')
 parser.add_option("--notrans", action="store_true", dest="notrans", default=False, \
                   help='Do not perform transient simulation (spinup only)')
+parser.add_option("--finidat", dest="finidat", default='', \
+                  help = 'Full path of ELM restart file to use (for transient only)')
+
 
 # model input options
 parser.add_option("--site", dest="site", default='', \
@@ -839,7 +842,16 @@ for row in AFdatareader:
 
 
         #transient
-        cmd_trns = basecmd+' --finidat_case '+basecase+ \
+        if (options.noad and options.nofnsp and options.finidat != ''):
+            cmd_trns = basecmd+' --finidat '+options.finidat+ \
+                ' --run_units nyears --run_n '+str(translen)+ \
+                ' --align_year '+str(year_align+1850)+' --hist_nhtfrq '+ \
+                options.hist_nhtfrq+' --hist_mfilt '+options.hist_mfilt+ \
+                ' --run_startyear '+str(options.run_startyear)
+            if (options.exeroot != ''):
+                cmd_trns = cmd_trns+' --no_build --exeroot '+options.exeroot
+        else:
+          cmd_trns = basecmd+' --finidat_case '+basecase+ \
             ' --finidat_year '+str(fsplen+1)+' --run_units nyears' \
             +' --run_n '+str(translen)+' --align_year '+ \
             str(year_align+1850)+' --hist_nhtfrq '+ \
@@ -1068,18 +1080,25 @@ for row in AFdatareader:
                 mysubmit_type = ''
             if ('mac' in options.machine):
                 mysubmit_type = ''
+            if ('docker' in options.machine):
+                mysubmit_type = ''
             if ((sitenum % npernode) == 0):
-                if (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/case.run')):
-                    input = open(caseroot+'/'+ad_case_firstsite+'/case.run')
-                elif (os.path.isfile(caseroot+'/'+ad_case_firstsite+'/.case.run')):
-                    input = open(caseroot+'/'+ad_case_firstsite+'/.case.run')
+                mycase_firstsite = ad_case_firstsite
+                if (options.noad):
+                    mycase_firstsite = fin_case_firstsite
+                    if (options.nofnsp):
+                        mycase_firstsite = tr_case_firstsite
+                if (os.path.isfile(caseroot+'/'+mycase_firstsite+'/case.run')):
+                    input = open(caseroot+'/'+mycase_firstsite+'/case.run')
+                elif (os.path.isfile(caseroot+'/'+mycase_firstsite+'/.case.run')):
+                    input = open(caseroot+'/'+mycase_firstsite+'/.case.run')
                 else:
-                    print(caseroot+'/'+ad_case_firstsite+'/case.run file not found.  Aborting')
+                    print(caseroot+'/'+mycase_firstsite+'/case.run file not found.  Aborting')
                     sys.exit(1)
                 output = open('./scripts/'+myscriptsdir+'/'+c+'_group'+str(groupnum)+'.pbs','w')
                 for s in input:
                     if ("perl" in s or "python" in s):
-                        if ('cades' in options.machine):
+                        if ('cades' in options.machine or 'docker' in options.machine):
                           output.write("#!/bin/bash -f\n")
                         else:
                           output.write("#!/bin/csh -f\n")
