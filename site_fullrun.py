@@ -595,7 +595,7 @@ for row in AFdatareader:
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
         if (options.fates_nutrient != ''):
             basecmd = basecmd+ ' --fates_nutrient '+options.fates_nutrient
-        if (options.fates_logging != ''):
+        if (options.fates_logging):
             basecmd = basecmd+ ' --fates_logging '
         if (options.surfdata_grid):
             basecmd = basecmd+' --surfdata_grid'
