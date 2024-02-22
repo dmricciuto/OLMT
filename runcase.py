@@ -376,23 +376,12 @@ else:
 
 #machine info:  cores per node
 ppn=1
-if ('titan' in options.machine):
-    ppn=16
-    if (int(options.walltime) > 2 and int(options.ng) < 2048):
-        print('Requested walltime too long')
-        print('Setting to 2 hours.')
-        options.walltime=2
-elif ('metis' in options.machine):
-    ppn=16
-elif ('oic2' in options.machine):
-    ppn=8
-elif ('oic5' in options.machine or 'cori-haswell' in options.machine or 'eos' in options.machine \
-      or 'cades' in options.machine):
+if ('cades-baseline' in options.machine):
+    ppn=128
+elif ('cori-haswell' in options.machine or 'cades' in options.machine):
     ppn=32
 elif ('cori-knl' in options.machine):
     ppn=64
-elif ('edison' in options.machine):
-    ppn=24
 elif ('anvil' in options.machine):
     ppn=36
 elif ('compy' in options.machine):
@@ -631,9 +620,6 @@ print("CASE directory is: "+casedir)
 #Construct case build and run directory
 if (options.exeroot == '' or (os.path.exists(options.exeroot) == False)):
     exeroot = runroot+'/'+casename+'/bld'
-    #if ('titan' in options.machine or 'eos' in options.machine):
-    #    exeroot = os.path.abspath(os.environ['HOME']+ \
-   # 	    '/acme_scratch/pointclm/'+casename+'/bld')
 else:
     options.no_build=True
     exeroot=options.exeroot
@@ -699,47 +685,11 @@ if (options.nopointdata == False):
     if(options.humhol):
         ptcmd = ptcmd + ' --humhol'
 
-    if (options.machine == 'eos' or options.machine == 'titan'):
-        os.system('rm temp/*.nc')
-        print('Note:  NCO operations are slow on eos and titan.')
-        print('Submitting PBS script to make surface and domain data on rhea')
-        pbs_rhea=open('makepointdata_rhea.pbs','w')
-        pbs_rhea.write('#PBS -l walltime=00:30:00\n')
-        pbs_rhea.write('#PBS -l nodes=1\n')
-        pbs_rhea.write('#PBS -A cli112\n')
-        pbs_rhea.write('#PBS -q rhea\n')
-        pbs_rhea.write('#PBS -l gres=atlas1%atlas2\n\n')
-        pbs_rhea.write(' module load nco\n')
-        pbs_rhea.write(' cd '+os.getcwd()+'\n')
-        pbs_rhea.write(' rm temp/*.nc\n')
-        pbs_rhea.write(' module unload PE-intel\n')
-        pbs_rhea.write(' module load PE-gnu\n')
-        pbs_rhea.write(' module load python\n')
-        pbs_rhea.write(' module load python_numpy\n')
-        pbs_rhea.write(' module load python_scipy\n')
-        pbs_rhea.write(ptcmd+'\n')
-        pbs_rhea.close()
-        os.system('qsub makepointdata_rhea.pbs')
-        n_nc_files = 3
-        if (options.nopftdyn):
-            n_nc_files = 2
-        n=0
-        while (n < n_nc_files):
-            #Wait until files have been generated on rhea to proceed
-            list_dir = os.listdir('./temp')
-            n=0
-            for file in list_dir:
-                if file.endswith('.nc'):
-                    n=n+1
-            os.system('sleep 10')
-        #Clean up
-        os.system('rm makepointdata_rhea*') 
-    else:
-        print(ptcmd)
-        result = os.system(ptcmd)
-        if (result > 0):
-            print ('PointCLM:  Error creating point data.  Aborting')
-            sys.exit(1)
+    print(ptcmd)
+    result = os.system(ptcmd)
+    if (result > 0):
+        print ('PointCLM:  Error creating point data.  Aborting')
+        sys.exit(1)
 
     if(options.makepointdata_only):
         print ('PointCLM:  Successfully creating point data ONLY, i.e. no further config/build/run CLM/ELM')
@@ -1131,11 +1081,11 @@ if (options.maxpatch_pft != 17):
   print('resetting maxpatch_pft to '+str(options.maxpatch_pft))
   xval = subprocess.check_output('./xmlquery --value CLM_BLDNML_OPTS', cwd=casedir, shell=True)
   xval = '-maxpft '+str(options.maxpatch_pft)+' '+xval
-  os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
+  os.system("./xmlchange CLM_BLDNML_OPTS = '" + xval + "'")
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
 if('mac' in options.machine or 'cades' in options.machine): 
-    os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
+    os.system("./xmlchange PIO_TYPENAME=netcdf ")
 
 
 #--------------------------CESM setup ----------------------------------------
@@ -1594,7 +1544,7 @@ for i in range(1,int(options.ninst)+1):
 
 #configure case
 #if (isglobal):
-os.system("./xmlchange --id BATCH_SYSTEM --val none")
+os.system("./xmlchange BATCH_SYSTEM=none")
 if (options.no_config == False):
     print('Running case.setup')
     result = os.system('./case.setup > case_setup.log')
@@ -1608,14 +1558,14 @@ else:
 #Land CPPDEF modifications
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+    os.system("./xmlchange --append "+mylsm+"_CONFIG_OPTS='-cppdefs -DHUM_HOL'")
 
 if (options.marsh):
     print("Turning on MARSH modification\n")
-    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+    os.system("./xmlchange --append "+mylsm+"_CONFIG_OPTS='-cppdefs -DMARSH'")
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    os.system("./xmlchange --append "+mylsm+"_CONFIG_OPTS='-cppdefs -DHARVMOD'")
 
 #Global CPPDEF modifications
 if (cpl_bypass):
@@ -1676,11 +1626,8 @@ if (options.clean_build):
 #compile cesm
 if (options.no_build == False):
     print('Running case.build')
-    if ('edison' in options.machine or 'titan' in options.machine):
-        #send output to screen since build times are very slow
-        result = os.system('./case.build') 
-    else:
-        result = os.system('./case.build > case_build.log')
+    result = os.system('./case.build') 
+    #result = os.system('./case.build > case_build.log')
     if (result > 0):
         print('Error:  Pointclm.py failed to build case.  Aborting')
         print('See '+os.getcwd()+'/case_build.log for details')
@@ -1782,7 +1729,10 @@ if (not cpl_bypass and not isglobal):
         myinput.close()
         myoutput.close()
     # run preview_namelists to copy user_datm.streams.... to CaseDocs
-    os.system(os.path.abspath(options.csmdir)+'/cime/scripts/Tools/preview_namelists')
+    if os.path.exists(os.path.abspath(options.csmdir)+'/cime/scripts/Tools/preview_namelists'):
+      os.system(os.path.abspath(options.csmdir)+'/cime/scripts/Tools/preview_namelists')
+    else:
+      os.system(os.path.abspath(options.csmdir)+'/cime/CIME/Tools/preview_namelists')
 
 
 #copy site data to run directory
@@ -1849,7 +1799,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             print('Error:  ensemble file does not exist')
             sys.exit(1)
 
-        samples=numpy.zeros((n_parameters,100000), dtype=numpy.float) 
+        samples=numpy.zeros((n_parameters,100000), dtype=float) 
         #get parameter samples and information
         myinput=open(options.ensemble_file)
         nsamples = 0
@@ -1860,7 +1810,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         myinput.close()
     elif (int(options.mc_ensemble) > 0):
         nsamples = int(options.mc_ensemble)
-        samples=numpy.zeros((n_parameters,nsamples), dtype=numpy.float)
+        samples=numpy.zeros((n_parameters,nsamples), dtype=float)
         for i in range(0,nsamples):
             for j in range(0,n_parameters):
                 samples[j][i] = param_min[j]+(param_max[j]-param_min[j])*numpy.random.rand(1)
@@ -1882,7 +1832,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
     #Launch ensemble if requested 
     mysubmit_type = 'qsub'
     if ('cades' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine or 'cori' in options.machine or \
-        options.machine == 'anvil' or options.machine == 'edison' or options.machine == 'chrysalis'):
+        options.machine == 'anvil' or options.machine == 'chrysalis'):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
         os.system('mkdir -p '+PTCLMdir+'/scripts/'+myscriptsdir)
@@ -1899,18 +1849,18 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             output_run.write('#PBS -N ens_'+casename+'\n')
             if (options.project != ''):
                 output_run.write('#PBS -A '+options.project+'\n')
-            if (options.machine == 'cades'):
-                output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
-                                    ':ppn='+str(ppn)+'\n')
-                output_run.write('#PBS -W group_list=cades-ccsi\n')
-            else:
-                output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
+            #if (options.machine == 'cades'):
+            #    output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
+            #                        ':ppn='+str(ppn)+'\n')
+            #    output_run.write('#PBS -W group_list=cades-ccsi\n')
+            #else:
+            output_run.write('#PBS -l nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+ \
                                      '\n')
         else:
             output_run.write('#SBATCH --time='+timestr+'\n')
             output_run.write('#SBATCH -J ens_'+casename+'\n')
             output_run.write('#SBATCH --nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+'\n')
-            if ('edison' in options.machine or 'cori' in options.machine):
+            if ('cori' in options.machine):
               if (options.debug):
                 output_run.write('#SBATCH --qos=debug\n')
               else:
@@ -1921,44 +1871,20 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
                 output_run.write('#SBATCH --constraint=knl\n')
             if ('compy' in options.machine and options.debug):
               output_run.write('#SBATCH --qos=short\n')
-            if ('cades' in options.machine):
-              output_run.write('#SBATCH -A ccsi\n')
+            if ('cades-baseline' in options.machine):
+              output_run.write('#SBATCH -A CLI185\n')
               output_run.write('#SBATCH -p batch\n')
-              output_run.write('#SBATCH --mem=64G\n')
-              output_run.write('#SBATCH --ntasks-per-node 32\n')
+              output_run.write('#SBATCH --ntasks-per-node 128\n')
+            elif ('cades' in options.machine):
+               output_run.write('#SBATCH -A ccsi\n')
+               output_run.write('#SBATCH -p batch\n')
+               output_run.write('#SBATCH --mem=64G\n')
+               output_run.write('#SBATCH --ntasks-per-node 32\n')
             if ('anvil' in options.machine):
               output_run.write('#SBATCH -A condo\n')
               output_run.write('#SBATCH -p acme-small\n')
         output_run.write("\n")
-        if (options.machine == 'eos'):
-            output_run.write('source $MODULESHOME/init/csh\n')
-            output_run.write('module load nco\n')
-            output_run.write('module load cray-netcdf\n')
-            output_run.write('module unload python\n')
-            output_run.write('module load python/2.7.5\n')
-            output_run.write('module unload PrgEnv-intel\n')
-            output_run.write('module load PrgEnv-gnu\n')
-            output_run.write('module load python_numpy\n')
-            output_run.write('module load python_scipy\n')
-            output_run.write('module load python_mpi4py/2.0.0\n')
-            output_run.write('module unload PrgEnv-gnu\n')
-            output_run.write('module load PrgEnv-intel\n')
-        if (options.machine == 'titan'):
-            output_run.write('source $MODULESHOME/init/csh\n')
-            output_run.write('module load nco\n')
-            output_run.write('module load cray-netcdf\n')
-            output_run.write('module load python/2.7.9\n')
-            output_run.write('module load python_numpy/1.9.2\n')
-            output_run.write('module load python_scipy/0.15.1\n')
-            output_run.write('module load python_mpi4py/2.0.0\n')
-        if ('cori' in options.machine or 'edison' in options.machine):
-            output_run.write('module unload python\n')
-            output_run.write('module unload scipy\n')
-            output_run.write('module unload numpy\n')
-            output_run.write('module load cray-netcdf\n')
-            output_run.write('module load python/2.7-anaconda-5.2\n')
-            output_run.write('module load nco\n')
-        if ('compy' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine):
+        if ('cades' in options.machine or 'compy' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine):
             #get the software environment
             softenvfile = open(casedir+'/software_environment.txt','r')
             for line in softenvfile:
@@ -1972,13 +1898,9 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         if ('docker' in options.machine or 'oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
             mpicmd = 'mpirun'
             if ('cades' in options.machine):
-                mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
-            cmd = mpicmd+' -np '+str(np_total)+' python manage_ensemble.py ' \
-               +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
-               options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
-               ' --site '+options.site+' --model_name '+model_name
-        elif (('titan' in options.machine or 'eos' in options.machine) and int(options.ninst) == 1):
-            cmd = 'aprun -n '+str(np_total)+' python manage_ensemble.py ' \
+               #mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
+               mpicmd = 'srun'
+               cmd = mpicmd+' -n '+str(np_total)+' python manage_ensemble.py ' \
                +'--case '+casename+' --runroot '+runroot+' --n_ensemble '+str(nsamples)+' --ens_file '+ \
                options.ensemble_file+' --exeroot '+exeroot+' --parm_list '+options.parm_list+' --cnp '+cnp + \
                ' --site '+options.site+' --model_name '+model_name

@@ -327,8 +327,6 @@ if (options.machine == ''):
 
 if (options.ccsm_input != ''):
     ccsm_input = options.ccsm_input
-elif (options.machine == 'titan' or options.machine == 'eos'):
-    ccsm_input = '/lustre/atlas/world-shared/cli900/cesm/inputdata'
 elif (options.machine == 'cades'):
     ccsm_input = '/nfs/data/ccsi/proj-shared/E3SM/inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
@@ -339,9 +337,7 @@ elif ('compy' in options.machine):
     ccsm_input = '/compyfs/inputdata/'
 
 #if (options.compiler != ''):
-#    if (options.machine == 'titan'):
-#        options.compiler = 'pgi'
-#    if (options.machine == 'eos' or options.machine == 'edison' or 'cori' in options.machine):
+#    if ('cori' in options.machine):
 #        options.compiler = 'intel'
 #    if (options.machine == 'cades'):
 #        options.compiler = 'gnu'
@@ -368,12 +364,7 @@ csmdir = options.csmdir
 myproject='e3sm'
 if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
     myuser = getpass.getuser()
-    if (options.machine == 'titan' or options.machine == 'eos'):
-        myinput = open('/ccs/home/'+myuser+'/.cesm_proj','r')
-        for s in myinput:
-    	    myproject=s[:-1]
-        runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
-    elif (options.machine == 'cades'):
+    if (options.machine == 'cades'):
         runroot='/lustre/or-scratch/cades-ccsi/scratch/'+myuser
     elif ('cori' in options.machine):
         runroot='/global/cscratch1/sd/'+myuser
@@ -381,8 +372,6 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
         for s in myinput:
            myproject=s[:-1] 
         print('Project = '+myproject)
-    elif ('edison' in options.machine):
-        runroot=os.environ.get('CSCRATCH')+'/acme_scratch/edison/'
     elif ('anvil' in options.machine or 'chrysalis' in options.machine):
         runroot="/lcrc/group/acme/"+myuser
         myproject='e3sm'
@@ -1123,11 +1112,15 @@ for row in AFdatareader:
                                     output.write('#SBATCH --partition=debug\n')
                                 else:
                                     output.write('#SBATCH --partition=regular\n')
-                            if ('cades' in options.machine):
+                            if ('cades-baseline' in options.machine):
+                                output.write('#SBATCH -A CLI185\n')
+                                output.write('#SBATCH -p batch\n')
+                                output.write('#SBATCH --ntasks-per-node 128\n')
+                            elif ('cades' in options.machine):
                                 output.write('#SBATCH -A ccsi\n')
                                 output.write('#SBATCH -p batch\n')
-                                output.write('#SBATCH --mem='+str(npernode*2)+'G\n')
-                                output.write('#SBATCH --ntasks-per-node '+str(npernode)+'\n')
+                                output.write('#SBATCH --mem=64G\n')
+                                output.write('#SBATCH --ntasks-per-node 32\n')
                     elif ("#" in s and "ppn" in s):
                         if ('cades' in options.machine):
                             #if ('diags' in c or 'iniadjust' in c):
@@ -1145,26 +1138,7 @@ for row in AFdatareader:
                 input.close()
                 output.write("\n")
         
-                if (options.machine == 'eos'):
-                    output.write('source $MODULESHOME/init/csh\n')
-                    output.write('module load nco\n')
-                    output.write('module unload python\n')
-                    output.write('module load python/2.7.5\n')
-                    output.write('module unload PrgEnv-intel\n')
-                    output.write('module load PrgEnv-gnu\n')
-                    output.write('module load python_numpy\n')
-                    output.write('module load python_scipy\n')
-                    output.write('module load python_mpi4py/2.0.0\n')
-                    output.write('module unload PrgEnv-gnu\n')
-                    output.write('module load PrgEnv-intel\n')
-                if (options.machine == 'titan'):
-                    output.write('source $MODULESHOME/init/csh\n')
-                    output.write('module load nco\n')
-                    output.write('module load python\n')
-                    output.write('module load python_numpy/1.9.2\n')
-                    output.write('module load python_scipy/0.15.1\n')
-                    output.write('module load python_mpi4py/2.0.0\n')
-                if (options.machine == 'edison' or 'cori' in options.machine):
+                if ('cori' in options.machine):
                     output.write('source $MODULESHOME/init/csh\n')
                     output.write('module unload python\n')
                     output.write('module unload scipy\n')

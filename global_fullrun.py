@@ -801,7 +801,10 @@ if (options.mc_ensemble <= 0):
                              output.write('#SBATCH --qos=regular\n')
                     if ('compy' in options.machine and options.debug):
                       output.write('#SBATCH -p short\n')
-                    if ('cades' in options.machine):
+                    if ('cades-baseline' in options.machine):
+                      output.write('#SBATCH -A CLI185\n')
+                      output.write('#SBATCH -p batch\n')
+                    elif ('cades' in options.machine):
                       output.write('#SBATCH -A ccsi\n')
                       output.write('#SBATCH -p batch\n')
                       output.write('#SBATCH --mem=64G\n')
@@ -813,8 +816,8 @@ if (options.mc_ensemble <= 0):
    
         if (options.machine == 'cades'):
             output.write('source $MODULESHOME/init/bash\n')
-            output.write('module unload python\n')
-            output.write('module load python/2.7.12\n\n')
+            #output.write('module unload python\n')
+            #output.write('module load python/2.7.12\n\n')
         if (options.machine == 'eos'):
             output.write('source $MODULESHOME/init/csh\n')
             output.write('module load nco\n')
