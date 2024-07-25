@@ -392,6 +392,8 @@ elif ('metis' in options.machine):
     ppn=16
 elif ('oic2' in options.machine):
     ppn=8
+elif ('cades-baseline' in options.machine):
+    ppn=128
 elif ('oic5' in options.machine or 'cori-haswell' in options.machine or 'eos' in options.machine \
       or 'cades' in options.machine):
     ppn=32
@@ -432,8 +434,11 @@ else:
     csmdir     = options.csmdir
     scriptsdir = csmdir+'/cime/scripts'
 #case directory
-if (options.caseroot == '' or (os.path.exists(options.caseroot) == False)):
+if (options.caseroot == ''):
     caseroot = csmdir+'/cime/scripts'
+elif (os.path.exists(options.caseroot) == False):
+    os.system('mkdir -p '+options.caseroot)
+    caseroot = os.path.abspath(options.caseroot)
 else:
     caseroot = os.path.abspath(options.caseroot)
 
@@ -839,7 +844,8 @@ else:
               +tmpdir+'/clm_params.nc')
     myncap = 'ncap'
     if ('chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine \
-          or 'mymac' in options.machine or 'anvil' in options.machine or 'stampede2' in options.machine):
+          or 'mymac' in options.machine or 'anvil' in options.machine or 'stampede2' in options.machine \
+          or 'cades-baseline' in options.machine):
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
@@ -1028,14 +1034,14 @@ if (options.project != ''):
    cmd = cmd+' --project '+options.project
 if (options.compiler != ''):
    cmd = cmd+' --compiler '+options.compiler
-cmd = cmd+' > create_newcase.log'
+cmd = cmd+' > '+tmpdir+'/create_newcase.log'
 print(cmd)
 result = os.system(cmd)
 
 if (os.path.isdir(casedir)):
     print(casename+' created.  See create_newcase.log for details')
     #os.system('mv create_newcase.log '+casename)
-    os.system('mv create_newcase.log '+casedir)
+    os.system('mv '+tmpdir+'/create_newcase.log '+casedir)
 else:
     print('Error:  runcase.py Failed to create case.  See create_newcase.log for details')
     sys.exit(1)
@@ -1168,7 +1174,7 @@ if (options.maxpatch_pft != 17):
   os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
-if('mac' in options.machine or 'cades' in options.machine): 
+if('mac' in options.machine or 'cades-baseline' in options.machine or 'cades' in options.machine): 
     os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
 
 
@@ -1630,7 +1636,7 @@ for i in range(1,int(options.ninst)+1):
 
 #configure case
 #if (isglobal):
-os.system("./xmlchange -id BATCH_SYSTEM --val none")
+os.system("./xmlchange --id BATCH_SYSTEM --val none")
 if (options.no_config == False):
     print('Running case.setup')
     result = os.system('./case.setup > case_setup.log')
@@ -1644,24 +1650,24 @@ else:
 #Land CPPDEF modifications
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
 
 if (options.marsh):
     print("Turning on MARSH modification\n")
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
 #Added option for COL3RD, 3rd column [Wei Huang 2022-07-11]
 if (options.col3rd):
     print("Turning on COL3RD modification\n")
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL3RD'")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL3RD'")
 if (options.alquimia != ""):
     print("Turning on alquimia interface for compilation and running")
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
     result = os.system("./xmlchange "+mylsm+"_USE_ALQUIMIA=TRUE")
     if result != 0:
         raise RuntimeError('Command failed: "./xmlchange '+mylsm+'_USE_ALQUIMIA=TRUE"')
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
 
 #Global CPPDEF modifications
 if (os.path.isfile("./Macros.make")):
@@ -1924,7 +1930,9 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
     num=0
     #Launch ensemble if requested 
     mysubmit_type = 'qsub'
-    if ('cades' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine or 'cori' in options.machine or \
+    if ('cades-baseline' in options.machine):
+        mysubmit_type = 'sbatch'
+    elif ('cades' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine or 'cori' in options.machine or \
         options.machine == 'anvil' or options.machine == 'edison'):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
@@ -1952,7 +1960,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         else:
             output_run.write('#SBATCH --time='+timestr+'\n')
             output_run.write('#SBATCH -J ens_'+casename+'\n')
-            output_run.write('#SBATCH --nodes='+str(int(math.ceil(np_total/(ppn*1.0))))+'\n')
+            output_run.write('#SBATCH -N '+str(int(math.ceil(np_total/(ppn*1.0))))+'\n')
             if ('edison' in options.machine or 'cori' in options.machine):
               if (options.debug):
                 output_run.write('#SBATCH --qos=debug\n')
@@ -1964,7 +1972,12 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
                 output_run.write('#SBATCH --constraint=knl\n')
             if ('compy' in options.machine and options.debug):
               output_run.write('#SBATCH --qos=short\n')
-            if ('cades' in options.machine):
+            if ('cades-baseline' in options.machine):
+              output_run.write('#SBATCH -A cli185\n')
+              output_run.write('#SBATCH -p batch\n')
+              output_run.write('#SBATCH --mem=0G\n')
+              output_run.write('#SBATCH --ntasks-per-node=128\n')
+            elif ('cades' in options.machine):
               output_run.write('#SBATCH -A ccsi\n')
               output_run.write('#SBATCH -p batch\n')
               output_run.write('#SBATCH --mem=64G\n')
@@ -2014,7 +2027,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
             cnp= 'False'
         if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
             mpicmd = 'mpirun'
-            if ('cades' in options.machine):
+            if ('cades' in options.machine and 'baseline' not in options.machine): # for this to work on cades-baseline, need further test
                 #mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
                 output_run.write('source ~/anaconda3/bin/activate\n') #[Wei Huang: activate conda installed by user under home dir: ~/anaconda3, 06-30-2023]
                 output_run.write('conda activate phpenv\n') #[Wei Huang: use mpi under conda environment installed by user, 06-27-2023]

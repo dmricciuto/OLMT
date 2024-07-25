@@ -263,6 +263,8 @@ if (options.ccsm_input != ''):
     ccsm_input = options.ccsm_input
 elif (options.machine == 'titan' or options.machine == 'eos'):
     ccsm_input = '/lustre/atlas/world-shared/cli900/cesm/inputdata'
+elif ('cades-baseline' in options.machine):
+    ccsm_input = '/gpfs/wolf2/cades/cli185/world-shared/e3sm/inputdata'
 elif (options.machine == 'cades' or options.machine == 'metis'):
     ccsm_input = '/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
@@ -285,7 +287,7 @@ if (options.compiler == ''):
         options.compiler = 'pgi'
     if (options.machine == 'eos' or options.machine == 'edison' or 'cori' in options.machine):
         options.compiler = 'intel'
-    if (options.machine == 'cades'):
+    if (options.machine == 'cades' or options.machine == 'cades-baseline'):
         options.compiler = 'gnu'
     if (options.machine == 'compy'): 
         options.compiler = 'intel'
@@ -294,7 +296,7 @@ if (options.compiler == ''):
 if (options.mpilib == ''):    
     if ('cori' in options.machine or 'edison' in options.machine):
         options.mpilib = 'mpt'  
-    elif ('cades' in options.machine):
+    elif ('cades' in options.machine or 'cades-baseline' in options.machine):
         options.mpilib = 'openmpi'
     elif ('anvil' in options.machine):
         options.mpilib = 'mvapich'
@@ -362,6 +364,8 @@ else:
 if (options.runroot == ''):
     if (options.machine == 'titan' or options.machine == 'eos'):
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
+    elif (options.machine == 'cades-baseline'):
+        runroot='/gpfs/wolf2/cades/cli185/scratch/'+myuser
     elif (options.machine == 'cades' or options.machine == 'metis'):
         runroot='/lustre/or-hydra/cades-ccsi/scratch/'+myuser
     elif ('cori' in options.machine or 'edison' in options.machine):
@@ -740,7 +744,8 @@ if (options.mc_ensemble <= 0):
 
 
     mysubmit_type = 'qsub'
-    if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine):
+    if ('cades' in options.machine or 'anvil' in options.machine or 'compy' in options.machine or 'cori' in options.machine \
+        or 'cades-baseline' in options.machine):
         mysubmit_type = 'sbatch'
     #Create a .PBS site fullrun script to launch the full job 
 
@@ -763,7 +768,7 @@ if (options.mc_ensemble <= 0):
                       timestr='00:30:00'
                     elif ('compy' in options.machine):
                       timestr='02:00:00'
-                if ('cades' in options.machine):
+                if ('cades-baseline' in options.machine or 'cades' in options.machine):
                     output.write("#!/bin/bash -f\n")
                 else:
                     output.write("#!/bin/csh -f\n")
@@ -783,7 +788,12 @@ if (options.mc_ensemble <= 0):
                              output.write('#SBATCH --partition=regular\n')
                     if ('compy' in options.machine and options.debug):
                       output.write('#SBATCH -p short\n')
-                    if ('cades' in options.machine):
+                    if ('cades-baseline' in options.machine):
+                      output.write('#SBATCH -A cli185\n')
+                      output.write('#SBATCH -p batch\n')
+                      output.write('#SBATCH --mem=0G\n')
+                      output.write('#SBATCH --ntasks-per-node 128\n')
+                    elif ('cades' in options.machine):
                       output.write('#SBATCH -A ccsi\n')
                       output.write('#SBATCH -p batch\n')
                       output.write('#SBATCH --mem=64G\n')
@@ -793,7 +803,11 @@ if (options.mc_ensemble <= 0):
         input.close()
         output.write("\n")
    
-        if (options.machine == 'cades'):
+        if (options.machine == 'cades-baseline'):
+            output.write('source $MODULESHOME/init/bash\n')
+            output.write('module unload python\n')
+            output.write('module load python/3.11-anaconda3\n\n')
+        elif (options.machine == 'cades'):
             output.write('source $MODULESHOME/init/bash\n')
             output.write('module unload python\n')
             output.write('module load python/2.7.12\n\n')
@@ -828,12 +842,12 @@ if (options.mc_ensemble <= 0):
 
         
         output.write("cd "+caseroot+'/'+c+"/\n")
-        output.write("./xmlchange -id STOP_N -val "+str(this_run_n)+'\n')
+        output.write("./xmlchange --id STOP_N -val "+str(this_run_n)+'\n')
         if (options.cplhist):
-          output.write("./xmlchange -id REST_N -val 25\n")
+          output.write("./xmlchange --id REST_N -val 25\n")
         else:
-          output.write("./xmlchange -id REST_N -val 20\n")   #Restart every 20 years in global mode
-        output.write("./xmlchange -id RUN_STARTDATE -val "+(str(10000+model_startdate))[1:]+ \
+          output.write("./xmlchange --id REST_N -val 20\n")   #Restart every 20 years in global mode
+        output.write("./xmlchange --id RUN_STARTDATE -val "+(str(10000+model_startdate))[1:]+ \
                          '-01-01\n')                           
         if (n > 0):
             #change finidat 

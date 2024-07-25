@@ -91,6 +91,8 @@ lnum=0
 username = getpass.getuser()
 if (options.machine == 'cades' and options.runroot == ''):
     options.runroot = '/lustre/pfs1/cades-ccsi/scratch/'+username
+elif (options.machine == 'cades-baseline' and options.runroot == ''):
+    options.runroot = '/gpfs/wolf2/cades/cli185/scratch/'+username
 elif (options.runroot == ''):
     options.runroot = '../../run'
 

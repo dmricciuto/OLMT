@@ -750,6 +750,10 @@ if ('or-condo' in hostname):
   ccsm_input = '/lustre/or-hydra/cades-ccsi/proj-shared/project_acme/ACME_inputdata/'
   rundir = '/lustre/or-hydra/cades-ccsi/scratch/'+username
   machine = 'cades'
+elif ('baseline' in hostname and 'ornl.gov' in hostname):
+  ccsm_input = '/gpfs/wolf2/cades/cli185/world-shared/e3sm/inputdata/'
+  rundir = '/gpfs/wolf2/cades/cli185/scratch/'+username
+  machine = 'cades-baseline'
 elif ('eos' in hostname or 'titan' in hostname):
   ccsm_input = '/lustre/atlas/world-shared/cli900/cesm/inputdata'
   rundir = '/lustre/atlas/scratch/cli112/'+username

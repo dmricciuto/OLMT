@@ -307,7 +307,10 @@ if (options.machine == ''):
    hostname = socket.gethostname()
    print('')
    print('Machine not specified.  Using hostname '+hostname+' to determine machine')
-   if ('or-condo' in hostname):
+   if ('baseline' in hostname and 'ornl.gov' in hostname):
+       options.machine = 'cades-baseline'
+       npernode=128
+   elif ('or-condo' in hostname):
        options.machine = 'cades'
        npernode=32
    elif ('or-slurm' in hostname):
@@ -344,6 +347,8 @@ if (options.ccsm_input != ''):
     ccsm_input = options.ccsm_input
 elif (options.machine == 'titan' or options.machine == 'eos'):
     ccsm_input = '/lustre/atlas/world-shared/cli900/cesm/inputdata'
+elif (options.machine == 'cades-baseline'):
+    ccsm_input = '/gpfs/wolf2/cades/cli185/world-shared/e3sm/inputdata/'
 elif (options.machine == 'cades'):
     ccsm_input = '/nfs/data/ccsi/proj-shared/E3SM/inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
@@ -388,6 +393,8 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
         for s in myinput:
     	    myproject=s[:-1]
         runroot='/lustre/atlas/scratch/'+myuser+'/'+myproject
+    elif (options.machine == 'cades-baseline'):
+        runroot='/gpfs/wolf2/cades/cli185/scratch/'+myuser
     elif (options.machine == 'cades'):
         runroot='/lustre/or-scratch/cades-ccsi/scratch/'+myuser
     elif ('cori' in options.machine):
@@ -1092,7 +1099,9 @@ for row in AFdatareader:
         for c in case_list:
             mysubmit_type = 'qsub'
             groupnum = int(sitenum/npernode)
-            if ('cades' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine or \
+            if ('cades-baseline' in options.machine):
+                mysubmit_type = 'sbatch'
+            elif ('cades' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine or \
                 'compy' in options.machine or 'cori' in options.machine or 'stampede2' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
@@ -1142,7 +1151,12 @@ for row in AFdatareader:
                                 output.write('#SBATCH -p skx-normal\n')
                                 output.write('#SBATCH -N 1               # Total # of nodes\n')
                                 output.write('#SBATCH -A NOAA_CSDL_NWI_SCHISM  # Allocation name \n')
-                            if ('cades' in options.machine):
+                            if ('cades-baseline' in options.machine):
+                                output.write('#SBATCH -A cli185\n')
+                                output.write('#SBATCH -p batch\n')
+                                output.write('#SBATCH --mem=0G\n')
+                                output.write('#SBATCH --ntasks-per-node '+str(npernode)+'\n')
+                            elif ('cades' in options.machine):
                                 output.write('#SBATCH -A ccsi\n')
                                 output.write('#SBATCH -p batch\n')
                                 output.write('#SBATCH --mem='+str(npernode*2)+'G\n')
@@ -1192,7 +1206,11 @@ for row in AFdatareader:
                     output.write('module unload numpy\n')
                     output.write('module load python/2.7-anaconda\n')
                     output.write('module load nco\n')     
-                if ('cades' in options.machine):
+                if ('cades-baseline' in options.machine):
+                    output.write('source $MODULESHOME/init/bash\n')
+                    output.write('module unload python\n')
+                    output.write('module load python/3.11-anaconda3\n')
+                elif ('cades' in options.machine):
                     output.write('source $MODULESHOME/init/bash\n')
                     output.write('module unload python\n')
                     output.write('module load python/2.7.12\n')
