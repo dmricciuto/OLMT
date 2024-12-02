@@ -14,9 +14,12 @@ caseroot= rootdir+'/e3sm_cases'
 runroot = rootdir+'/e3sm_run'
 #TODO:  add option to clone repository
 modelroot = os.environ['HOME']+'/models/E3SM'  #Existing E3SM code directory
+queue = 'batch_ccsi'
 
 #We are going to use a pre-built executable. Set exeroot='' to build 
-exeroot = '/gpfs/wolf2/cades/cli185/scratch/zdr/e3sm_run/20241106_Baltimore_ICB1850CNRDCTCBC_ad_spinup/bld'
+#exeroot = '/gpfs/wolf2/cades/cli185/scratch/zdr/e3sm_run/20241112_Alabama_ICB1850CNRDCTCBC_ad_spinup/bld'
+exeroot = ''
+
 #----------------------Required inputs---------------------------------------------
 
 runtype = 'latlon_bbox'        #site,latlon_list,latlon_bbox
@@ -25,17 +28,16 @@ case_suffix = ''               #Identifier for cases (leave blank if none)
 
 if (runtype == 'site'):
     sites = 'all'           #Site name, list of site names, or 'all' for all sites in site group
-    sitegroup = ''       #Sites defined in <inputdata>/lnd/clm2/PTCLM/<sitegroup>_sitedata.txt
+    sitegroup = 'ERW'       #Sites defined in <inputdata>/lnd/clm2/PTCLM/<sitegroup>_sitedata.txt
 else:
-    region_name = 'Baltimore'  #Set the name of the region/point list to be simulated
-    numproc = 640            #Number of processors, must be <= the number of active gridcells
+    region_name = '4km_Alabama'  #Set the name of the region/point list to be simulated
+    numproc = 128           #Number of processors, must be <= the number of active gridcells
     if (runtype == 'latlon_list'):
-        point_list_file = ''   #List of lat lons
-
+        point_list_file = '/ccsopen/home/zdr/models/OLMT/point_lists/ERW_sitedata.txt'   #List of lat lons
 #If neither point_list or site is defined, it will use the bounds below.
-lat_bounds = [-180,180]   
-lon_bounds = [-90,90]
 
+lat_bounds = [33.5,34]   
+lon_bounds = [-88,-87.5]
 
 res = 'r05_r05'          #Resolution of global files to extract from
 
@@ -44,8 +46,8 @@ use_SP         = False     #Use Satellite phenolgy mode (doesn't yet work with F
 use_fates      = False     #Use FATES compsets
 fates_nutrient = True      #Use FATES nutrient (parteh_mode = 2)
 
-nyears_ad      =  40      #number of years for ad spinup
-nyears_final   =  40      #number of years for final spinup OR for SP run
+nyears_ad      =  200      #number of years for ad spinup
+nyears_final   =  400      #number of years for final spinup OR for SP run
 nyears_trans   =  174      #number of years for transient run 
                            #  If -1, the final year will be the last year of forcing data.
 run_startyear  = 1850      #Starting year for transient run OR for SP run
@@ -61,14 +63,15 @@ run_startyear  = 1850      #Starting year for transient run OR for SP run
 
 case_options={} 
 case_options['metdir'] = '/gpfs/wolf2/cades/cli185/world-shared/e3sm/inputdata/atm/datm7/Daymet_ERA5_TESSFA2/cpl_bypass_full/'
+#NLCD 4km Southeast USA
+case_options['surffile_global'] = '/gpfs/wolf2/cades/cli185/proj-shared/zdr/hires_data/surfdata.TESSFA_DOMAIN2.4km.1d.NLCD.c240827.nc'
+#case_options['surffile_global'] = '/gpfs/wolf2/cades/cli185/proj-shared/TESSFA/domain_surfdata/surfdata.TESSFA_DOMAIN2.4km.1d.c240827.nc3'
+case_options['domainfile_global'] = '/gpfs/wolf2/cades/cli185/proj-shared/TESSFA/domain_surfdata/domain.lnd.TESSFA_SE.4km.1d.c240827.nc3'
 #Baltimore 300m
-case_options['surffile_global']='/gpfs/wolf2/cades/cli185/proj-shared/zdr/hires_data/surfdata.TESSFA_DOMAIN2.300m.NLCD.BALTIMORE.c241028.nc'
-case_options['domainfile_global']='/gpfs/wolf2/cades/cli185/proj-shared/zdr/hires_data/domain.TESSFA_DOMAIN2.300m.NLCD.BALTIMORE.c241028.nc'
-case_options['flanduse_timeseries'] = ''
 case_options['create_crop_landunit']='.false.'
-case_options['hist_empty_htapes']='.false.'
-case_options['hist_mfilt'] = '1, 1'
-case_options['hist_nhtfrq'] = '-8760, -175200'
+case_options['do_transient_pfts']='.false.'
+case_options['flanduse_timeseries'] = ''
+
 
 #--------------------ensemble options------------------------------------------------
 
@@ -234,7 +237,7 @@ for site in sites:
 
     cases[c] = model_ELM.ELMcase(caseid='',compset=compsets[c], site=site, \
         caseroot=caseroot,runroot=runroot,inputdata=inputdata,modelroot=modelroot, \
-        machine=machine, exeroot=exeroot, suffix=mysuffix,  \
+        machine=machine, exeroot=exeroot, suffix=mysuffix, queue=queue,  \
         res=res, nyears=nyears[c],startyear=startyear[c], region_name=region_name, \
         lat_bounds=lat_bounds, lon_bounds=lon_bounds, np=numproc, point_list=point_list)
 
@@ -308,7 +311,7 @@ for site in sites:
     if (c == 2 and not use_fates):
       #Get the dynamic PFT data
       cases[c].mask_grid = cases[0].mask_grid          #Get the mask from the first case
-      #cases[c].setup_domain_surfdata(makepftdyn=True)
+      cases[c].setup_domain_surfdata(makepftdyn=True)
 
     #Build the case
     print('Building case')

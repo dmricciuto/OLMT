@@ -13,7 +13,7 @@ from datetime import datetime
 
 class ELMcase():
   def __init__(self,caseid='',compset='ICBELMBC',suffix='',site='',sitegroup='AmeriFlux', \
-            res='',tstep=1,np=1,nyears=1,startyear=-1, machine='', \
+            res='',tstep=1,np=1,nyears=1,startyear=-1, machine='', queue='', \
             exeroot='', modelroot='', runroot='',caseroot='',inputdata='', \
             region_name='', lat_bounds=[-90,90],lon_bounds=[-180,180], \
             point_list=[], namelist_options=[],casename=''):
@@ -58,6 +58,7 @@ class ELMcase():
           self.caseid = current_date.strftime('%Y%m%d')
         else:
           self.caseid = caseid
+        self.queue=queue
         self.project=''
         self.get_machine(machine=machine)
         self.compiler=''
@@ -124,7 +125,8 @@ class ELMcase():
     self.noslurm=False
     if ('linux' in self.machine or 'ubuntu' in self.machine):
         self.noslurm=True
-    self.queue='batch' #_ccsi'
+    if self.queue == '':
+        self.queue='batch'
     if ('baseline' in self.machine):
         self.project='CLI185'
     if ('perlmutter' in self.machine):
