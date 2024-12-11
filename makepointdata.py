@@ -60,6 +60,9 @@ parser.add_option("--marsh", dest="marsh", default=False, \
 #adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
 parser.add_option("--col3rd", dest="col3rd", default=False, \
                   help = 'Adding 3rd column/gridcell', action="store_true")
+#adding option for a 4th column (gridcell) [japg 11-01-2024]
+parser.add_option("--col4th", dest="col4th", default=False, \
+                  help = 'Adding 4th column/gridcell', action="store_true")
 parser.add_option("--usersurfnc", dest="usersurfnc", default="none", \
                   help = 'User-provided surface data nc file, with one or more variable(s) as defined')
 parser.add_option("--usersurfvar", dest="usersurfvar", default="none", \
@@ -200,6 +203,7 @@ elif (options.point_list != ''):
 
     input_file.close()
     n_grids = n_grids-1
+
 elif (options.site != ''):
     print('\nCreating datasets for '+options.site+' using '+options.res+' resolution')
     issite = True
@@ -233,6 +237,24 @@ elif (options.site != ''):
                       lat.append(float(row[4]))
                 print('3rd grid lat='+str(lat))
                 n_grids = 3
+            
+            #adding 4th grid cell [japg 11-01-2024]
+            if (options.col4th):
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
+                for row in AFdatareader:
+                   if row[0] == options.site3rd:  # Take a look this later (japg)
+                      mylon=float(row[3])
+                      if (mylon < 0):
+                          mylon=360.0+float(row[3])
+                      
+                      lon.append(mylon)#append lat/lon for 2nd column from site3rd
+                      lat.append(float(row[4]))
+                      print('2nd grid lat='+str(lat))
+                      lon.append(mylon)#append twice so that lon ahd lat has 3 elements
+                      lat.append(float(row[4]))
+                print('3rd grid lat='+str(lat))
+                n_grids = 3
+
             startyear=int(row[6])
             endyear=int(row[7])
             alignyear = int(row[8])
@@ -645,6 +667,48 @@ for n in range(0,n_grids):
                         mypct_clay = row[5]
                 if (mypct_sand == 0.0 and mypct_clay == 0.0):
                     print('*** Warning:  Soil data NOT found.  Using gridded data ***')
+
+
+        elif (options.surfdata_grid == False and options.site != '' and options.col4th): # =============================================================> Start [JAPG 12-10-2024]
+            if(n==1):
+                #read file for site-specific PFT information
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
+                for row in AFdatareader:
+                    if row[0] == options.site3rd:
+                       print('read from site3rd'+options.site3rd)
+                       for thispft in range(0,5):
+                           mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
+                if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
+                    print('*** Warning:  PFT data NOT found.  Using gridded data ***')
+                #read file for site-specific soil information
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
+                for row in AFdatareader:
+                    if row[0] == options.site3rd:
+                        print('read from site3rd'+options.site3rd)
+                        mypct_sand = row[4]
+                        mypct_clay = row[5]
+                if (mypct_sand == 0.0 and mypct_clay == 0.0):
+                    print('*** Warning:  Soil data NOT found.  Using gridded data ***')
+
+            else:
+                #read file for site-specific PFT information
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
+                for row in AFdatareader:    
+                    if row[0] == options.site:
+                       for thispft in range(0,5):
+                           mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
+                if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
+                    print('*** Warning:  PFT data NOT found.  Using gridded data ***')
+                #read file for site-specific soil information
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
+                for row in AFdatareader:
+                    if row[0] == options.site:
+                        mypct_sand = row[4]
+                        mypct_clay = row[5]
+                if (mypct_sand == 0.0 and mypct_clay == 0.0):
+                    print('*** Warning:  Soil data NOT found.  Using gridded data ***') # =============================================================> End [JAPG 12-10-2024]
+
+
         else:
           try:
             #mypft_frac[point_pfts[n]] = 100.0
@@ -744,16 +808,31 @@ for n in range(0,n_grids):
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
             #if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
+
             if options.marsh and n==1 and not (options.col3rd): # # [Wei Huang 2022-07-11] Set tidal channel column in marsh mode to zero PFT area
                 print('Setting PFT area in tidal column to zero')
                 mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
                 mypft_frac[0]=100.0
             # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
             # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
+
+            if options.marsh and n==1 and not (options.col4th): # # [japg 11-01-2024] Set tidal channel column in marsh mode to zero PFT area
+                print('Setting PFT area in tidal column to zero')
+                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+                mypft_frac[0]=100.0
+            # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
+            # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
+
             if options.col3rd and n==2: # [Wei Huang 2022-07-11]
                 print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [Wei Huang 2022-07-11]
                 mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [Wei Huang 2022-07-11]
                 mypft_frac[0]=100.0 # [Wei Huang 2022-07-11]
+
+            if options.col4th and n==2: # [japg 11-01-2024]
+                print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [japg 11-01-2024]
+                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [japg 11-01-2024]
+                mypft_frac[0]=100.0 # [japg 11-01-2024]
+
             if (options.mypft >= 0 and not (options.marsh and n==1)):
               print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
               pct_pft[:,0,0] = 0.0
@@ -788,6 +867,17 @@ for n in range(0,n_grids):
             for k in range(0,10):#[Wei Huang 05/26/2023]:change organic for soil characteristics at low marsh
              organic[k][0][0] = 1.2 #43.0 #2.1 #max/min for wetland at CB
              #organic[k][0][0] = 2.6 #31.6 #2.6 #max/min for wetland at GL
+
+        if (options.col4th and n==0):
+            for k in range(0,10): #[japg 11-01-2024]:change organic for soil characteristics at high marsh
+             organic[k][0][0] = 1 #39.0 #1.6 #max/min for upland at CB
+             #organic[k][0][0] = 0.5 #44.9 #0.5 #max/min for upland at GL
+        if (options.col4th and n>0):
+            for k in range(0,10):#[japg 11-01-2024]:change organic for soil characteristics at low marsh
+             organic[k][0][0] = 1.2 #43.0 #2.1 #max/min for wetland at CB
+             #organic[k][0][0] = 2.6 #31.6 #2.6 #max/min for wetland at GL
+
+
         ierr = nffun.putvar(surffile_new, 'LANDFRAC_PFT', landfrac_pft)
         ierr = nffun.putvar(surffile_new, 'PFTDATA_MASK', pftdata_mask)
         ierr = nffun.putvar(surffile_new, 'LONGXY', longxy)

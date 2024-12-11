@@ -140,8 +140,6 @@ parser.add_option("--site_forcing", dest="site_forcing", default='', \
                   help = '6-character FLUXNET code for forcing data')
 parser.add_option("--metdir", dest="metdir", default="none", \
                   help = 'subdirectory for met data forcing')
-
-
 # metdata
 parser.add_option("--cruncep", dest="cruncep", default=False, \
                   help = "use cru-ncep data", action="store_true")
@@ -712,6 +710,10 @@ if (options.nopointdata == False):
     # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
     if(options.col3rd):
         ptcmd = ptcmd + ' --col3rd'
+    # adding option for 4th column (gridcell) [JAPG 11-5-2024] <====
+    if(options.col4th):
+        ptcmd = ptcmd + ' --col4th'
+
     if(options.site3rd != ''):
         ptcmd = ptcmd + ' --site3rd '+options.site3rd
     if(options.humhol):
@@ -881,7 +883,7 @@ else:
     #   flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     #   os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     #   ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    if ((options.marsh or options.col3rd) and options.tide_components_file != ''):
+    if ((options.marsh or options.col3rd or options.col4th) and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
         print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
         print('Tide datum (tide_baseline parameter) needs to be specified separately. Default is 800 mm')
@@ -894,7 +896,7 @@ else:
             os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    elif (options.marsh or options.col3rd) and options.tide_forcing_file == '':
+    elif (options.marsh or options.col3rd or options.col4th) and options.tide_forcing_file == '':
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')

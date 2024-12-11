@@ -174,6 +174,10 @@ parser.add_option("--marsh", dest="marsh", default=False, \
 #adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
 parser.add_option("--col3rd", dest="col3rd", default=False, \
                   help = 'Adding 3rd column/gridcell', action="store_true")
+
+#adding option for a 4th column (gridcell) [japg 11-01-2024]
+parser.add_option("--col4th", dest="col4th", default=False, help = 'Adding 4th column/gridcell', action="store_true")
+
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
@@ -587,6 +591,9 @@ for row in AFdatareader:
         # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
         if(options.col3rd):
             basecmd = basecmd + ' --col3rd'
+        # adding option for 4th column (gridcell) [japg 11-01-2024]
+        if(options.col4th):
+            basecmd = basecmd + ' --col4th'
         if(options.site3rd != ''):
             basecmd = basecmd + ' --site3rd '+options.site3rd
         if (options.tide_components_file != ''):
@@ -975,6 +982,9 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --marsh'
                 if (options.col3rd):
                     ptcmd = ptcmd+' --col3rd'
+                
+                if (options.col4th):                # [japg 11-01-2024] 
+                    ptcmd = ptcmd+' --col4th'       # [japg 11-01-2024] 
                 if (options.site3rd != ''):
                     ptcmd = ptcmd+' --site3rd '+options.site3rd
                 result = runcmd(ptcmd)
