@@ -281,6 +281,9 @@ def ensemble_copy(self, ens_num):
          param[parm_indices[pnum] / 12 , parm_indices[pnum] % 12] = parm_values[pnum]
       elif ('fates_leaf_long' in p or 'fates_leaf_vcmax25top' in p):
          param[0,parm_indices[pnum]] = parm_values[pnum]
+      elif (p == 'kmax' or p == 'psi50'):
+          #2D parameter, set all segments to the same value
+          param[:,parm_indices[pnum]] = parm_values[pnum]
       #elif (p == 'fates_seed_alloc'):
       #    if (not fates_seed_zeroed[0]):
       #       param[:]=0.
@@ -325,5 +328,57 @@ def ensemble_copy(self, ens_num):
   #  ierr = self.putncvar(myfile, 'fates_seed_alloc_mature', param2)
 
 
+def plot_ensemble(self, myvar, percentiles=[1, 5, 25, 50, 75, 95, 99]):
+    UQ_output = './UQ_output/' + self.casename + '/ensemble'
+    os.makedirs(UQ_output, exist_ok=True)  # Ensures the directory exists
+    """
+    Plots percentiles (99th, 95th, 75th, 50th, 25th, 5th, and 1st) for ensemble data.
+    
+    Parameters:
+        data (numpy.ndarray): 2D array of ensemble data (shape: [ensemble_size, num_time_steps]).
+        x_axis (list or numpy.ndarray): x-axis values (e.g., time).
+        output_file (str): Path to save the plot.
+    """
+    # Percentiles to calculate
+    data=self.output[myvar].transpose()
+
+    # Calculate percentiles along the ensemble axis
+    percentile_values = np.percentile(data, percentiles, axis=0)
+
+    # Define line styles for each percentile
+    # (Use the same style for matching pairs: 1/99, 5/95, 25/75, and make 50 bold)
+    line_styles = {
+        1:  {'linestyle': '--', 'color': 'black',  'linewidth': 2},
+        99: {'linestyle': '--', 'color': 'black',  'linewidth': 2},
+        5:  {'linestyle': '-.', 'color': 'black', 'linewidth': 2},
+        95: {'linestyle': '-.', 'color': 'black', 'linewidth': 2},
+        25: {'linestyle': ':',  'color': 'black','linewidth': 2},
+        75: {'linestyle': ':',  'color': 'black','linewidth': 2},
+        50: {'linestyle': '-',  'color': 'black',   'linewidth': 3},  # Bold line
+    }
+
+    # Plot each percentile
+    plt.figure(figsize=(10, 6))
+    for i, p in enumerate(percentiles):
+        style = line_styles[p]
+        plt.plot(self.output['taxis'],
+                 percentile_values[i, :],
+                 linestyle=style['linestyle'],
+                 color=style['color'],
+                 linewidth=style['linewidth'],
+                 label=f'{p}th Percentile')
+
+
+    # Add labels and legend
+    plt.xlabel("Time Step")
+    plt.ylabel("Value")
+    plt.title("Ensemble Percentiles")
+    plt.legend()
+    plt.grid(True)
+
+    # Save the plot
+    plt.tight_layout()
+    plt.savefig(UQ_output+f'/{myvar}_percentiles.png', bbox_inches='tight')
+    plt.close()
 
 ### END ###

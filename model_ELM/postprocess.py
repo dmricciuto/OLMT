@@ -72,6 +72,7 @@ def postprocess(self, var, index=0, gindex=0, startyear=-1, endyear=9999, hnum=0
         if (nperyear != 12):
           #If not monthly files, ignore the last file (it only represents a single timestep)
           file_list = file_list[:-1]
+    #print('ncrcat -O -v '+var.split('_pft')[0]+' '+' '.join(file_list)+' '+var+'.nc')
     os.system('ncrcat -O -v '+var.split('_pft')[0]+' '+' '.join(file_list)+' '+var+'.nc')
     myoutput = Dataset(var+'.nc','r')
     if (myoutput[var.split('_pft')[0]][:].ndim == 4):
@@ -103,7 +104,7 @@ def postprocess(self, var, index=0, gindex=0, startyear=-1, endyear=9999, hnum=0
     if ('_pft' in var):
         var_out = var_out+str(index)
     if (ens_num > 0 and not var_out in self.output):
-        self.output[var_out] = np.zeros([len(values_out),self.nsamples],float)
+        self.output[var_out] = np.zeros([len(values_out),self.nsamples],float)-9999
     if (ens_num > 0):
         self.output[var_out][:,ens_num-1] = values_out
     else:

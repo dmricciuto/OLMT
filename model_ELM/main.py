@@ -360,6 +360,8 @@ class ELMcase():
         self.met_endyear   = 2014
         if ('daymet' in self.forcing):
             self.met_startyear = 1980
+        if ('gfdl' in self.forcing):
+            self.met_startyear = 1951
         if ('Qian' in self.forcing):
             self.met_startyear = 1948
         if ('era5' in self.forcing):
@@ -814,6 +816,7 @@ class ELMcase():
   def create_pkl(self, outdir='./pklfiles'):
     os.chdir(self.OLMTdir)
     os.system('mkdir -p pklfiles')
+    #print(os.path.abspath(outdir+'/'+self.casename+'.pkl'))
     with open(outdir+'/'+self.casename+'.pkl','wb') as file_out:
         pickle.dump(self, file_out)
 

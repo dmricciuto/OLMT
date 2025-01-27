@@ -21,10 +21,11 @@ def calc_posterior(self,parms,myvars):
     post = prior
     if (prior > 0.0):
       output = self.run_surrogate(parms.reshape(1, -1), myvars)
+      output['NEEdiff'] = output['NEEdiff']*24*3600*365/9
       for v in myvars:
         myoutput = output[v].flatten()
-        myobs    = self.obs[v].flatten()
-        myerr    = self.obs_err[v].flatten()
+        myobs    = np.array(self.obs[v]).flatten()
+        myerr    = np.array(self.obs_err[v]).flatten()
         for n in range(0,len(myoutput)):
             if ((myobs[n]) > -9000 and myerr[n] > 0):
                 resid = (myoutput[n] - myobs[n])
@@ -42,7 +43,8 @@ def calc_posterior(self,parms,myvars):
 #-------------------------------- MCMC ------------------------------------------------------
 
 def MCMC(self, parms, myvars, nevals, type='uniform', nburn=1000, burnsteps=10, default_output=[]):
-    UQ_output='./UQ_output'
+    UQ_output='./UQ_output/'+self.casename
+    print(os.path.abspath(UQ_output))
     #Metropolis-Hastings Markov Chain Monte Carlo with adaptive sampling
     post_best = -99999
     post_last = -99999
@@ -180,15 +182,10 @@ def MCMC(self, parms, myvars, nevals, type='uniform', nburn=1000, burnsteps=10, 
 
     np.savetxt(UQ_output+'/MCMC_output/MCMC_chain.txt', np.transpose(chain_afterburn))
     #Print out some statistics
-    #parm_data=open(options.parm_list,'r')
-    #parm_best=open(UQ_output+'/MCMC_output/parms_best.txt','w')
-    #p=0
-    #for s in parm_data:
-    #  row = s.split()
-    #  parm_best.write(row[0]+' '+row[1]+' '+str(parms_best[p])+'\n')
-    #  p=p+1
-    #parm_data.close()
-    #parm_best.close()
+    parm_best=open(UQ_output+'/MCMC_output/parms_best.txt','w')
+    for p in range(0,len(parms_best)):
+      parm_best.write(self.ensemble_parms[p]+' '+str(self.ensemble_pfts[p])+' '+str(parms_best[p])+'\n')
+    parm_best.close()
     #np.savetxt(UQ_output+'/MCMC_output/correlation_matrix.txt',np.corrcoef(chain_afterburn))
 
     #parameter correlation plots (threshold correlations)
@@ -251,9 +248,9 @@ def MCMC(self, parms, myvars, nevals, type='uniform', nburn=1000, burnsteps=10, 
       fig = plt.figure()
       ax=fig.add_subplot(111)
       x = np.cumsum(np.ones([self.nobs[v]],float))
-      obs_plot = self.obs[v].copy()
+      obs_plot = np.array(self.obs[v].copy())
       obs_plot[obs_plot < -9000] = np.NaN
-      obs_err_plot = self.obs_err[v].copy()
+      obs_err_plot = np.array(self.obs_err[v].copy())
       obs_err_plot[obs_err_plot < -9000] = np.NaN
       ax.errorbar(x,obs_plot, yerr=obs_err_plot, label='Observations')
       ax.plot(x,output_best[v].flatten(),'r', label = 'Model best')
