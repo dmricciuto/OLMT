@@ -804,7 +804,7 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if (options.humhol or options.marsh or options.col3rd):
+            if (options.humhol or options.marsh or options.col3rd or options.col4th):
                 numxpts=2
             else:
                 numxpts=1
@@ -856,7 +856,7 @@ else:
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-    if (options.humhol or options.marsh or options.col3rd):
+    if (options.humhol or options.marsh or options.col3rd or options.col4th):                                           # ======================================> japg [2-20-2025]
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
     #   print('humhol_ht = 0.15m')
     #   print('humhol_dist = 1.0m')
@@ -865,14 +865,18 @@ else:
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       if (options.col3rd):
         os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (options.marsh or options.col3rd):
-        os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+
+      if (options.col4th):                                                                                              # ======================================> japg [2-20-2025]
+        os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')       
+
+      if (options.marsh or options.col3rd or options.col4th):                                                           # ======================================> japg [2-20-2025]                                             
+        os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')            
         print('hum_frac  = 0.50')
       else:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.64')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (options.marsh or options.col3rd):
+      if (options.marsh or options.col3rd or options.col4th):                                                           # ======================================> japg [2-20-2025]
         print('qflx_h2osfc_surfrate = 0.0')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       else:
@@ -1637,6 +1641,8 @@ for i in range(1,int(options.ninst)+1):
     if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
     if (cpl_bypass and options.col3rd and options.tide_forcing_file != ''):
+        output.write(" tide_file = '%s'"%options.tide_forcing_file)
+    if (cpl_bypass and options.col4th and options.tide_forcing_file != ''):  # ==================================================================================> japg [2-20-2025]
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
     output.close()
 
