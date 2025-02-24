@@ -95,6 +95,10 @@ parser.add_option("--site", dest="site", default='', \
 # add site3rd for 3 columns run Wei Huang 2022-07-28
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
+
+parser.add_option("--site4th", dest="site4th", default='', \
+                  help = '6-character FLUXNET code to run (optional)')   # ======================================> japg [02-24-2025]
+ 
 parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--ccsm_input", dest="ccsm_input", default='', \
@@ -596,6 +600,8 @@ for row in AFdatareader:
             basecmd = basecmd + ' --col4th'
         if(options.site3rd != ''):
             basecmd = basecmd + ' --site3rd '+options.site3rd
+        if(options.site4th != ''):
+            basecmd = basecmd + ' --site4th '+options.site4th       # ======================================> japg [02-24-2025]
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
         if (options.tide_forcing_file != ''):
@@ -987,6 +993,8 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --col4th'       # [japg 11-01-2024] 
                 if (options.site3rd != ''):
                     ptcmd = ptcmd+' --site3rd '+options.site3rd
+                if (options.site4th != ''):
+                    ptcmd = ptcmd+' --site4th '+options.site4th                     # ==========================> japg [02-24-2025]
                 result = runcmd(ptcmd)
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)

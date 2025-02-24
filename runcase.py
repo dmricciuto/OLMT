@@ -136,6 +136,10 @@ parser.add_option("--site", dest="site", default='', \
 #site3rd added by Wei Huang for 3 columns run
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
+
+parser.add_option("--site4th", dest="site4th", default='', \
+                  help = '6-character FLUXNET code to run (optional)') # ==============================================> japg [02-24-2025]
+
 parser.add_option("--site_forcing", dest="site_forcing", default='', \
                   help = '6-character FLUXNET code for forcing data')
 parser.add_option("--metdir", dest="metdir", default="none", \
@@ -716,6 +720,8 @@ if (options.nopointdata == False):
 
     if(options.site3rd != ''):
         ptcmd = ptcmd + ' --site3rd '+options.site3rd
+    if(options.site4th != ''):
+        ptcmd = ptcmd + ' --site4th '+options.site4th  # =================================> japg [02-24-2025]
     if(options.humhol):
         ptcmd = ptcmd + ' --humhol'
 

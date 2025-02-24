@@ -12,6 +12,11 @@ parser.add_option("--site", dest="site", default='', \
 #added by wei huang 2022-07-28 for 3 columns run
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
+
+# japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+parser.add_option("--site4th", dest="site4th", default='', \
+                  help = '6-character FLUXNET code to run (optional)')
+# japg [02-24-2025] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
@@ -239,21 +244,25 @@ elif (options.site != ''):
                 n_grids = 3
             
             #adding 4th grid cell [japg 11-01-2024]
-            if (options.col4th):
+            if (options.col4th):                                                                                        # =====================> japg [2-24-2025]
                 AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
                 for row in AFdatareader:
-                   if row[0] == options.site3rd:  # Take a look this later (japg)
+                   if row[0] == options.site4th:  # ===========================================================================================> japg [2-24-2025]
                       mylon=float(row[3])
                       if (mylon < 0):
                           mylon=360.0+float(row[3])
                       
-                      lon.append(mylon)#append lat/lon for 2nd column from site3rd
+                      lon.append(mylon)                     #append lat/lon for 2nd column from site3rd
                       lat.append(float(row[4]))
                       print('2nd grid lat='+str(lat))
-                      lon.append(mylon)#append twice so that lon ahd lat has 3 elements
+                      lon.append(mylon)                     #append twice so that lon ahd lat has 3 elements
                       lat.append(float(row[4]))
-                print('3rd grid lat='+str(lat))
-                n_grids = 3
+                      
+                      lon.append(mylon)                     #append thrice so that lon ahd lat has 3 elements
+                      lat.append(float(row[4]))
+
+                print('4th grid lat='+str(lat))
+                n_grids = 4
 
             startyear=int(row[6])
             endyear=int(row[7])
@@ -674,8 +683,8 @@ for n in range(0,n_grids):
                 #read file for site-specific PFT information
                 AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
                 for row in AFdatareader:
-                    if row[0] == options.site3rd:
-                       print('read from site3rd'+options.site3rd)
+                    if row[0] == options.site4th:                                   # ================================================> japg [2-24-2025]
+                       print('read from site4th'+options.site4th)                   # ================================================> japg [2-24-2025]
                        for thispft in range(0,5):
                            mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
                 if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
@@ -683,8 +692,8 @@ for n in range(0,n_grids):
                 #read file for site-specific soil information
                 AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
                 for row in AFdatareader:
-                    if row[0] == options.site3rd:
-                        print('read from site3rd'+options.site3rd)
+                    if row[0] == options.site4th:
+                        print('read from site4th'+options.site4th)                  # ================================================> japg [2-24-2025]
                         mypct_sand = row[4]
                         mypct_clay = row[5]
                 if (mypct_sand == 0.0 and mypct_clay == 0.0):

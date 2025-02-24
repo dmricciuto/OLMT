@@ -7,7 +7,7 @@ MYROOT=/gpfs/wolf2/cades/cli185/
 MYMACH=cades-baseline
 
 python ./site_fullrun.py \
-      --site US-GC3 --sitegroup Wetland --caseidprefix C3s \
+      --site US-GC3 --sitegroup Wetland --caseidprefix C4t \
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --tstep 1 \
       --cpl_bypass --machine $MYMACH --compiler gnu --mpilib openmpi \
       --model_root /ccsopen/home/ji8/E3SM_baseline \
@@ -17,11 +17,11 @@ python ./site_fullrun.py \
       --spinup_vars \
       --np 1 \
       --nopointdata \
-      --col3rd \
+      --col4th \
       --tide_forcing_file /ccsopen/home/ji8/OLMT_baseline/Annapolis_elev_sal_35yrs_MSL.nc \
       --parm_file /ccsopen/home/ji8/OLMT_baseline/parm_GC4_9 \
       --parm_file_2nd /ccsopen/home/ji8/OLMT_baseline/parm_short_GC3_12 \
-      --site3rd US-GC3 \
+      --site4th US-GC3 \
       --nyears_transient 10 \
       --hist_nhtfrq_trans -1 \
       --hist_mfilt_trans 8760 \
