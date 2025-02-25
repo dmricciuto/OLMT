@@ -19,9 +19,6 @@ parser.add_option("--site3rd", dest="site3rd", default='', \
 parser.add_option("--site4th", dest="site4th", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
-parser.add_option("--nyears_transient", dest="nyears_transient", default=-1, \
-                  help = 'number of years to run transient')
-
 parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
                   help='Number of the columns for the saltmarsh system')
 
@@ -257,7 +254,8 @@ elif (options.site != ''):
                 print('3rd grid lat='+str(lat))
                 n_grids = 3
             
-            #adding 4th grid cell [japg 11-01-2024]
+            # starts japg [11-01-2024]: Adding 4th grid cell ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
             if (options.col4th):                                                                                        # =====================> japg [2-24-2025]
                 AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
                 for row in AFdatareader:
@@ -266,19 +264,23 @@ elif (options.site != ''):
                       if (mylon < 0):
                           mylon=360.0+float(row[3])
                       
-                      lon.append(mylon)                     #append lat/lon for 2nd column from site3rd
+                      lon.append(mylon)                     # append lat/lon for 2nd column from site3rd
                       lat.append(float(row[4]))
                       print('2nd grid lat='+str(lat))
-                      lon.append(mylon)                     #append twice so that lon ahd lat has 3 elements
+                      lon.append(mylon)                     # append twice so that lon ahd lat has 3 elements
                       lat.append(float(row[4]))
-                      
-                      #lon.append(mylon)                     #append thrice so that lon ahd lat has 3 elements
-                      #lat.append(float(row[4]))
-
-                print('4th grid lat='+str(lat))          # ===========================================================================================> japg [2-24-2025]
+                      print('3rd: grid lat='+str(lat))                                    
+                                      
                 numcols_japg = options.number_of_columns # ===========================================================================================> japg [2-25-2025]
-                n_grids = numcols_japg                   # ===========================================================================================> japg [2-25-2025]
 
+                if (numcols_japg == 4):
+                    lon.append(mylon)                      # append thrice so that lon ahd lat has 3 elements
+                    lat.append(float(row[4]))
+                    print('4th: grid lat='+str(lat))       # ===========================================================================================> japg [2-24-2025]
+
+                n_grids = numcols_japg                   # ===========================================================================================> japg [2-25-2025]
+            
+            # ends japg [11-01-2024]: Adding 4th grid cell ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
             startyear=int(row[6])
             endyear=int(row[7])
             alignyear = int(row[8])
