@@ -137,8 +137,13 @@ parser.add_option("--site", dest="site", default='', \
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
+# japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 parser.add_option("--site4th", dest="site4th", default='', \
-                  help = '6-character FLUXNET code to run (optional)') # ==============================================> japg [02-24-2025]
+                  help = '6-character FLUXNET code to run (optional)')
+
+parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
+                  help='Number of the columns for the saltmarsh system')
+# japg [02-24-2025] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 parser.add_option("--site_forcing", dest="site_forcing", default='', \
                   help = '6-character FLUXNET code for forcing data')
@@ -348,6 +353,9 @@ parser.add_option("--landusefile", dest="pftdynfile", default='', \
                   help='user-defined dynamic PFT file')
 parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-separated list of vars to output at PFT level')
 (options, args) = parser.parse_args()
+
+
+print(f"DEBUG_JAPG: runcase.py number_of_columns = {options.number_of_columns}")  # ============> japg [02-25-2025], chekcing if number_of_columns value is transfered
 
 #-------------------------------------------------------------------------------
 # If only make point(s) data, reset relevant options.
@@ -721,7 +729,11 @@ if (options.nopointdata == False):
     if(options.site3rd != ''):
         ptcmd = ptcmd + ' --site3rd '+options.site3rd
     if(options.site4th != ''):
-        ptcmd = ptcmd + ' --site4th '+options.site4th  # =================================> japg [02-24-2025]
+        ptcmd = ptcmd + ' --site4th '+options.site4th                               # =================================> japg [02-24-2025]
+
+    if (options.number_of_columns is not None):                                     # =================================> japg [02-24-2025], transfering number_of_columns to makepointdata.py
+        ptcmd = ptcmd + ' --number_of_columns ' + str(options.number_of_columns)
+
     if(options.humhol):
         ptcmd = ptcmd + ' --humhol'
 

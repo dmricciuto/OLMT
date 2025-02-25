@@ -180,7 +180,12 @@ parser.add_option("--walltime", dest="walltime", default=24, \
                   help = "desired walltime for each job (hours)")
 parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
                     help='Do not submit jobs')
+# japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv ======================> starts japg [02-24-2025]
 
+
+
+
+# japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv ======================> ends japg [02-24-2025]
 (options, args) = parser.parse_args()
 
 #------------ define function for pbs submission
@@ -338,6 +343,7 @@ mycaseid   = options.mycaseid
 srcmods    = options.srcmods_loc
 
 translen = int(options.nyears_transient)
+
 
 if (options.bgc):
     mybgc='BGC'

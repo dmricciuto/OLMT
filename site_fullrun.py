@@ -6,7 +6,6 @@ import subprocess
 import numpy
 import re
 
-
 ### Run options
 parser = OptionParser();
 
@@ -96,8 +95,12 @@ parser.add_option("--site", dest="site", default='', \
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
+# japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv ======================> starts japg [02-24-2025]
 parser.add_option("--site4th", dest="site4th", default='', \
-                  help = '6-character FLUXNET code to run (optional)')   # ======================================> japg [02-24-2025]
+                  help = '6-character FLUXNET code to run (optional)')
+parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
+                  help='Number of the columns for the saltmarsh system')
+# japg [02-24-2025] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ======================> ends japg [02-24-2025]
  
 parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
@@ -595,13 +598,16 @@ for row in AFdatareader:
         # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
         if(options.col3rd):
             basecmd = basecmd + ' --col3rd'
-        # adding option for 4th column (gridcell) [japg 11-01-2024]
-        if(options.col4th):
+        if(options.col4th):                     # ==============================================================================> japg [02-24-2025]
             basecmd = basecmd + ' --col4th'
         if(options.site3rd != ''):
             basecmd = basecmd + ' --site3rd '+options.site3rd
         if(options.site4th != ''):
-            basecmd = basecmd + ' --site4th '+options.site4th       # ======================================> japg [02-24-2025]
+            basecmd = basecmd + ' --site4th '+options.site4th                                   # ======================================> japg [02-24-2025]
+        
+        if options.number_of_columns is not None:                                               # ======================================> japg [02-25-2025], transfering number_of_columns to runcase.py
+            basecmd = basecmd + ' --number_of_columns ' + str(options.number_of_columns)        # ======================================> japg [02-25-2025]
+
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
         if (options.tide_forcing_file != ''):
@@ -989,13 +995,13 @@ for row in AFdatareader:
                 if (options.col3rd):
                     ptcmd = ptcmd+' --col3rd'
                 
-                if (options.col4th):                # [japg 11-01-2024] 
-                    ptcmd = ptcmd+' --col4th'       # [japg 11-01-2024] 
+                if (options.col4th):                # ==========================================================> [japg 11-01-2024] 
+                    ptcmd = ptcmd+' --col4th'       # ==========================================================> [japg 11-01-2024]  
                 if (options.site3rd != ''):
                     ptcmd = ptcmd+' --site3rd '+options.site3rd
                 if (options.site4th != ''):
                     ptcmd = ptcmd+' --site4th '+options.site4th                     # ==========================> japg [02-24-2025]
-                result = runcmd(ptcmd)
+
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)
                     sys.exit(1)
@@ -1445,7 +1451,6 @@ if (options.no_submit == False and options.ensemble_file == ''):
                 else:
                     job_depend_run = submit('scripts/'+myscriptsdir+'/'+thiscase+'_group'+str(g)+'.pbs',job_depend= \
                                     job_depend_run, submit_type=mysubmit_type)
-
 
 
 # END

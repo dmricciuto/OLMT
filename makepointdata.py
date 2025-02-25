@@ -5,6 +5,8 @@ import numpy
 import netcdf4_functions as nffun
 from netCDF4 import Dataset
 
+print("Arguments received in makepointdata.py:", sys.argv) # japg 
+
 parser = OptionParser()
 
 parser.add_option("--site", dest="site", default='', \
@@ -16,7 +18,15 @@ parser.add_option("--site3rd", dest="site3rd", default='', \
 # japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 parser.add_option("--site4th", dest="site4th", default='', \
                   help = '6-character FLUXNET code to run (optional)')
+
+parser.add_option("--nyears_transient", dest="nyears_transient", default=-1, \
+                  help = 'number of years to run transient')
+
+parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
+                  help='Number of the columns for the saltmarsh system')
+
 # japg [02-24-2025] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--lat_bounds", dest="lat_bounds", default='-999,-999', \
@@ -77,7 +87,9 @@ parser.add_option("--usersurfvar", dest="usersurfvar", default="none", \
 
 ccsm_input = os.path.abspath(options.ccsm_input)
 
+print(f"JAPG_DEBUG: makepointdata.py number_of_columns = {options.number_of_columns}")  # =====> japg  [02-25-2025], checking if options.number_of_columns is getting the integer value
 #------------------- get site information ----------------------------------
+
 
 #Remove existing temp files
 os.system('find ./temp/ -name "*.nc*" -exec rm {} \; ')
@@ -88,6 +100,7 @@ lat_bounds = [float(l) for l in lat_bounds]
 lon_bounds = [float(l) for l in lon_bounds]
 
 mysimyr=int(options.mysimyr)
+
 
 if ('hcru' in options.res):
     resx = 0.5
@@ -134,6 +147,7 @@ issite = False
 isglobal = False
 lat=[]
 lon=[]
+
 if (lat_bounds[0] > -90 and lon_bounds[0] > -180):
     print( '\nCreating regional datasets using '+options.res+ 'resolution')
     if (lon_bounds[0] < 0):
@@ -258,11 +272,12 @@ elif (options.site != ''):
                       lon.append(mylon)                     #append twice so that lon ahd lat has 3 elements
                       lat.append(float(row[4]))
                       
-                      lon.append(mylon)                     #append thrice so that lon ahd lat has 3 elements
-                      lat.append(float(row[4]))
+                      #lon.append(mylon)                     #append thrice so that lon ahd lat has 3 elements
+                      #lat.append(float(row[4]))
 
-                print('4th grid lat='+str(lat))
-                n_grids = 4
+                print('4th grid lat='+str(lat))          # ===========================================================================================> japg [2-24-2025]
+                numcols_japg = options.number_of_columns # ===========================================================================================> japg [2-25-2025]
+                n_grids = numcols_japg                   # ===========================================================================================> japg [2-25-2025]
 
             startyear=int(row[6])
             endyear=int(row[7])

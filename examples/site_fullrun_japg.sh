@@ -28,4 +28,6 @@ python ./site_fullrun.py \
       --gswp3 --daymet \
       --nopftdyn \
       --metdir /gpfs/wolf2/cades/cli185/proj-shared/japg/mymetdir/cpl_bypass_full \
-      --tide_components_file /ccsopen/home/ji8/E3SM_baseline/OLMT_coastal/harmonic_Annapolis.csv
+      --tide_components_file /ccsopen/home/ji8/E3SM_baseline/OLMT_coastal/harmonic_Annapolis.csv \
+      --number_of_columns 3 
+      
