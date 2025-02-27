@@ -273,14 +273,19 @@ elif (options.site != ''):
                                       
                 numcols_japg = options.number_of_columns # ===========================================================================================> japg [2-25-2025]
 
-                if (numcols_japg == 4):
-                    lon.append(mylon)                      # append thrice so that lon ahd lat has 3 elements
-                    lat.append(float(row[4]))
-                    print('4th: grid lat='+str(lat))       # ===========================================================================================> japg [2-24-2025]
+                if (numcols_japg >= 4):
+                    num_append = max(1, numcols_japg - 3)  # Determine how many times to append
+                    icont = 4
+                    for _ in range(num_append):
+                        lon.append(mylon)
+                        lat.append(float(row[4]))
+                        print(f'{icont}th: grid lat={lat}')  # Dynamic print message
+                        icont = icont + 1
 
                 n_grids = numcols_japg                   # ===========================================================================================> japg [2-25-2025]
             
             # ends japg [11-01-2024]: Adding 4th grid cell ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+            
             startyear=int(row[6])
             endyear=int(row[7])
             alignyear = int(row[8])
