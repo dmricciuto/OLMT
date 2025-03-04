@@ -72,7 +72,7 @@ parser.add_option("--nco_path", dest="nco_path", default="", \
 
 #
 ccsm_input = os.path.abspath(options.ccsm_input)
-print(os.environ['PATH'])
+#print(os.environ['PATH'])
 #------------------- get site information ----------------------------------
 if HAS_MPI4PY:
     mycomm = MPI.COMM_WORLD
