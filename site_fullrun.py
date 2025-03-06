@@ -186,6 +186,8 @@ parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
+parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
+                    help = 'Tide height and salinity forcing time series file')
 parser.add_option("--nofire", dest="nofire", default=False, action="store_true", \
                   help='Turn off fire algorithms')
 parser.add_option("--C13", dest="C13", default=False, action="store_true", \
@@ -236,6 +238,8 @@ parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False,
                   help = 'Use variable soil depth from surface data file',action='store_true')
 parser.add_option("--no_budgets", dest="no_budgets", default=False, \
                   help = 'Turn off CNP budget calculations', action='store_true')
+parser.add_option("--alquimia", dest="alquimia",default='',  help="Compile model with alquimia BGC interface using specified input file")
+parser.add_option("--alquimia_ad",dest='alquimia_ad',default='',help='Alquimia input file for ad spinup')
 parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
                   help = 'Turn on hydraulic stress', action='store_true')
 parser.add_option("--spruce_treatments", dest="spruce_treatments", default=False, \
@@ -321,6 +325,7 @@ def submit(fname, submit_type='qsub', job_depend=''):
 
 #----------------------------------------------------------
 # Set default model root
+print(options.csmdir)
 if (options.csmdir == ''):
    if (os.path.exists('../E3SM')):
        options.csmdir = os.path.abspath('../E3SM')
@@ -480,8 +485,8 @@ elif (not 'all' in mysites and (options.ensemble_file == '')):
     npernode = len(mysites)
 
 for row in AFdatareader:
-    if (row[0] in mysites) or ('all' in mysites and row[0] !='site_code' \
-                                      and row[0] != ''):
+    if (row[0] in mysites) or \
+       ('all' in mysites and row[0] !='site_code' and row[0] != ''):
         site      = row[0]
         if (sitenum == 0):
             firstsite=site
@@ -594,6 +599,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --marsh'
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
+        if (options.tide_forcing_file != ''):
+            basecmd = basecmd + ' --tide_forcing_file %s'%options.tide_forcing_file
         if (float(options.lai) >= 0):
             basecmd = basecmd+' --lai '+str(options.lai)
         if (options.nopftdyn):
@@ -723,6 +730,9 @@ for row in AFdatareader:
                 basecmd = basecmd + ' --finidat_year '+options.finidat_year
             
 #---------------- build commands for runcase.py -----------------------------
+        if (options.alquimia != ''):
+            basecmd = basecmd + ' --alquimia '+options.alquimia
+
 
         # define compsets
         # C, CN, CNP
@@ -826,7 +836,8 @@ for row in AFdatareader:
             ad_case = mycaseid+'_'+ad_case
         if (sitenum == 0 and options.exeroot == ''):
             ad_exeroot = os.path.abspath(runroot+'/'+ad_case+'/bld')
-
+        if (options.alquimia_ad != ''):
+            cmd_adsp = cmd_adsp.replace(options.alquimia,options.alquimia_ad)
 
         # final spinup
         if mycaseid !='':

@@ -328,7 +328,7 @@ if (int(options.mc_ensemble) != -1):
         input.close()
         n_parameters = len(param_names)
     nsamples = int(options.mc_ensemble)
-    samples=numpy.zeros((n_parameters,nsamples), dtype=numpy.float)
+    samples=numpy.zeros((n_parameters,nsamples), dtype=float)
     for i in range(0,nsamples):
         for j in range(0,n_parameters):
             samples[j][i] = param_min[j]+(param_max[j]-param_min[j])*numpy.random.rand(1)

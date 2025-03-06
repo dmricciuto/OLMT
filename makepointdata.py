@@ -959,12 +959,12 @@ for n in range(ng0_rank[myrank], ng_rank[myrank]+1):
                        'EBF Temperate', 'DBF Tropical', 'DBF Temperate', 'DBF Boreal', 'EB Shrub' \
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
-            if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
-                if myrank==0: print('Setting PFT area in tidal column to zero')
-                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
-                mypft_frac[0]=100.0
-            if (options.mypft >= 0 and not (options.marsh and n==1)):
-              if myrank==0: print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
+            # if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
+            #     print('Setting PFT area in tidal column to zero')
+            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+            #     mypft_frac[0]=100.0
+            if (options.mypft >= 0):
+              print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
               pct_pft[:,0,0] = 0.0
               pct_pft[int(options.mypft),0,0] = 100.0
             else:

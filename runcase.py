@@ -91,6 +91,8 @@ parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
+parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
+                    help = 'Tide height and salinity forcing time series file')
 parser.add_option("--mask", dest="mymask", default='', \
                   help = 'Mask file to use (regional only)')
 
@@ -330,7 +332,8 @@ parser.add_option("--use_hydrstress", dest="use_hydrstress", default=False, \
                   help = 'Turn on hydraulic stress', action='store_true')
 parser.add_option("--spruce_treatments", dest="spruce_treatments", default=False, \
                   help = 'Run SPRUCE treatment simulations (ensemble mode)', action='store_true')
-
+parser.add_option("--alquimia", dest="alquimia",default="",
+                help="Compile model with alquimia BGC interface and use specified input file")
 #Changed by Ming for mesabi
 parser.add_option("--archiveroot", dest="archiveroot", default='', \
                   help = "archive root directory only for mesabi")
@@ -848,7 +851,7 @@ else:
     #   print('humhol_ht = 0.15m')
     #   print('humhol_dist = 1.0m')
       print('setting rsub_top_globalmax = 1.2e-5')
-      print('Making br_mr a PFT-specific parameter')
+    #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       if options.marsh:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -866,12 +869,9 @@ else:
       os.system(myncap+' -O -s "moss_swc_adjust=scalar(0)" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "rsub_top_globalmax = br_mr*0+1.2e-5" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       os.system(myncap+' -O -s "h2osoi_offset = br_mr*0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-      os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    #os.system(myncap+' -O -s "vcmaxse = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    #ierr = nffun.putvar(tmpdir+'/clm_params.nc','vcmaxse', flnr*0.0+670)
-
+    #   flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
+    #   os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    #   ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
     if (options.marsh and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
         print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
@@ -882,8 +882,8 @@ else:
             os.system(myncap+' -O -s "tide_coeff_amp_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Amplitude'].iloc[comp]*1000)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,360*3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-            os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    elif options.marsh:
+        os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+    elif options.marsh and options.tide_forcing_file == '':
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     #os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     #os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -1159,7 +1159,6 @@ if (options.drydep):
   xval = xval + ' -drydep '
   os.system("./xmlchange --id "+mylsm+"_BLDNML_OPTS --val '" + xval + "'")
 
-
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
 if('mymac' in options.machine or 'cades' in options.machine \
    or 'wsl' in options.machine or 'docker' in options.machine): 
@@ -1421,6 +1420,10 @@ for i in range(1,int(options.ninst)+1):
     if (options.no_budgets):
         output.write(" do_budgets = .false.\n")
 
+    if (options.alquimia != ""):
+        output.write(" use_alquimia = .TRUE.\n")
+        output.write(" alquimia_inputfile = '%s'\n"%options.alquimia)
+
     #pft dynamics file for transient run
     if ('20TR' in compset or options.istrans):
         if (options.nopftdyn):
@@ -1577,7 +1580,7 @@ for i in range(1,int(options.ninst)+1):
                 output.write(" metdata_type = 'gswp3_daymet4'\n")
             elif (options.daymet and options.gswp3):
                 output.write(" metdata_type = 'gswp3v1_daymet'\n")
-            else:
+            elif (options.gswp3):
                 output.write(" metdata_type = 'gswp3'\n") # This needs to be updated for other types
             output.write(" metdata_bypass = '%s'\n"%options.metdir)
             
@@ -1635,13 +1638,19 @@ for i in range(1,int(options.ninst)+1):
     if (options.addco2 != 0):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
+
     #clm-pflotran coupled run is ON -----------------
     if (options.clmpf_mode):
       if (options.pflotran_inputdir!=''):
         output.write(" pflotran_inputdir = '"+str(options.pflotran_inputdir)+"'\n")
       if (options.pflotran_inputdir!=''):
         output.write(" pflotran_prefix = '"+str(options.pflotran_prefix)+"'\n")
+
+    if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
+        output.write(" tide_file = '%s'"%options.tide_forcing_file)
+
     #------------------------------------------------
+
     output.close()
 
 
@@ -1659,21 +1668,37 @@ else:
     sys.exit(1)
 
 #Land CPPDEF modifications
-xval = subprocess.check_output('./xmlquery --value '+mylsm+'_CONFIG_OPTS', cwd=casedir, shell=True)
-xval = xval.decode()
-cppdefs = ''
+# At least for E3SM v2, cppdefs appear to only work as a list after one "-cppdefs". With repeated "-cppdefs" it only applies the last one!
+import subprocess
+status,opts=subprocess.getstatusoutput("./xmlquery -value %s_CONFIG_OPTS"%mylsm)
+if status != 0:
+    raise RuntimeError('Command failed: "./xmlquery -value %s_CONFIG_OPTS"%mylsm')
+
+if 'cppdefs' in opts:
+    cppdefs=opts[opts.find('cppdefs')+7:].strip().strip("'").split()
+else:
+    cppdefs=[]
+
 if (options.humhol):
     print("Turning on HUM_HOL modification\n")
-    #os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'") # this appending not works if already having '-cppdef ...'
-    cppdefs = cppdefs + ' -DHUM_HOL'
+    # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
+    cppdefs.append('-DHUM_HOL')
+
 if (options.marsh):
     print("Turning on MARSH modification\n")
-    #os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'") # this appending not works if already having '-cppdef ...'
-    cppdefs = cppdefs + ' -DMARSH'
+    # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
+    cppdefs.append('-DMARSH')
+if (options.alquimia != ""):
+    print("Turning on alquimia interface for compilation and running")
+    # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
+    cppdefs.append('-DUSE_ALQUIMIA_LIB')
+    result = os.system("./xmlchange "+mylsm+"_USE_ALQUIMIA=TRUE")
+    if result != 0:
+        raise RuntimeError('Command failed: "./xmlchange '+mylsm+'_USE_ALQUIMIA=TRUE"')
 if (options.harvmod):
     print('Turning on HARVMOD modification\n')
-    #os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'") # this appending not works if already having '-cppdef ...'
-    cppdefs = cppdefs + ' -DHARVMOD'
+    # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHARVMOD'")
+    cppdefs.append('-DHARVMOD')
 
 #elm-pflotran coupled build/run is ON -----------------
 if (options.clmpf_source_dir!=''):
@@ -1688,15 +1713,16 @@ if (options.clmpf_source_dir!=''):
        print('PFLOTRAN coupled run is ON! \n')
        os.system("./xmlchange --id "+mylsm+"_INTERFACE_MODE --val pflotran")
 #------------------------------------------------
-if (cppdefs!=''):
-    if ('-cppdefs' in xval): 
-       subidx = xval.index('-cppdefs')
-       cppdefs = xval[subidx+len('-cppdefs'):]+' '+ cppdefs  # orignal cppdefs included
-       xval = xval[:subidx]
-    xval_cppdefs = "-cppdefs \' "+cppdefs+" \'" # multiple cppdefs must be bracketed with single quotation marks
-    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --val \""+xval+ " " +xval_cppdefs+"\"")
-    print(mylsm+'_CONFIG_OPTS modified as following: ')
-    os.system("./xmlquery "+mylsm+"_CONFIG_OPTS")
+
+if len(cppdefs)>0:
+    cppdefs_str='-cppdefs "'
+    for cppdef in cppdefs:
+        if cppdef.startswith('-D'):
+            cppdefs_str = cppdefs_str + ' ' + cppdef
+    cppdefs_str = cppdefs_str + '"'
+    print("./xmlchange --append "+mylsm+"_CONFIG_OPTS='%s'"%(cppdefs_str))
+    os.system("./xmlchange --append "+mylsm+"_CONFIG_OPTS='%s'"%(cppdefs_str))
+
 
 #Global CPPDEF modifications
 if (cpl_bypass):
@@ -1747,6 +1773,9 @@ if (cpl_bypass):
   if (os.path.isfile("./cmake_macros/universal.cmake")):
     #infile = open("./cmake_macros/universal.cmake")
     os.system("echo 'string(APPEND CPPDEFS \" -DCPL_BYPASS\")' >> cmake_macros/universal.cmake")
+
+  if (options.alquimia != ""):
+      os.system('''echo 'set(ELM_USE_ALQUIMIA "TRUE")' >> cmake_macros/universal.cmake''')
 
 #copy sourcemods
 os.chdir('..')
