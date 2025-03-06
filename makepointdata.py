@@ -252,7 +252,8 @@ elif (options.site != ''):
                       lon.append(mylon)#append twice so that lon ahd lat has 3 elements
                       lat.append(float(row[4]))
                 print('3rd grid lat='+str(lat))
-                n_grids = 3
+                numcols_japg = options.number_of_columns # ===========================================================================================> japg [3-4-2025]
+                n_grids = numcols_japg
             
             # starts japg [11-01-2024]: Adding 4th grid cell ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
