@@ -118,6 +118,8 @@ parser.add_option("--cruncep", dest="cruncep", default=False, action="store_true
                   help = 'Use CRU-NCEP meteorology')
 parser.add_option("--cruncepv8", dest="cruncepv8", default=False, action="store_true", \
                   help = 'Use CRU-NCEP meteorology')
+parser.add_option("--era5", dest="era5", default=False, action="store_true", \
+                  help = 'Use ERA5 meteorology')
 parser.add_option("--gswp3", dest="gswp3", default=False, action="store_true", \
                   help = 'Use GSWP3 meteorology')
 parser.add_option("--gswp3_w5e5", dest="gswp3_w5e5", default=False, action="store_true", \
@@ -231,7 +233,7 @@ parser.add_option("--srcmods_loc", dest="srcmods_loc", default='', \
 parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = 'Use Daymet corrected meteorology')
 parser.add_option("--daymet4", dest="daymet4", default=False, \
-                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 forcing with user-provided domain and surface data)")
+                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 or ERA5 forcing with user-provided domain and surface data)")
 parser.add_option("--dailyvars", dest="dailyvars", default=False, \
                  action="store_true", help="Write daily ouptut variables")
 parser.add_option("--var_soilthickness",dest="var_soilthickness", default=False, \
@@ -492,11 +494,13 @@ for row in AFdatareader:
             firstsite=site
         site_lat  = row[4]
         site_lon  = row[3]
-        if (options.cruncepv8 or options.cruncep or options.gswp3 or options.gswp3_w5e5 or options.princeton):
+        if (options.cruncepv8 or options.cruncep or options.era5 or options.gswp3 or options.gswp3_w5e5 or options.princeton):
           startyear = 1901
           endyear = 1920
           if (options.cruncepv8):
             endyear_trans=2016
+          elif (options.era5):
+            endyear_trans=2023
           elif (options.gswp3):
             endyear_trans=2014
           elif (options.gswp3_w5e5):
@@ -528,7 +532,7 @@ for row in AFdatareader:
             translen = endyear-1850+1            # length of transient run
             if (options.eco2_file != ''):
                 translen = translen - ncycle     # if experiment sim, stop first transient at exp start yr - 1
-            if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
+            if (options.cpl_bypass and (options.cruncep or options.era5 or options.gswp3 or \
                 options.princeton or options.cruncepv8 or options.gswp3_w5e5)):
                 print(endyear_trans, site_endyear)
                 translen = min(site_endyear,endyear_trans)-1850+1
@@ -621,6 +625,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --cruncep'
         if (options.cruncepv8):
             basecmd = basecmd+' --cruncepv8'
+        if (options.era5):
+            basecmd = basecmd+' --era5'
         if (options.gswp3):
             basecmd = basecmd+' --gswp3'
         if (options.gswp3_w5e5):
@@ -631,7 +637,7 @@ for row in AFdatareader:
             basecmd = basecmd+' --daymet'
         if (options.daymet4): # gswp3 v2 spatially-downscaled by daymet v4, usually together with user-defined domain and surface data
             basecmd = basecmd+' --daymet4'
-            if (not options.gswp3): basecmd = basecmd+' --gswp3'
+            if (not options.gswp3 and not options.era5): basecmd = basecmd+' --gswp3'
         if (options.fates_paramfile != ''):
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
         if (options.fates_nutrient != ''):
@@ -1090,7 +1096,7 @@ for row in AFdatareader:
                         ' --site_new '+site+' --finidat_year '+str(int(ny_fin)+1)+ \
                         ' --nyears '+str(translen)
                  result = runcmd(ptcmd)
-            if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
+            if ((options.cruncep or options.cruncepv8 or options.era5 or options.gswp3 or options.princeton) and not options.cpl_bypass):
                  print('\nSetting up transient case phase 2\n')
                  result = runcmd(cmd_trns2)
 
@@ -1098,7 +1104,7 @@ for row in AFdatareader:
                 print('Site_fullrun:  Error in runcase.py for transient')
                 sys.exit(1)
 
-            if ((options.cruncep or options.cruncepv8 or options.gswp3 or options.princeton) and not options.cpl_bypass):
+            if ((options.cruncep or options.cruncepv8 or options.era5 or options.gswp3 or options.princeton) and not options.cpl_bypass):
                 print('\n\nSetting up transient case phase 2\n')
                 print(cmd_trns2)
                 result = os.system(cmd_trns2)

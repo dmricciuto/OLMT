@@ -137,6 +137,8 @@ parser.add_option("--crujra", dest="crujra", default=False, \
                   help = "use crujra data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
+parser.add_option("--era5", dest="era5", default=False, \
+                  help= "use ERA5 forcing", action="store_true")
 parser.add_option("--gswp3", dest="gswp3", default=False, \
                   help= "use GSWP3 forcing", action="store_true")
 parser.add_option("--gswp3_w5e5", dest="gswp3_w5e5", default=False, action="store_true", \
@@ -172,7 +174,7 @@ parser.add_option("--startdate_add_co2", dest="sd_addco2", default="99991231", \
 
 
 parser.add_option("--daymet4", dest="daymet4", default=False, \
-                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 forcing with user-provided domain and surface data)")
+                  action="store_true", help = "Daymet v4 downscaled GSWP3-v2 or ERA5 forcing with user-provided domain and surface data)")
 parser.add_option("--ad_spinup", action="store_true", \
                   dest="ad_spinup", default=False, \
                   help = 'Run accelerated decomposition spinup')
@@ -497,7 +499,7 @@ else:
 # check for a specific forcing data, GSWP3-Daymet4, to offline ELM
 # This is high-resolution dataset, usually together with user-defined domain and surface data
 if (options.daymet4):
-    if (not options.gswp3): options.gswp3 = True
+    if (not options.gswp3 and not options.era5): options.gswp3 = True
     if (options.metdir=='none'):
         print('Error:  must provide user-defined " --metdir " for " --daymet4"')
         sys.exit(1)
@@ -630,7 +632,7 @@ if (options.mycaseid != ""):
 if (options.metdir!='none'):# obviously user-provided met forcing is not reanalysis type
     use_reanalysis = False
 #CRU-NCEP 2 transient phases
-elif ('CRU' in compset or options.cruncep or options.gswp3 or options.gswp3_w5e5 or \
+elif ('CRU' in compset or options.cruncep or options.era5 or options.gswp3 or options.gswp3_w5e5 or \
             options.crujra or options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
@@ -1578,6 +1580,8 @@ for i in range(1,int(options.ninst)+1):
         elif options.metdir != 'none':
             if (options.daymet4 and options.gswp3):
                 output.write(" metdata_type = 'gswp3_daymet4'\n")
+            elif (options.daymet4 and options.era5):
+                output.write(" metdata_type = 'era5_daymet4'\n")
             elif (options.daymet and options.gswp3):
                 output.write(" metdata_type = 'gswp3v1_daymet'\n")
             elif (options.gswp3):
