@@ -10,21 +10,21 @@
 #  (4) Cases, cases/, and Runs, scratch/, root directory: $HOME/project_e3sm/
 
 python ./site_fullrun.py \
-      --site AK-K64G --sitegroup NGEEArctic --caseidprefix TestOMLT \
+      --site US-PLM1 --sitegroup Wetland --caseidprefix OLMT \
       --nyears_ad_spinup 200 --nyears_final_spinup 600 --tstep 1 \
-      --machine wsl --compiler gnu --mpilib mpich \
+      --machine wsl --compiler gnu --mpilib openmpi \
       --cpl_bypass --gswp3 \
       --no_budgets \
-      --model_root $HOME/mygithub/E3SM \
+      --model_root $HOME/models/E3SM \
       --caseroot $HOME/project_e3sm/cases \
       --ccsm_input $HOME/pt-e3sm-inputdata \
       --runroot $HOME/project_e3sm/scratch \
       --spinup_vars \
       --nopointdata \
-      --metdir $HOME/pt-e3sm-inputdata/atm/datm7/atm_forcing.datm7.GSWP3.0.5d.v2.c180716_kougarok-Grid/cpl_bypass_full \
-      --domainfile $HOME/pt-e3sm-inputdata/share/domains/domain.clm/domain.lnd.1x1pt_kougarok-GRID_navy.nc \
-      --surffile $HOME/pt-e3sm-inputdata/lnd/clm2/surfdata_map/surfdata_1x1pt_kougarok-GRID_simyr1850_c360x720_171002.nc \
-      --landusefile $HOME/pt-e3sm-inputdata/lnd/clm2/surfdata_map/landuse.timeseries_1x1pt_kougarok-GRID_simyr1850-2015_c180423.nc
+      --metdir $HOME/pt-e3sm-inputdata/atm/datm7/atm_forcing.datm7.GSWP3.0.5d.v2.c180716_PIE-Grid/cpl_bypass_full \
+      --domainfile $HOME/pt-e3sm-inputdata/atm/datm7/atm_forcing.datm7.GSWP3.0.5d.v2.c180716_PIE-Grid/cpl_bypass_full/domain.nc \
+      --surffile $HOME/pt-e3sm-inputdata/atm/datm7/atm_forcing.datm7.GSWP3.0.5d.v2.c180716_PIE-Grid/cpl_bypass_full/surfdata.nc \
+      --landusefile $HOME/pt-e3sm-inputdata/atm/datm7/atm_forcing.datm7.GSWP3.0.5d.v2.c180716_PIE-Grid/cpl_bypass_full/surfdata.pftdyn.nc
 
 # for grid-cell gswp3 v2 (1901-2014)
 #      --cpl_bypass --gswp3 \
