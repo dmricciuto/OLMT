@@ -7,7 +7,11 @@ MYROOT=/gpfs/wolf2/cades/cli185/
 MYMACH=cades-baseline
 
 python ./site_fullrun.py \
+<<<<<<< HEAD
       --site US-GC3 --sitegroup Wetland --caseidprefix C3s \
+=======
+      --site US-GC3 --sitegroup Wetland --caseidprefix C3t \
+>>>>>>> dc7279889e18311c6c2aa6281eee6e7ae6fc7c12
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --tstep 1 \
       --cpl_bypass --machine $MYMACH --compiler gnu --mpilib openmpi \
       --model_root /ccsopen/home/ji8/E3SM_baseline \
