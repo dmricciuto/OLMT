@@ -92,9 +92,8 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
-#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
-parser.add_option("--col3rd", dest="col3rd", default=False, \
-                  help = 'Adding 3rd column/gridcell', action="store_true")
+parser.add_option("--tai_xcols", dest="tai_xcols", default=3, \
+                  help = 'TAI multi-cols number for lateral hydrology')
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
@@ -128,9 +127,6 @@ parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
-#site3rd added by Wei Huang for 3 columns run
-parser.add_option("--site3rd", dest="site3rd", default='', \
-                  help = '6-character FLUXNET code to run (optional)')
 parser.add_option("--site_forcing", dest="site_forcing", default='', \
                   help = '6-character FLUXNET code for forcing data')
 parser.add_option("--metdir", dest="metdir", default="none", \
@@ -704,11 +700,8 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --nosurfdata '
     if(options.marsh):
         ptcmd = ptcmd + ' --marsh'
-    # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
-    if(options.col3rd):
-        ptcmd = ptcmd + ' --col3rd'
-    if(options.site3rd != ''):
-        ptcmd = ptcmd + ' --site3rd '+options.site3rd
+    if(int(options.tai_xcols)>=3):
+        ptcmd = ptcmd + ' --tai_xcols '+str(options.tai_xcols)
     if(options.humhol):
         ptcmd = ptcmd + ' --humhol'
 
@@ -797,8 +790,10 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if (options.humhol or options.marsh or options.col3rd):
+            if (options.humhol or options.marsh):
                 numxpts=2
+            elif (int(options.tai_xcols)>=3):
+                numxpts=int(options.tai_xcols)
             else:
                 numxpts=1
             numypts=1
@@ -849,23 +844,23 @@ else:
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-    if (options.humhol or options.marsh or options.col3rd):
+    if (options.humhol or options.marsh or int(options.tai_xcols)>=3):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
     #   print('humhol_ht = 0.15m')
     #   print('humhol_dist = 1.0m')
       print('setting rsub_top_globalmax = 1.2e-5')
     #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (options.col3rd):
+      if (int(options.tai_xcols)>=3):
         os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (options.marsh or options.col3rd):
+      if (options.marsh or int(options.tai_xcols)>=3):
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.50')
       else:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.64')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (options.marsh or options.col3rd):
+      if (options.marsh or int(options.tai_xcols)>=3):
         print('qflx_h2osfc_surfrate = 0.0')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       else:
@@ -876,7 +871,7 @@ else:
     #   flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     #   os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     #   ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    if ((options.marsh or options.col3rd) and options.tide_components_file != ''):
+    if ((options.marsh or int(options.tai_xcols)>=3) and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
         print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
         print('Tide datum (tide_baseline parameter) needs to be specified separately. Default is 800 mm')
@@ -889,7 +884,7 @@ else:
             os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    elif (options.marsh or options.col3rd) and options.tide_forcing_file == '':
+    elif (options.marsh or int(options.tai_xcols)>=3) and options.tide_forcing_file == '':
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -1584,8 +1579,12 @@ for i in range(1,int(options.ninst)+1):
         elif options.metdir != 'none':
             if (options.daymet4 and options.gswp3):
                 output.write(" metdata_type = 'gswp3_daymet4'\n")
-            else:
+            elif (options.daymet and options.gswp3):
                 output.write(" metdata_type = 'gswp3v1_daymet'\n") # This needs to be updated for other types
+            elif (options.gswp3):
+                output.write(" metdata_type = 'gswp3'\n")
+            elif (options.site):
+                output.write(" metdata_type = 'site'\n")
             output.write(" metdata_bypass = '%s'\n"%options.metdir)
             
         # not reanalysis
@@ -1627,9 +1626,8 @@ for i in range(1,int(options.ninst)+1):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
 
-    if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
-        output.write(" tide_file = '%s'"%options.tide_forcing_file)
-    if (cpl_bypass and options.col3rd and options.tide_forcing_file != ''):
+    if (cpl_bypass and (options.marsh or int(options.tai_xcols)>=3) \
+                        and options.tide_forcing_file != ''):
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
     output.close()
 
@@ -1656,9 +1654,17 @@ if (options.marsh):
     print("Turning on MARSH modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
 #Added option for COL3RD, 3rd column [Wei Huang 2022-07-11]
-if (options.col3rd):
+elif (int(options.tai_xcols)==3):
     print("Turning on COL3RD modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL3RD'")
+
+elif (int(options.tai_xcols)==4):
+    print("Turning on COL3RD modification\n")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL4TH'")
+elif (int(options.tai_xcols)>4):
+    print("Turning on COL3RD modification\n")
+    os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHYDRO_XCOLS'")
+
 if (options.alquimia != ""):
     print("Turning on alquimia interface for compilation and running")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")

@@ -92,9 +92,6 @@ parser.add_option("--notrans", action="store_true", dest="notrans", default=Fals
 # model input options
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
-# add site3rd for 3 columns run Wei Huang 2022-07-28
-parser.add_option("--site3rd", dest="site3rd", default='', \
-                  help = '6-character FLUXNET code to run (optional)')
 parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--ccsm_input", dest="ccsm_input", default='', \
@@ -174,6 +171,8 @@ parser.add_option("--marsh", dest="marsh", default=False, \
 #adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
 parser.add_option("--col3rd", dest="col3rd", default=False, \
                   help = 'Adding 3rd column/gridcell', action="store_true")
+parser.add_option("--tai_xcols", dest="tai_xcols", default=3, \
+                  help = 'TAI multi-cols number for lateral hydrology')
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
@@ -584,11 +583,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --humhol'
         if (options.marsh):
             basecmd = basecmd+' --marsh'
-        # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
-        if(options.col3rd):
-            basecmd = basecmd + ' --col3rd'
-        if(options.site3rd != ''):
-            basecmd = basecmd + ' --site3rd '+options.site3rd
+        if (int(options.tai_xcols)>=3):
+            basecmd = basecmd + ' --tai_xcols '+str(options.tai_xcols)            
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
         if (options.tide_forcing_file != ''):
@@ -973,10 +969,8 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --humhol'
                 if (options.marsh):
                     ptcmd = ptcmd+' --marsh'
-                if (options.col3rd):
-                    ptcmd = ptcmd+' --col3rd'
-                if (options.site3rd != ''):
-                    ptcmd = ptcmd+' --site3rd '+options.site3rd
+                if (int(options.tai_xcols)>=3):
+                    ptcmd = ptcmd + ' --tai_xcols '+str(options.tai_xcols)            
                 result = runcmd(ptcmd)
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)
