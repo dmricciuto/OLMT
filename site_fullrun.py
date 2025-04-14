@@ -186,6 +186,8 @@ parser.add_option("--humhol", dest="humhol", default=False, action="store_true",
                   help = 'Use hummock/hollow microtopography')
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+parser.add_option("--tai_xcols", dest="tai_xcols", default=0, \
+                  help = 'XCOLS number to represent marsh hydrology/elevation')
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
@@ -601,6 +603,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --humhol'
         if (options.marsh):
             basecmd = basecmd+' --marsh'
+        if (int(options.tai_xcols)>=3):
+            basecmd = basecmd+' --tai_xcols '+str(options.tai_xcols)
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
         if (options.tide_forcing_file != ''):
@@ -1031,6 +1035,8 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --humhol'
                 if (options.marsh):
                     ptcmd = ptcmd+' --marsh'
+                if (int(options.tai_xcols)>=3):
+                    ptcmd = ptcmd+' --tai_xcols '+str(options.tai_xcols)
                 result = runcmd(ptcmd)
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)

@@ -89,6 +89,8 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+parser.add_option("--tai_xcols", dest="tai_xcols", default=0, \
+                  help = 'XCOLS number to represent marsh hydrology/elevation')
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
 parser.add_option("--tide_forcing_file", dest="tide_forcing_file", default='', \
@@ -744,6 +746,9 @@ if (options.nopointdata == False):
     #    ptcmd = ptcmd + ' --nosurfdata '
     if(options.marsh):
         ptcmd = ptcmd + ' --marsh'
+    elif(int(options.tai_xcols)>=3):
+        ptcmd = ptcmd + ' --tai_xcols'
+        
     if(options.humhol):
         ptcmd = ptcmd + ' --humhol'
 
@@ -798,6 +803,8 @@ if (isglobal == False):
                 timezone = int(row[9])
             if (options.humhol or options.marsh):
                 numxpts=2
+            elif(int(options.tai_xcols)>=3):
+                numxpts=int(options.tai_xcols)
             else:
                 numxpts=1
             numypts=1
@@ -848,21 +855,21 @@ else:
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-    if (options.humhol or options.marsh):
+    if (options.humhol or options.marsh or int(options.tai_xcols)>=3):
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
     #   print('humhol_ht = 0.15m')
     #   print('humhol_dist = 1.0m')
       print('setting rsub_top_globalmax = 1.2e-5')
     #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if options.marsh:
+      if options.marsh or int(options.tai_xcols)>=3:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.50')
       else:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.64')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if options.marsh:
+      if options.marsh or int(options.tai_xcols)>=3:
         print('qflx_h2osfc_surfrate = 0.0')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       else:
@@ -874,7 +881,7 @@ else:
     #   flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     #   os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     #   ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    if (options.marsh and options.tide_components_file != ''):
+    if ((options.marsh or int(options.tai_xcols)>=3) and options.tide_components_file != ''):
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
         print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
         print('Tide datum (tide_baseline parameter) needs to be specified separately. Default is 800 mm')
@@ -885,7 +892,7 @@ else:
             os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,360*3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+800.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    elif options.marsh and options.tide_forcing_file == '':
+    elif (options.marsh or int(options.tai_xcols)>=3) and options.tide_forcing_file == '':
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     #os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     #os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -1650,7 +1657,7 @@ for i in range(1,int(options.ninst)+1):
       if (options.pflotran_inputdir!=''):
         output.write(" pflotran_prefix = '"+str(options.pflotran_prefix)+"'\n")
 
-    if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
+    if (cpl_bypass and (options.marsh or int(options.tai_xcols)>=3) and options.tide_forcing_file != ''):
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
 
     #------------------------------------------------
@@ -1692,6 +1699,11 @@ if (options.marsh):
     print("Turning on MARSH modification\n")
     # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
     cppdefs.append('-DMARSH')
+elif (int(options.tai_xcols)==3):
+    cppdefs.append('-DCOL3RD')
+elif (int(options.tai_xcols)==4):
+    cppdefs.append('-DCOL4TH')    
+    
 if (options.alquimia != ""):
     print("Turning on alquimia interface for compilation and running")
     # os.system("./xmlchange -id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")
