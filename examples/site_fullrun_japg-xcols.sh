@@ -46,3 +46,4 @@ python ./site_fullrun.py \
       --parm_file /ccsopen/home/ji8/ModelELM_japg/OLMT/examples/tai_tidedata_examples/parm_GC4_13 \
       --parm_file_2nd /ccsopen/home/ji8/ModelELM_japg/OLMT/examples/tai_tidedata_examples/parm_short_GC3_12 \
       --tide_components_file /ccsopen/home/ji8/ModelELM_japg/OLMT/examples/tai_tidedata_examples/harmonic_Annapolis.csv
+      
