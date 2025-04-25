@@ -755,10 +755,17 @@ for n in range(0,n_grids):
 surffile_new = './temp/surfdata.nc'
 
 if (n_grids > 1):
+  # extract 2 constants in the original surfdata.nc, to avoid 'ncecat'ing them below 
+  ierr = os.system('ncks -O -h -v mxsoil_color,mxsoil_order '+surffile_orig+' -o ./temp/constants.nc');
+  if(ierr!=0): raise RuntimeError('Error: ncks to extract constants')
   #os.system('ncecat '+surffile_list+' '+surffile_new) # not works with too long '_list'
   ierr = os.system('find ./temp/ -name "'+surffile_tmp+ \
-                 '" | xargs ls | sort | ncecat -O -h -o'+surffile_new)
+                 '" | xargs ls | sort | ncecat -O -h -x -v mxsoil_color,mxsoil_order -o '+surffile_new)
+                # must exclude 'mxsoil_color, mxsoil_order', which are scalars and to be added back afterwards
   if(ierr!=0): raise RuntimeError('Error: ncecat '); #os.sys.exit()
+  # append back 'constants.nc'
+  ierr = os.system('ncks -h -A ./temp/constants.nc -o '+surffile_new)  
+  os.system('rm ./temp/constants.nc')
   #os.system('rm ./temp/surfdata?????.nc*') # not works with too many files
   os.system('find ./temp/ -name "'+surffile_tmp+'" -exec rm {} \;')
 
