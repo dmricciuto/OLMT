@@ -305,7 +305,7 @@ if (options.col4th):
 
     numcols_japg = options.number_of_columns
 
-    lon_wetlan      = -76.549978 + 360.0    # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
+    lon_wetland      = -76.549978 + 360.0    # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
     lon_transition  = -76.551469 + 360.0    # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
     lon_upland      = -76.552129 + 360.0    # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
 
@@ -313,7 +313,7 @@ if (options.col4th):
     lat_transition  = 38.874473             # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
     lat_upland      = 38.874076             # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
 
-    lon_x = numpy.array([lon_upland, lon_transition, lon_wetlan])
+    lon_x = numpy.array([lon_upland, lon_transition, lon_wetland])
     lat_y = numpy.array([lat_upland, lat_transition, lat_wetland])
 
     funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
@@ -321,7 +321,7 @@ if (options.col4th):
     lon = numpy.linspace(min(lon_x), max(lon_x),numcols_japg)
 
     lon = numpy.round(lon,6)    
-    lat = funct_int(lon)
+    lat = funct_int(lon) # japg [04-21-2025] => Interporlation
     lat = numpy.round(lat,6)    
     
     print('numcols =' + str(numcols_japg) +' grid lon='+str(lon))   
@@ -1027,7 +1027,8 @@ surffile_new = './temp/surfdata.nc'
 if (n_grids > 1):
   #os.system('ncecat '+surffile_list+' '+surffile_new) # not works with too long '_list'
   ierr = os.system('find ./temp/ -name "'+surffile_tmp+ \
-                 '" | xargs ls | sort | ncecat -O -h -o'+surffile_new)
+                 #'" | xargs ls | sort | ncecat -O -h -o'+surffile_new)
+                 '" | xargs ls | sort | ncecat -O -h -x -v mxsoil_color,mxsoil_order -o '+surffile_new)
   if(ierr!=0): raise RuntimeError('Error: ncecat '); #os.sys.exit()
   #os.system('rm ./temp/surfdata?????.nc*') # not works with too many files
   os.system('find ./temp/ -name "'+surffile_tmp+'" -exec rm {} \;')

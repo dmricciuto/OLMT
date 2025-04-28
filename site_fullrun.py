@@ -7,7 +7,7 @@ import numpy
 import re
 
 ### Run options
-parser = OptionParser();
+parser = OptionParser()
 
 # general OLMT options
 parser.add_option("--no_submit", dest="no_submit", default=False, action="store_true", \
