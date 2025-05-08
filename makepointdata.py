@@ -17,14 +17,23 @@ parser.add_option("--site", dest="site", default='', \
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
-# japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+# japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 parser.add_option("--site4th", dest="site4th", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
-parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
-                  help='Number of the columns for the saltmarsh system')
+#parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
+#                  help='Number of the columns for the saltmarsh system')
 
-# japg [02-24-2025] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+parser.add_option("--nsite_codes", dest="nsite_codes", default='', type="string", \
+                  help = 'vector with the PFT codes for each column. Example: [US-TREE, US-GC3, US-GC4]')
+
+parser.add_option("--lat_coordinates", dest="lat_coordinates", default='', type="str", \
+                  help = 'vector for latitude coordinates for each column. Example: [38.874957, 38.874473, 38.874076]')
+
+parser.add_option("--lon_coordinates", dest="lon_coordinates", default='', type="str", \
+                  help = 'vector for longitude coordinates for each column. Example: [38.874957, 38.874473, 38.874076]')
+
+# japg [02-24-2025] ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
@@ -86,7 +95,28 @@ parser.add_option("--usersurfvar", dest="usersurfvar", default="none", \
 
 ccsm_input = os.path.abspath(options.ccsm_input)
 
-print(f"JAPG_DEBUG: makepointdata.py number_of_columns = {options.number_of_columns}")  # =====> japg  [02-25-2025], checking if options.number_of_columns is getting the integer value
+
+# japg [05-07-2024]: Obtaining the variable associate to the number of columns  ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
+site_codes = options.nsite_codes.split(',')                         # assigning the site codes to a variable "site_codes"
+number_of_columns = len(site_codes)                                 # assigning the number of columns to a variable "number_of_columns"
+print('japg/makepointdata.py =========> number_of_columns =', number_of_columns)     # printing the number of columns
+
+
+lat_coor = numpy.fromstring(options.lat_coordinates, sep=',')       # assigning the latitude coordinates to a variable "lat_coor"
+print('japg/makepointdata.py =========> lat_coor =', lat_coor)                                              
+
+
+lon_coor = numpy.fromstring(options.lon_coordinates, sep=',')       # assigning the latitude coordinates to a variable "lat_coor"                                  
+
+for i in range(len(lon_coor)):
+    if (lon_coor[i] < 0):                                           # In case a longitude coordinate is negative, add 360 to it
+        lon_coor[i] = lon_coor[i]+360
+
+print('japg/makepointdata.py =========> lon_coor =', lon_coor)         
+
+# japg [05-07-2024]: Obtaining the variable associate to the number of columns ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
 #------------------- get site information ----------------------------------
 
 
@@ -147,197 +177,186 @@ isglobal = False
 lat=[]
 lon=[]
 
-if not options.col4th:
+
     
-    if (lat_bounds[0] > -90 and lon_bounds[0] > -180):
-        print( '\nCreating regional datasets using '+options.res+ 'resolution')
-        if (lon_bounds[0] < 0):
-            lon_bounds[0] = lon_bounds[0]+360.
-        if (lon_bounds[1] < 0):
-            lon_bounds[1] = lon_bounds[1]+360.
-    elif (options.point_list != ''):
-        issite=True
-        input_file = open(options.point_list,'r')
-        n_grids=0
-        point_pfts=[]
-        
-        # if providing a user-defined nc file for extracting surface data other than standard inputs
-        if (options.usersurfnc!='none'):
-            if (options.usersurfvar=='none'):
-                print('must provide variable name(s) for extracting data from : ',options.usersurfnc)
-                sys.exit()
-            else:
-                mysurfvar = options.usersurfvar.split(',')
-            mysurfnc = Dataset(options.usersurfnc,'r') # must provide the full path and file name
-            mysurf_lat = numpy.asarray(mysurfnc['LATIXY'])
-            mysurf_lon = numpy.asarray(mysurfnc['LONGXY'])
-            ix=numpy.where(mysurf_lon<0.0)
-            if(ix[0].size>0): mysurf_lon[ix]=mysurf_lon[ix]+360.0
-            point_mysurf = {}
-            point_ij = []
-            for isurfvar in mysurfvar:
-                point_mysurf[isurfvar] = []
+if (lat_bounds[0] > -90 and lon_bounds[0] > -180):
+    print( '\nCreating regional datasets using '+options.res+ 'resolution')
+    if (lon_bounds[0] < 0):
+        lon_bounds[0] = lon_bounds[0]+360.
+    if (lon_bounds[1] < 0):
+        lon_bounds[1] = lon_bounds[1]+360.
+elif (options.point_list != ''):
+    issite=True
+    input_file = open(options.point_list,'r')
+    n_grids=0
+    point_pfts=[]
     
-        for s in input_file:
-            if (n_grids == 0):
-                header = s.split()
-            else:
-                data = s.split()
-                dnum=0
-                point_pfts.append(-1)
-                for d in data:
-                    if ('lon' in header[dnum]): 
-                        mylon = float(d)
-                        if (mylon < 0):
-                            mylon = mylon+360
-                        lon.append(mylon)
-                    elif ('lat' in header[dnum]):
-                        mylat = float(d)
-                        lat.append(float(d))
-                    elif ('pft' in header[dnum]):
-                        point_pfts[n_grids-1] = int(d)
-                    if (int(options.mypft) >= 0):    #overrides info in file
-                        point_pfts[n_grids-1] = options.mypft
-                    
-                    dnum=dnum+1
-                #
-                #overrides data from a PCT_PFT nc input file (TIP: only index here to speed-up loop)
-                if(options.usersurfnc!='none' and options.usersurfvar!='none'):
-                        dx=numpy.abs(mysurf_lon-mylon)
-                        dy=numpy.abs(mysurf_lat-mylat)
-                        dxy = numpy.sqrt(dx*dx+dy*dy)
-                        ixy = numpy.unravel_index(numpy.argmin(dxy, axis=None), dxy.shape)
-                        if (n_grids==1):
-                            point_ij=[ixy[0],ixy[1]]
-                        else:
-                            point_ij=numpy.vstack((point_ij,[ixy[0],ixy[1]]))
-            
-            n_grids=n_grids+1
-            if(divmod(n_grids, 100)[1]==0): print("grid counting: \n",n_grids)
-        
-        #overrides data from a PCT_PFT nc input file, after all index are assembled
-        if(options.usersurfnc!='none' and options.usersurfvar!='none'):
-            for isurfvar in mysurfvar:
-                isurfvar_vals = numpy.asarray(mysurfnc[isurfvar])[:,point_ij[:,0],point_ij[:,1]]
-                point_mysurf[isurfvar] = numpy.transpose(isurfvar_vals)
+    # if providing a user-defined nc file for extracting surface data other than standard inputs
+    if (options.usersurfnc!='none'):
+        if (options.usersurfvar=='none'):
+            print('must provide variable name(s) for extracting data from : ',options.usersurfnc)
+            sys.exit()
+        else:
+            mysurfvar = options.usersurfvar.split(',')
+        mysurfnc = Dataset(options.usersurfnc,'r') # must provide the full path and file name
+        mysurf_lat = numpy.asarray(mysurfnc['LATIXY'])
+        mysurf_lon = numpy.asarray(mysurfnc['LONGXY'])
+        ix=numpy.where(mysurf_lon<0.0)
+        if(ix[0].size>0): mysurf_lon[ix]=mysurf_lon[ix]+360.0
+        point_mysurf = {}
+        point_ij = []
+        for isurfvar in mysurfvar:
+            point_mysurf[isurfvar] = []
 
-        input_file.close()
-        n_grids = n_grids-1
-
-    elif (options.site != ''):
-        print('\nCreating datasets for '+options.site+' using '+options.res+' resolution')
-        issite = True
-        AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-        for row in AFdatareader:
-            if row[0] == options.site:        # japg [3-27-2025] ==> this checks the first column in the file Wetland_sitedata.txt (US-GC3)
-                mylon=float(row[3])
-                if (mylon < 0):
-                    mylon=360.0+float(row[3])
-                lon.append(mylon)
-                lat.append(float(row[4]))
-                # print('1st grid lat='+str(lat))
-
-                if ('US-SPR' in options.site or    # japg [04-04-2025] => This is for two-column system 
-                    (options.marsh or options.humhol)):
+    for s in input_file:
+        if (n_grids == 0):
+            header = s.split()
+        else:
+            data = s.split()
+            dnum=0
+            point_pfts.append(-1)
+            for d in data:
+                if ('lon' in header[dnum]): 
+                    mylon = float(d)
+                    if (mylon < 0):
+                        mylon = mylon+360
                     lon.append(mylon)
-                    lat.append(float(row[4]))
-                    n_grids = 2
-
-                #adding third grid cell [Wei Huang, 2022-07-06]
-                if (options.col3rd):
-                    AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-                    for row in AFdatareader:
-                        if row[0] == options.site3rd:
-                            mylon=float(row[3])
-                            if (mylon < 0):
-                                mylon=360.0+float(row[3])
-                            
-                            lon.append(mylon)#append lat/lon for 2nd column from site3rd
-                            lat.append(float(row[4]))
-                            print('2nd grid lat='+str(lat))
-                            lon.append(mylon)#append twice so that lon ahd lat has 3 elements
-                            lat.append(float(row[4]))
-                            print('3rd grid lat='+str(lat))
-                    numcols_japg = options.number_of_columns # ===========================================================================================> japg [3-4-2025]
-                    n_grids = numcols_japg
+                elif ('lat' in header[dnum]):
+                    mylat = float(d)
+                    lat.append(float(d))
+                elif ('pft' in header[dnum]):
+                    point_pfts[n_grids-1] = int(d)
+                if (int(options.mypft) >= 0):    #overrides info in file
+                    point_pfts[n_grids-1] = options.mypft
                 
-                # starts japg [11-01-2024]: Adding 4th grid cell ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-                
-                # if (options.col4th):                                                                                        # =====================> japg [2-24-2025]
-                    
-                #     AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-                #     for row in AFdatareader:
-                #        if row[0] == options.site4th:  # ===========================================================================================> japg [2-24-2025]
-                #           mylon=float(row[3])
-                #           if (mylon < 0):
-                #               mylon=360.0+float(row[3])
-                        
-                #           lon.append(mylon)                     # append lat/lon for 2nd column from site3rd
-                #           lat.append(float(row[4]))
-                #           print('2nd grid lat='+str(lat))
-                #           lon.append(mylon)                     # append twice so that lon ahd lat has 3 elements
-                #           lat.append(float(row[4]))
-                #           print('3rd: grid lat='+str(lat))
-                #           lon.append(mylon)                     # append twice so that lon ahd lat has 3 elements
-                #           lat.append(float(row[4]))                                    
-                #           print('4th: grid lat='+str(lat)) 
-
-                # numcols_japg = options.number_of_columns    # ===========================================================================================> japg [2-25-2025]
-                # n_grids = numcols_japg                      # ===========================================================================================> japg [2-25-2025]
-                
-                # ends japg [11-01-2024]: Adding 4th grid cell ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-                
-                startyear=int(row[6])
-                print('startyear =' + str(startyear))
-                endyear=int(row[7])
-                print('endyear =' + str(endyear))
-                alignyear = int(row[8])
-                print('alignyear =' + str(alignyear))
-
-    else:
-        isglobal=True
-
-# starts japg [04-09-2025]: Adding 4th grid cell with interpolation ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-
-if (options.col4th): 
-
-    issite = True # japg [04-09-2025] => This is needed to create the .nc file
-
-    numcols_japg = options.number_of_columns
-
-    lon_wetland      = -76.549978 + 360.0    # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
-    lon_transition  = -76.551469 + 360.0    # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
-    lon_upland      = -76.552129 + 360.0    # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
-
-    lat_wetland     = 38.874957             # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
-    lat_transition  = 38.874473             # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
-    lat_upland      = 38.874076             # japg [04-04-2025] => Getting the coordenates for Chesapeake Bay GCW GCReW
-
-    lon_x = numpy.array([lon_upland, lon_transition, lon_wetland])
-    lat_y = numpy.array([lat_upland, lat_transition, lat_wetland])
-
-    funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
-
-    lon = numpy.linspace(min(lon_x), max(lon_x),numcols_japg)
-
-    lon = numpy.round(lon,6)    
-    lat = funct_int(lon) # japg [04-21-2025] => Interporlation
-    lat = numpy.round(lat,6)    
+                dnum=dnum+1
+            #
+            #overrides data from a PCT_PFT nc input file (TIP: only index here to speed-up loop)
+            if(options.usersurfnc!='none' and options.usersurfvar!='none'):
+                    dx=numpy.abs(mysurf_lon-mylon)
+                    dy=numpy.abs(mysurf_lat-mylat)
+                    dxy = numpy.sqrt(dx*dx+dy*dy)
+                    ixy = numpy.unravel_index(numpy.argmin(dxy, axis=None), dxy.shape)
+                    if (n_grids==1):
+                        point_ij=[ixy[0],ixy[1]]
+                    else:
+                        point_ij=numpy.vstack((point_ij,[ixy[0],ixy[1]]))
+        
+        n_grids=n_grids+1
+        if(divmod(n_grids, 100)[1]==0): print("grid counting: \n",n_grids)
     
-    print('numcols =' + str(numcols_japg) +' grid lon='+str(lon))   
-    print('numcols =' + str(numcols_japg) +' grid lat='+str(lat))     
+    #overrides data from a PCT_PFT nc input file, after all index are assembled
+    if(options.usersurfnc!='none' and options.usersurfvar!='none'):
+        for isurfvar in mysurfvar:
+            isurfvar_vals = numpy.asarray(mysurfnc[isurfvar])[:,point_ij[:,0],point_ij[:,1]]
+            point_mysurf[isurfvar] = numpy.transpose(isurfvar_vals)
 
-    n_grids = numcols_japg
+    input_file.close()
+    n_grids = n_grids-1
 
+elif (options.site != ''):
+    print('\nCreating datasets for '+options.site+' using '+options.res+' resolution')
+    issite = True
     AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
     for row in AFdatareader:
-        if row[0] == options.site4th:
+        if row[0] == options.site:        # japg [3-27-2025] ==> this checks the first column in the file Wetland_sitedata.txt (US-GC3)
+            mylon=float(row[3])
+            if (mylon < 0):
+                mylon=360.0+float(row[3])
+            lon.append(mylon)
+            lat.append(float(row[4]))
+            # print('1st grid lat='+str(lat))
+
+            if ('US-SPR' in options.site or    # japg [04-04-2025] => This is for two-column system 
+                (options.marsh or options.humhol)):
+                lon.append(mylon)
+                lat.append(float(row[4]))
+                n_grids = 2
+            
+            if (number_of_columns == 3): # japg [05-06-2024] 
+                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
+                for row in AFdatareader:
+                    if row[0] == options.site3rd:
+                        mylon=float(row[3])
+                        if (mylon < 0):
+                            mylon=360.0+float(row[3])
+                        
+                        lon.append(mylon)#append lat/lon for 2nd column from site3rd
+                        lat.append(float(row[4]))
+                        print('2nd grid lat='+str(lat))
+                        lon.append(mylon)#append twice so that lon ahd lat has 3 elements
+                        lat.append(float(row[4]))
+                        print('3rd grid lat='+str(lat))
+                
+                n_grids = number_of_columns
+            
+            # starts japg [11-01-2024]: Adding 4th grid cell ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+            
+            # if (options.col4th):                                                                                        # =====================> japg [2-24-2025]
+                
+            #     AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
+            #     for row in AFdatareader:
+            #        if row[0] == options.site4th:  # ===========================================================================================> japg [2-24-2025]
+            #           mylon=float(row[3])
+            #           if (mylon < 0):
+            #               mylon=360.0+float(row[3])
+                    
+            #           lon.append(mylon)                     # append lat/lon for 2nd column from site3rd
+            #           lat.append(float(row[4]))
+            #           print('2nd grid lat='+str(lat))
+            #           lon.append(mylon)                     # append twice so that lon ahd lat has 3 elements
+            #           lat.append(float(row[4]))
+            #           print('3rd: grid lat='+str(lat))
+            #           lon.append(mylon)                     # append twice so that lon ahd lat has 3 elements
+            #           lat.append(float(row[4]))                                    
+            #           print('4th: grid lat='+str(lat)) 
+
+            # numcols_japg = options.number_of_columns    # ===========================================================================================> japg [2-25-2025]
+            # n_grids = numcols_japg                      # ===========================================================================================> japg [2-25-2025]
+            
+            # ends japg [11-01-2024]: Adding 4th grid cell ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+            
             startyear=int(row[6])
             print('startyear =' + str(startyear))
             endyear=int(row[7])
             print('endyear =' + str(endyear))
             alignyear = int(row[8])
             print('alignyear =' + str(alignyear))
+
+else:
+    isglobal=True
+
+# starts japg [04-09-2025]: Adding 4th grid cell with interpolation ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
+if (number_of_columns == 4): # japg [05-06-2025] =>
+
+    issite = True # japg [04-09-2025] => This is needed to create the .nc file
+
+    lat_y = lat_coor
+    lon_x = lon_coor
+
+    funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
+
+    lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
+
+    lon = numpy.round(lon,6)    
+    lat = funct_int(lon) # japg [04-21-2025] => Interporlation
+    lat = numpy.round(lat,6)    
+    
+    print('numcols =' + str(number_of_columns) +' grid lon='+str(lon))   
+    print('numcols =' + str(number_of_columns) +' grid lat='+str(lat))     
+
+    n_grids = number_of_columns
+
+    # AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
+    # for row in AFdatareader:
+    #     if row[0] == site_codes[0]:        # japg [05-06-2025] ==> this checks the first column in the file Wetland_sitedata.txt (US-GC3)   
+    #         startyear=int(row[6])
+    #         print('startyear =' + str(startyear))
+    #         endyear=int(row[7])
+    #         print('endyear =' + str(endyear))
+    #         alignyear = int(row[8])
+    #         print('alignyear =' + str(alignyear))
 
 # ends japg [04-09-2025]: Adding 4th grid cell with interpolation ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -622,7 +641,7 @@ else:
 #-------------------- create surface data ----------------------------------
 print('Creating surface data')
 
-site_codes = ['US-TREE', 'US-GC3', 'US-GC4', 'US-GC3'] # japg [04-10-2025] => each element corresponds to the site_code in the file Wetland_pftdata.txt. Always, the last element will be rewrite to specify ocean water
+#site_codes = ['US-TREE', 'US-GC3', 'US-GC4', 'US-GC3'] # japg [04-10-2025] => each element corresponds to the site_code in the file Wetland_pftdata.txt. Always, the last element will be rewrite to specify ocean water
 
 surffile_tmp = 'surfdata??????.nc' # filename pattern of 'surffile_new'
 for n in range(0,n_grids):                  # japg [03-31-2025] =====================> This is the loop that goes through each column 
@@ -934,7 +953,7 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
                 mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [Wei Huang 2022-07-11]
                 mypft_frac[0]=100.0 # [Wei Huang 2022-07-11]
 
-            if options.col4th and n == numcols_japg-1: # [japg 03-31-2025] => Here, I can specify the tidal 
+            if options.col4th and n == number_of_columns-1: # [japg 03-31-2025] => Here, I can specify the tidal 
                 print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [japg 11-01-2024]
                 mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [japg 11-01-2024]
                 mypft_frac[0]=100.0 # [japg 11-01-2024]
@@ -1025,11 +1044,18 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
 surffile_new = './temp/surfdata.nc'
 
 if (n_grids > 1):
+  
+  # extract 2 constants in the original surfdata.nc, to avoid 'ncecat'ing them below                            # ===>japg [04-30-2025]
+  ierr = os.system('ncks -O -h -v mxsoil_color,mxsoil_order '+surffile_orig+' -o ./temp/constants.nc')          # ===>japg [04-30-2025]
+  if(ierr!=0): raise RuntimeError('Error: ncks to extract constants')                                           # ===>japg [04-30-2025]
   #os.system('ncecat '+surffile_list+' '+surffile_new) # not works with too long '_list'
   ierr = os.system('find ./temp/ -name "'+surffile_tmp+ \
                  #'" | xargs ls | sort | ncecat -O -h -o'+surffile_new)
-                 '" | xargs ls | sort | ncecat -O -h -x -v mxsoil_color,mxsoil_order -o '+surffile_new)
+                 '" | xargs ls | sort | ncecat -O -h -x -v mxsoil_color,mxsoil_order -o '+surffile_new)         # ===>japg [04-30-2025]
   if(ierr!=0): raise RuntimeError('Error: ncecat '); #os.sys.exit()
+   
+  ierr = os.system('ncks -h -A ./temp/constants.nc -o '+surffile_new)                                           # ===>japg [04-30-2025]
+  os.system('rm ./temp/constants.nc')                                                                           # ===>japg [04-30-2025]
   #os.system('rm ./temp/surfdata?????.nc*') # not works with too many files
   os.system('find ./temp/ -name "'+surffile_tmp+'" -exec rm {} \;')
 

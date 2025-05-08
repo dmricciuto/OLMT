@@ -9,7 +9,7 @@ METDIR=$MYROOT/world-shared/e3sm/inputdata
 MPILIB=openmpi
 
 python ./site_fullrun.py \
-      --site US-GC4 --sitegroup Wetland --caseidprefix C4j \
+      --site US-GC3 --sitegroup Wetland --caseidprefix C4j \
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --nyears_transient 165 --tstep 1 \
       --machine $MYMACH --compiler gnu --mpilib $MPILIB \
       --model_root /ccsopen/home/ji8/ModelELM_japg/E3SM_japg \

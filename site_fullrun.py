@@ -95,12 +95,23 @@ parser.add_option("--site", dest="site", default='', \
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
-# japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv ======================> starts japg [02-24-2025]
+# japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 parser.add_option("--site4th", dest="site4th", default='', \
                   help = '6-character FLUXNET code to run (optional)')
-parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
-                  help='Number of the columns for the saltmarsh system')
-# japg [02-24-2025] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ======================> ends japg [02-24-2025]
+
+#parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
+#                  help='Number of the columns for the saltmarsh system')
+
+parser.add_option("--nsite_codes", dest="nsite_codes", default='', type="string", \
+                  help = 'vector with the PFT codes for each column. Example: [US-TREE, US-GC3, US-GC4]')
+
+parser.add_option("--lat_coordinates", dest="lat_coordinates", default='', type="string", \
+                  help = 'vector for latitude coordinates for each column. Example: [38.874957, 38.874473, 38.874076]')
+
+parser.add_option("--lon_coordinates", dest="lon_coordinates", default='', type="string", \
+                  help = 'vector for latitude coordinates for each column. Example: [38.874957, 38.874473, 38.874076]')
+
+# japg [02-24-2025] ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
  
 parser.add_option("--sitegroup", dest="sitegroup",default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
@@ -603,10 +614,17 @@ for row in AFdatareader:
         if(options.site3rd != ''):
             basecmd = basecmd + ' --site3rd '+options.site3rd
         if(options.site4th != ''):
-            basecmd = basecmd + ' --site4th '+options.site4th                                   # ======================================> japg [02-24-2025]
-        
-        if options.number_of_columns is not None:                                               # ======================================> japg [02-25-2025], transfering number_of_columns to runcase.py
-            basecmd = basecmd + ' --number_of_columns ' + str(options.number_of_columns)        # ======================================> japg [02-25-2025]
+            basecmd = basecmd + ' --site4th '+options.site4th                         # ========================> japg [02-24-2025]
+
+        if options.nsite_codes is not None:                                           # ========================> japg [04-29-2025], transfering nsite_codes to runcase.py
+            basecmd = basecmd + ' --nsite_codes ' + options.nsite_codes          # ========================> japg [04-29-2025]
+
+        if options.lat_coordinates is not None:                                       # ========================> japg [04-29-2025], transfering nsite_codes to runcase.py
+            basecmd = basecmd + ' --lat_coordinates ' + str(options.lat_coordinates)  # ========================> japg [05-07-2025], transfering lat_coordinates to runcase.py
+
+        if options.lon_coordinates is not None:                                       # ========================> japg [04-29-2025], transfering nsite_codes to runcase.py
+            basecmd = basecmd + ' --lon_coordinates ' + str(options.lon_coordinates)  # ========================> japg [05-07-2025], transfering lat_coordinates to runcase.py
+
 
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
@@ -1001,6 +1019,13 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --site3rd '+options.site3rd
                 if (options.site4th != ''):
                     ptcmd = ptcmd+' --site4th '+options.site4th                     # ==========================> japg [02-24-2025]
+                if (options.nsite_codes != ''):
+                    ptcmd = ptcmd+' --nsite_codes '+options.nsite_codes             # ==========================> japg [04-29-2025]
+
+                if (options.lat_coordinates != ''):
+                    ptcmd = ptcmd+' --lat_coordinates '+options.lat_coordinates             # ==========================> japg [04-29-2025]
+                if (options.lon_coordinates != ''):
+                    ptcmd = ptcmd+' --lon_coordinates '+options.lon_coordinates             # ==========================> japg [04-29-2025]
 
                 if (result > 0):
                     print('Site_fullrun:  Error creating point data for '+site)

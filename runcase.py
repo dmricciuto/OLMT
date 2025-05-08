@@ -137,13 +137,23 @@ parser.add_option("--site", dest="site", default='', \
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
-# japg [02-24-2025] vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+# japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 parser.add_option("--site4th", dest="site4th", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
-parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
-                  help='Number of the columns for the saltmarsh system')
-# japg [02-24-2025] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
+#                  help='Number of the columns for the saltmarsh system')
+
+parser.add_option("--nsite_codes", dest="nsite_codes", default='', type="string", \
+                  help = 'vector with the PFT codes for each column. Example: [US-TREE, US-GC3, US-GC4]')
+
+parser.add_option("--lat_coordinates", dest="lat_coordinates", default='', type="string", \
+                  help = 'vector for latitude coordinates for each column. Example: [38.874957, 38.874473, 38.874076]')
+
+parser.add_option("--lon_coordinates", dest="lon_coordinates", default='', type="string", \
+                  help = 'vector for latitude coordinates for each column. Example: [38.874957, 38.874473, 38.874076]')
+
+# japg [02-24-2025] ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 parser.add_option("--site_forcing", dest="site_forcing", default='', \
                   help = '6-character FLUXNET code for forcing data')
@@ -355,7 +365,16 @@ parser.add_option("--var_list_pft", dest="var_list_pft", default="",help='Comma-
 (options, args) = parser.parse_args()
 
 
-print(f"DEBUG_JAPG: runcase.py number_of_columns = {options.number_of_columns}")  # ============> japg [02-25-2025], chekcing if number_of_columns value is transfered
+
+# japg [05-06-2024]: Obtaining the variable associate to the number of columns  ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
+site_codes = options.nsite_codes.split(',')                                     # assigning the site codes to a variable "site_codes"
+number_of_columns = len(site_codes)                                             # assigning the number of columns to a variable "number_of_columns"
+print('japg/runcase.py =========> number_of_columns =', number_of_columns)      # printing the number of columns
+
+# japg [05-06-2024]: Obtaining the variable associate to the number of columns ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+
 
 #-------------------------------------------------------------------------------
 # If only make point(s) data, reset relevant options.
@@ -729,10 +748,16 @@ if (options.nopointdata == False):
     if(options.site3rd != ''):
         ptcmd = ptcmd + ' --site3rd '+options.site3rd
     if(options.site4th != ''):
-        ptcmd = ptcmd + ' --site4th '+options.site4th                               # =================================> japg [02-24-2025]
+        ptcmd = ptcmd + ' --site4th '+options.site4th                         # ======================> japg [02-24-2025]
 
-    if (options.number_of_columns is not None):                                     # =================================> japg [02-24-2025], transfering number_of_columns to makepointdata.py
-        ptcmd = ptcmd + ' --number_of_columns ' + str(options.number_of_columns)
+    if (options.nsite_codes is not None):                                     # ======================> japg [04-29-2025], transfering nsite_codes to makepointdata.py
+        ptcmd = ptcmd + ' --nsite_codes ' + str(options.nsite_codes)
+
+    if (options.lat_coordinates is not None):                                 # ======================> japg [05-07-2025], transfering lat_coordinates to makepointdata.py
+        ptcmd = ptcmd + ' --lat_coordinates ' + str(options.lat_coordinates)
+
+    if (options.lon_coordinates is not None):                                 # ======================> japg [05-07-2025], transfering lat_coordinates to makepointdata.py
+        ptcmd = ptcmd + ' --lon_coordinates ' + str(options.lon_coordinates)
 
     if(options.humhol):
         ptcmd = ptcmd + ' --humhol'
@@ -1690,8 +1715,8 @@ if (options.marsh):
 if (options.col3rd):
     print("Turning on COL3RD modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL3RD'")
-#Added option for COL4TH, 4rd column [Jorge A Penaloza-Giraldo 2024]
-if (options.col4th):
+
+if (number_of_columns == 4):   # japg [05-06-2025] => activating the 4th-column system 
     print("Turning on COL4TH modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL4TH'")
 if (options.alquimia != ""):
