@@ -98,12 +98,12 @@ ccsm_input = os.path.abspath(options.ccsm_input)
 
 # japg [05-07-2024]: Obtaining the variable associate to the number of columns  ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
-site_codes = options.nsite_codes.split(',')                         # assigning the site codes to a variable "site_codes"
-number_of_columns = len(site_codes)                                 # assigning the number of columns to a variable "number_of_columns"
-print('japg/makepointdata.py =========> number_of_columns =', number_of_columns)     # printing the number of columns
+site_codes = options.nsite_codes.split(',')                                             # assigning the site codes to a variable "site_codes"
+number_of_columns = len(site_codes)                                                     # assigning the number of columns to a variable "number_of_columns"
+print('japg/makepointdata.py =========> number_of_columns =', number_of_columns)        # printing the number of columns
 
 
-lat_coor = numpy.fromstring(options.lat_coordinates, sep=',')       # assigning the latitude coordinates to a variable "lat_coor"
+lat_coor = numpy.fromstring(options.lat_coordinates, sep=',')                           # assigning the latitude coordinates to a variable "lat_coor"
 print('japg/makepointdata.py =========> lat_coor =', lat_coor)                                              
 
 
@@ -123,6 +123,9 @@ print('japg/makepointdata.py =========> lon_coor =', lon_coor)
 #Remove existing temp files
 os.system('find ./temp/ -name "*.nc*" -exec rm {} \; ')
 
+
+
+
 lat_bounds = options.lat_bounds.split(',')
 lon_bounds = options.lon_bounds.split(',')
 lat_bounds = [float(l) for l in lat_bounds]
@@ -130,8 +133,9 @@ lon_bounds = [float(l) for l in lon_bounds]
 
 mysimyr=int(options.mysimyr)
 
+# start japg [05-08-2025] Just the first condition is working (resx = 0.5 & resy = 0.5) >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-if ('hcru' in options.res):
+if ('hcru' in options.res):    
     resx = 0.5
     resy = 0.5
     domainfile_orig = ccsm_input+'/share/domains/domain.clm/domain.lnd.360x720_cruncep.100429.nc'
@@ -148,7 +152,7 @@ if ('hcru' in options.res):
 
     pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_360x720cru_hist_simyr1850-2015_c180220.nc'
     nyears_landuse=166
-elif ('f19' in options.res):
+elif ('f19' in options.res):    
     domainfile_orig = ccsm_input+'/share/domains/domain.lnd.fv1.9x2.5_gx1v6.090206.nc'
     surffile_orig =  ccsm_input+'/lnd/clm2/surfdata_map/surfdata_1.9x2.5_simyr1850_c180306.nc'
     pftdyn_orig = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_1.9x2.5_rcp8.5_simyr1850-2100_c141219.nc'
@@ -171,14 +175,17 @@ elif ('ne30' in options.res):
     pftdyn_orig     = ccsm_input+'/lnd/clm2/surfdata_map/landuse.timeseries_ne30np4_hist_simyr1850_2015_c20171018.nc'
     nyears_landuse  = 166
 
+# start japg [05-08-2025] Can I delete this? >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+# start japg [05-08-2025] This is main code >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 n_grids=1
 issite = False
 isglobal = False
 lat=[]
 lon=[]
+# end japg [05-08-2025] >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-
-    
+# start japg [05-08-2025] This is not needed. Jumps to "options.site != '' " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 if (lat_bounds[0] > -90 and lon_bounds[0] > -180):
     print( '\nCreating regional datasets using '+options.res+ 'resolution')
     if (lon_bounds[0] < 0):
@@ -253,100 +260,104 @@ elif (options.point_list != ''):
 
     input_file.close()
     n_grids = n_grids-1
+# start japg [05-08-2025] Just the first condition is working (resx = 0.5 & resy = 0.5) >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-elif (options.site != ''):
-    print('\nCreating datasets for '+options.site+' using '+options.res+' resolution')
-    issite = True
-    AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-    for row in AFdatareader:
-        if row[0] == options.site:        # japg [3-27-2025] ==> this checks the first column in the file Wetland_sitedata.txt (US-GC3)
-            mylon=float(row[3])
-            if (mylon < 0):
-                mylon=360.0+float(row[3])
-            lon.append(mylon)
-            lat.append(float(row[4]))
-            # print('1st grid lat='+str(lat))
 
-            if ('US-SPR' in options.site or    # japg [04-04-2025] => This is for two-column system 
-                (options.marsh or options.humhol)):
-                lon.append(mylon)
-                lat.append(float(row[4]))
-                n_grids = 2
+elif number_of_columns >= 3:
+    issite = True # japg [04-09-2025] => This is needed to create the .nc file
+
+    lat_y = lat_coor
+    lon_x = lon_coor
+
+    # funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
+    # lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
+    # lon = numpy.round(lon,6)    
+    # lat = funct_int(lon) # japg [04-21-2025] => Interporlation
+    # lat = numpy.round(lat,6)    
+    
+    lat = lat_y
+    lon = lon_x
+
+
+    print('numcols =' + str(number_of_columns) +' grid lon='+str(lon))   
+    print('numcols =' + str(number_of_columns) +' grid lat='+str(lat))     
+
+    n_grids = number_of_columns
+
+
+# elif (options.site != ''):
+#     print('\nCreating datasets for '+options.site+' using '+options.res+' resolution')
+#     issite = True
+#     AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
+#     for row in AFdatareader:
+#         if row[0] == options.site:        # japg [3-27-2025] ==> this checks the first column in the file Wetland_sitedata.txt (US-GC3)
+#             mylon=float(row[3])
+#             if (mylon < 0):
+#                 mylon=360.0+float(row[3])
+#             lon.append(mylon)
+#             lat.append(float(row[4]))
+#             # print('1st grid lat='+str(lat))
+
+#             if ('US-SPR' in options.site or    # japg [04-04-2025] => This is for two-column system 
+#                 (options.marsh or options.humhol)):
+#                 lon.append(mylon)
+#                 lat.append(float(row[4]))
+#                 n_grids = 2
             
-            if (number_of_columns == 3): # japg [05-06-2024] 
-                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-                for row in AFdatareader:
-                    if row[0] == options.site3rd:
-                        mylon=float(row[3])
-                        if (mylon < 0):
-                            mylon=360.0+float(row[3])
+#             if (number_of_columns == 3): # japg [05-06-2024] 
+#                 AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
+#                 for row in AFdatareader:
+#                     if row[0] == options.site3rd:
+#                         mylon=float(row[3])
+#                         if (mylon < 0):
+#                             mylon=360.0+float(row[3])
                         
-                        lon.append(mylon)#append lat/lon for 2nd column from site3rd
-                        lat.append(float(row[4]))
-                        print('2nd grid lat='+str(lat))
-                        lon.append(mylon)#append twice so that lon ahd lat has 3 elements
-                        lat.append(float(row[4]))
-                        print('3rd grid lat='+str(lat))
+#                         lon.append(mylon)#append lat/lon for 2nd column from site3rd
+#                         lat.append(float(row[4]))
+#                         print('2nd grid lat='+str(lat))
+#                         lon.append(mylon)#append twice so that lon ahd lat has 3 elements
+#                         lat.append(float(row[4]))
+#                         print('3rd grid lat='+str(lat))
                 
-                n_grids = number_of_columns
+#                 n_grids = number_of_columns
             
-            # starts japg [11-01-2024]: Adding 4th grid cell ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+#             # starts japg [11-01-2024]: Adding 4th grid cell ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+           
             
-            # if (options.col4th):                                                                                        # =====================> japg [2-24-2025]
-                
-            #     AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-            #     for row in AFdatareader:
-            #        if row[0] == options.site4th:  # ===========================================================================================> japg [2-24-2025]
-            #           mylon=float(row[3])
-            #           if (mylon < 0):
-            #               mylon=360.0+float(row[3])
-                    
-            #           lon.append(mylon)                     # append lat/lon for 2nd column from site3rd
-            #           lat.append(float(row[4]))
-            #           print('2nd grid lat='+str(lat))
-            #           lon.append(mylon)                     # append twice so that lon ahd lat has 3 elements
-            #           lat.append(float(row[4]))
-            #           print('3rd: grid lat='+str(lat))
-            #           lon.append(mylon)                     # append twice so that lon ahd lat has 3 elements
-            #           lat.append(float(row[4]))                                    
-            #           print('4th: grid lat='+str(lat)) 
-
-            # numcols_japg = options.number_of_columns    # ===========================================================================================> japg [2-25-2025]
-            # n_grids = numcols_japg                      # ===========================================================================================> japg [2-25-2025]
+#             # ends japg [11-01-2024]: Adding 4th grid cell ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
             
-            # ends japg [11-01-2024]: Adding 4th grid cell ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-            
-            startyear=int(row[6])
-            print('startyear =' + str(startyear))
-            endyear=int(row[7])
-            print('endyear =' + str(endyear))
-            alignyear = int(row[8])
-            print('alignyear =' + str(alignyear))
+#             startyear=int(row[6])
+#             print('startyear =' + str(startyear))
+#             endyear=int(row[7])
+#             print('endyear =' + str(endyear))
+#             alignyear = int(row[8])
+#             print('alignyear =' + str(alignyear))
 
 else:
     isglobal=True
 
 # starts japg [04-09-2025]: Adding 4th grid cell with interpolation ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
-if (number_of_columns == 4): # japg [05-06-2025] =>
 
-    issite = True # japg [04-09-2025] => This is needed to create the .nc file
+# if (number_of_columns == 4): # japg [05-06-2025] =>
 
-    lat_y = lat_coor
-    lon_x = lon_coor
+#     issite = True # japg [04-09-2025] => This is needed to create the .nc file
 
-    funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
+#     lat_y = lat_coor
+#     lon_x = lon_coor
 
-    lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
+#     funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
 
-    lon = numpy.round(lon,6)    
-    lat = funct_int(lon) # japg [04-21-2025] => Interporlation
-    lat = numpy.round(lat,6)    
+#     lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
+
+#     lon = numpy.round(lon,6)    
+#     lat = funct_int(lon) # japg [04-21-2025] => Interporlation
+#     lat = numpy.round(lat,6)    
     
-    print('numcols =' + str(number_of_columns) +' grid lon='+str(lon))   
-    print('numcols =' + str(number_of_columns) +' grid lat='+str(lat))     
+#     print('numcols =' + str(number_of_columns) +' grid lon='+str(lon))   
+#     print('numcols =' + str(number_of_columns) +' grid lat='+str(lat))     
 
-    n_grids = number_of_columns
+#     n_grids = number_of_columns
 
     # AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
     # for row in AFdatareader:
@@ -1045,15 +1056,16 @@ surffile_new = './temp/surfdata.nc'
 
 if (n_grids > 1):
   
-  # extract 2 constants in the original surfdata.nc, to avoid 'ncecat'ing them below                            # ===>japg [04-30-2025]
+  # extract 2 constants in the original surfdata.nc, to avoid 'ncecat'ing them below                            
   ierr = os.system('ncks -O -h -v mxsoil_color,mxsoil_order '+surffile_orig+' -o ./temp/constants.nc')          # ===>japg [04-30-2025]
   if(ierr!=0): raise RuntimeError('Error: ncks to extract constants')                                           # ===>japg [04-30-2025]
   #os.system('ncecat '+surffile_list+' '+surffile_new) # not works with too long '_list'
   ierr = os.system('find ./temp/ -name "'+surffile_tmp+ \
                  #'" | xargs ls | sort | ncecat -O -h -o'+surffile_new)
                  '" | xargs ls | sort | ncecat -O -h -x -v mxsoil_color,mxsoil_order -o '+surffile_new)         # ===>japg [04-30-2025]
+                 # must exclude 'mxsoil_color, mxsoil_order', which are scalars and to be added back afterwards
   if(ierr!=0): raise RuntimeError('Error: ncecat '); #os.sys.exit()
-   
+  # append back 'constants.nc' 
   ierr = os.system('ncks -h -A ./temp/constants.nc -o '+surffile_new)                                           # ===>japg [04-30-2025]
   os.system('rm ./temp/constants.nc')                                                                           # ===>japg [04-30-2025]
   #os.system('rm ./temp/surfdata?????.nc*') # not works with too many files

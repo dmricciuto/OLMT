@@ -1712,7 +1712,7 @@ if (options.marsh):
     print("Turning on MARSH modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
 #Added option for COL3RD, 3rd column [Wei Huang 2022-07-11]
-if (options.col3rd):
+if (number_of_columns == 3):
     print("Turning on COL3RD modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL3RD'")
 

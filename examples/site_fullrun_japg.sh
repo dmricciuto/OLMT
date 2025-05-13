@@ -6,16 +6,18 @@
 MYROOT=/gpfs/wolf2/cades/cli185/
 MYMACH=cades-baseline
 
-nsite_codes="US-GC3,US-GC3,US-GC4,US-GC3"   # No space between the variable, the =, and the values inside the " "
+nsite_codes="US-GC3,US-GC3,US-GC4"                                      # No space between the variable, the =, and the values inside the " "
 
-lat_coordinates=(38.874076 38.874473 38.874957)
+# lat_coordinates=(38.874076 38.874473 38.874957)                       # [japg] => Chesapeake Bay Coordinates 
+lat_coordinates=(38.874941 38.874941 38.874941)                         # [japg] => From Wetland_sitedata.txt
 lat_coordinates_str=$(IFS=','; echo "${lat_coordinates[*]}")
 
-lon_coordinates=(-76.549978 -76.551469 -76.552129)
+# lon_coordinates=(-76.549978 -76.551469 -76.552129)                    # [japg] => Chesapeake Bay Coordinates
+lon_coordinates=(-76.550043 -76.550043 -76.550043)                      # [japg] => From Wetland_sitedata.txt
 lon_coordinates_str=$(IFS=','; echo "${lon_coordinates[*]}")
 
 python ./site_fullrun.py \
-      --sitegroup Wetland --caseidprefix C4p \
+      --sitegroup Wetland --caseidprefix C3pt \
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --tstep 1 \
       --cpl_bypass --machine $MYMACH --compiler gnu --mpilib openmpi \
       --model_root /ccsopen/home/ji8/E3SM_baseline \
@@ -34,12 +36,13 @@ python ./site_fullrun.py \
       --parm_file /ccsopen/home/ji8/OLMT_baseline/parm_GC4_9 \
       --parm_file_2nd /ccsopen/home/ji8/OLMT_baseline/parm_short_GC3_12 \
       --col3rd \
-      --site3rd US-GC4 \
+      --site3rd US-GC3 \
       --site US-GC3 \
       --nsite_codes "$nsite_codes" \
       --lat_coordinates "$lat_coordinates_str" \
-      --lon_coordinates "$lon_coordinates_str"
-      #--nopointdata --nopftdyn 
+      --lon_coordinates "$lon_coordinates_str" \
+      --nopftdyn
+      #--nopointdata  
       
 
       
