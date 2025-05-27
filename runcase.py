@@ -840,7 +840,7 @@ else:
     myncap = 'ncap'
     if ('chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine \
           or 'mymac' in options.machine or 'anvil' in options.machine or 'stampede2' in options.machine \
-          or 'cades-baseline' in options.machine):
+          or 'cades-baseline' in options.machine or 'docker' in options.machine):
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
@@ -1169,7 +1169,8 @@ if (options.maxpatch_pft != 17):
   os.system("./xmlchange --id CLM_BLDNML_OPTS --val '" + xval + "'")
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
-if('mac' in options.machine or 'cades-baseline' in options.machine or 'cades' in options.machine): 
+if('mac' in options.machine or 'cades-baseline' in options.machine \
+   or 'cades' in options.machine or 'docker' in options.machine): 
     os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
 
 
@@ -2031,7 +2032,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         cnp = 'True'
         if (options.cn_only or options.c_only):
             cnp= 'False'
-        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
+        if ('oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine or 'docker' in options.machine):
             mpicmd = 'mpirun'
             if ('cades' in options.machine and 'baseline' not in options.machine): # for this to work on cades-baseline, need further test
                 #mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'

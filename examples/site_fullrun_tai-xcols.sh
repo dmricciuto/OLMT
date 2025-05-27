@@ -1,10 +1,15 @@
 #!/bin/sh -f
 
-MYROOT=/Users/f9y
-MYMACH=mymac
-MPILIB=mpich
-METDIR=$MYROOT/mygithub/E3SM_REPOS/pt-e3sm-inputdata
-MODEL_ROOT=$MYROOT/mygithub/E3SM_REPOS/E3SM_ORNL_IM
+MYROOT=/home/$USER
+MYMACH=docker
+MPILIB=openmpi
+METDIR=$MYROOT/inputdata
+MODEL_ROOT=$MYROOT/models/E3SM_tai
+
+CASES_ROOT=$MYROOT/output/cases
+mkdir -p $CASES_ROOT
+RUNS_ROOT=$MYROOT/output/scratchs
+mkdir -p $RUNS_ROOT
 
 # 3-cols
 XCOLS=3
@@ -16,17 +21,17 @@ SURF_FILE=$METDIR/lnd/clm2/surfdata_map/surfdata_3x1pt_US-GC3_simyr1850.nc
 #DOMAIN_FILE=$METDIR/share/domains/domain.clm/domain.lnd.4x1pt_US-GC3_TEMPEST_navy.nc
 #SURF_FILE=$METDIR/lnd/clm2/surfdata_map/surfdata_4x1pt_US-GC3_TEMPEST_simyr1850.nc
 
-OLMT_SRC=/Users/f9y/mygithub/E3SM_REPOS/OLMT
+OLMT_SRC=${PWD}
 
 
 python ./site_fullrun.py \
-      --site US-GC3 --sitegroup Wetland --caseidprefix C3p \
+      --site US-GC3 --sitegroup Wetland --caseidprefix xcol3 \
       --nyears_ad_spinup 200 --nyears_final_spinup 600 --nyears_transient 165 --tstep 1 \
       --machine $MYMACH --compiler gnu --mpilib $MPILIB \
       --model_root $MODEL_ROOT \
-      --caseroot $MYROOT/project_e3sm/cases \
+      --caseroot $CASES_ROOT \
       --ccsm_input $METDIR \
-      --runroot $MYROOT/project_e3sm/scratch \
+      --runroot $RUNS_ROOT \
       --spinup_vars \
       --np 1 \
       --nopointdata --nopftdyn \
