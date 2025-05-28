@@ -807,29 +807,37 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
             #if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
 
-            if options.marsh and n==1 and not (options.col3rd): # # [Wei Huang 2022-07-11] Set tidal channel column in marsh mode to zero PFT area
-                print('Setting PFT area in tidal column to zero')
-                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
-                mypft_frac[0]=100.0
-            # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
-            # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
+            # if options.marsh and n==1 and not (options.col3rd): # # [Wei Huang 2022-07-11] Set tidal channel column in marsh mode to zero PFT area
+            #     print('Setting PFT area in tidal column to zero')
+            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+            #     mypft_frac[0]=100.0
+            # # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
+            # # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
 
-            if options.marsh and n==1 and not (options.col4th): # # [japg 11-01-2024] Set tidal channel column in marsh mode to zero PFT area
-                print('Setting PFT area in tidal column to zero')
-                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
-                mypft_frac[0]=100.0
-            # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
-            # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
+            # if options.marsh and n==1 and not (options.col4th): # # [japg 11-01-2024] Set tidal channel column in marsh mode to zero PFT area
+            #     print('Setting PFT area in tidal column to zero')
+            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
+            #     mypft_frac[0]=100.0
+            # # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
+            # # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
 
-            if options.col3rd and n==2: # [Wei Huang 2022-07-11]
-                print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [Wei Huang 2022-07-11]
-                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [Wei Huang 2022-07-11]
-                mypft_frac[0]=100.0 # [Wei Huang 2022-07-11]
+            # if options.col3rd and n==2: # [Wei Huang 2022-07-11]
+            #     print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [Wei Huang 2022-07-11]
+            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [Wei Huang 2022-07-11]
+            #     mypft_frac[0]=100.0 # [Wei Huang 2022-07-11]
 
-            if options.col4th and n == number_of_columns-1: # [japg 03-31-2025] => Here, I can specify the tidal 
-                print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [japg 11-01-2024]
-                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [japg 11-01-2024]
-                mypft_frac[0]=100.0 # [japg 11-01-2024]
+            # if options.col4th and n == number_of_columns-1: # [japg 03-31-2025] => Here, I can specify the tidal 
+            #     print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [japg 11-01-2024]
+            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [japg 11-01-2024]
+            #     mypft_frac[0]=100.0 # [japg 11-01-2024]
+
+            # start japg [05-28-2025]: Tidal assignation. 100% in the last column ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
+            if n == number_of_columns-1: 
+                mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64)
+                mypft_frac[0] = 100.0 # ocean water, no PFTs
+
+            # ends japg [05-28-2025] ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
             if (options.mypft >= 0 and not (options.marsh and n==1)):
               print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
