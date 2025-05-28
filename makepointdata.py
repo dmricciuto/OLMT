@@ -725,165 +725,27 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
         mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64)
         mypct_sand = 0.0 
         mypct_clay = 0.0
- 
-        
-        if not options.col4th:
-
-            if (options.surfdata_grid == False and options.site != '' and not options.col3rd and not options.col4th): # japg [3-28-2025] =====> This is for 2-column system 
-                #read file for site-specific PFT information
-                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
-                for row in AFdatareader:
-                    if row[0] == options.site:                      # japg [03-20-2025] => currently options.site = US-GC3 
-                        for thispft in range(0,5):
-                            mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
-                if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
-                    print('*** Warning:  PFT data NOT found.  Using gridded data ***')
-                #read file for site-specific soil information
-                AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
-                for row in AFdatareader:
-                    if row[0] == options.site:
-                        mypct_sand = row[4]
-                        mypct_clay = row[5]
-                if (mypct_sand == 0.0 and mypct_clay == 0.0):
-                    print('*** Warning:  Soil data NOT found.  Using gridded data ***')
-            elif (options.surfdata_grid == False and options.site != '' and options.col3rd):  # japg [3-28-2025] => When option col3rd is activated !!
-                if(n==1):
-                    #read file for site-specific PFT information
-                    AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
-                    for row in AFdatareader:
-                        if row[0] == options.site3rd:
-                            print('read from site3rd'+options.site3rd)
-                            for thispft in range(0,5):
-                                mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
-                    if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
-                        print('*** Warning:  PFT data NOT found.  Using gridded data ***')
-                    #read file for site-specific soil information
-                    AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
-                    for row in AFdatareader:
-                        if row[0] == options.site3rd:
-                            print('read from site3rd'+options.site3rd)
-                            mypct_sand = row[4]
-                            mypct_clay = row[5]
-                    if (mypct_sand == 0.0 and mypct_clay == 0.0):
-                        print('*** Warning:  Soil data NOT found.  Using gridded data ***')
-                else:
-                    #read file for site-specific PFT information
-                    AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
-                    for row in AFdatareader:
-                        if row[0] == options.site:
-                            for thispft in range(0,5):
-                                mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
-                    if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
-                        print('*** Warning:  PFT data NOT found.  Using gridded data ***')
-                    #read file for site-specific soil information
-                    AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
-                    for row in AFdatareader:
-                        if row[0] == options.site:
-                            mypct_sand = row[4]
-                            mypct_clay = row[5]
-                    if (mypct_sand == 0.0 and mypct_clay == 0.0):
-                        print('*** Warning:  Soil data NOT found.  Using gridded data ***')
-
-    # starts japg [04-09-2025]: Adding 4th pft  ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-
-            # elif (options.surfdata_grid == False and options.site != '' and options.col4th): # =============================================================> Start [JAPG 12-10-2024]
-            #     if(n==1):
-            #         #read file for site-specific PFT information
-            #         AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
-            #         for row in AFdatareader:                                            # japg [04-09-2025] => I need this loop to go through the columns in the file Wetland_pftdata.txt 
-            #             if row[0] == options.site4th:                                   # ================================================> japg [2-24-2025]
-            #                 print('read from site4th'+options.site4th)                   # ================================================> japg [2-24-2025]
-            #                 for thispft in range(0,5):
-            #                     mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
-            #         if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
-            #             print('*** Warning:  PFT data NOT found.  Using gridded data ***')
-            #         #read file for site-specific soil information
-            #         AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
-            #         for row in AFdatareader:
-            #             if row[0] == options.site4th:
-            #                 print('read from site4th'+options.site4th)                  # ================================================> japg [2-24-2025]
-            #                 mypct_sand = row[4]
-            #                 mypct_clay = row[5]
-            #         if (mypct_sand == 0.0 and mypct_clay == 0.0):
-            #             print('*** Warning:  Soil data NOT found.  Using gridded data ***')
-
-            #     else:
-            #         #read file for site-specific PFT information
-            #         AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
-            #         for row in AFdatareader:    
-            #             if row[0] == options.site:
-            #                 for thispft in range(0,5):
-            #                     mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
-            #         if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
-            #             print('*** Warning:  PFT data NOT found.  Using gridded data ***')
-            #         #read file for site-specific soil information
-            #         AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
-            #         for row in AFdatareader:
-            #             if row[0] == options.site:
-            #                 mypct_sand = row[4]
-            #                 mypct_clay = row[5]
-            #         if (mypct_sand == 0.0 and mypct_clay == 0.0):
-            #             print('*** Warning:  Soil data NOT found.  Using gridded data ***') # =============================================================> End [JAPG 12-10-2024]
-
-    # ends japg [04-09-2025]: Adding 4th pft ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-
-            else:
-                try:
-                #mypft_frac[point_pfts[n]] = 100.0
-                    if(point_pfts[n]!=-1):
-                        # a single PFT of 100% indicated by input option
-                        mypft_frac[point_pfts[n]] = 100.0
-                    else:
-                        mypft_frac = pct_pft
-
-                    # multiple PFTs' pct are read-in from a nc file
-                    if('PCT_PFT' in mysurfvar or 'PCT_NAT_PFT' in mysurfvar):
-                        sum_nat=numpy.sum(pct_pft)
-                        if ('PCT_PFT' in point_mysurf.keys()):
-                            if(numpy.sum(point_mysurf['PCT_PFT'][n])>0.0):
-                                pct_pft[:,0,0] = point_mysurf['PCT_PFT'][n]
-                        elif('PCT_NAT_PFT' in point_mysurf.keys()):
-                            if(numpy.sum(point_mysurf['PCT_NAT_PFT'][n])>0.0):
-                                pct_pft[:,0,0] = point_mysurf['PCT_NAT_PFT'][n]
-                        else:
-                            print('Error: PCT_PFT or PCT_NAT_PFT is used variable name for PFT fraction in surface data')
-                            sys.exit()
-                        # in case PCT not summed to 100.0
-                        sum_nat2=numpy.sum(pct_pft[:,0,0])
-                        if (sum_nat2!=100.0):
-                            adj=100.0/sum_nat2
-                            pct_pft[:,0,0] = pct_pft[:,0,0] * adj
-                        if (sum_nat<100.0):
-                            pct_pft[:,0,0] = pct_pft[:,0,0]*sum_nat/100.0
-                        if(numpy.sum(pct_pft[:,0,0])!=sum_nat):
-                            # this is rare to occur, after TWO corrections above, 
-                            # seems due to numerical error relevant to machine
-                            # have to fix it if any (will throw error when used by ELM)
-                            err=sum_nat - numpy.sum(pct_pft[:,0,0])
-                            err_ix=numpy.argmax(pct_pft[:,0,0])
-                            pct_pft[err_ix,0,0]=pct_pft[err_ix,0,0]+err
-                            print('Error correction - ', err,numpy.sum(pct_pft[:,0,0]))
-
-                except NameError:
-                    print('using PFT information from surface data')
-
+   
         # starts japg [04-10-2025]: Location of the PFTs in the column matrix  ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-
-        if (options.col4th and not options.col3rd ):
-            # Input arguments
             
-            AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
-            for row in AFdatareader:
-                if row[0] == site_codes[n]:         # japg [04-10-2025] => The variable 'site_codes' is a input defined before the loop 'for n in range(0,n_grids):'
-                    for thispft in range(0,5):
-                            mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
+        AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_pftdata.txt','r'))
+        for row in AFdatareader:
+            if row[0] == site_codes[n]:         # japg [04-10-2025] => The variable 'site_codes' is a input defined before the loop 'for n in range(0,n_grids):'
+                for thispft in range(0,5):
+                        mypft_frac[int(row[2+2*thispft])]=float(row[1+2*thispft])
 
-            if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
-                    print('*** Warning:  PFT data NOT found.  Using gridded data ***')           
+        if (sum(mypft_frac[0:npft+npft_crop]) == 0.0):
+                print('*** Warning:  PFT data NOT found.  Using gridded data ***')           
+
+        AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_soildata.txt','r'))
+        for row in AFdatareader:
+            if row[0] == site_codes[n]:         # japg [04-10-2025] => The variable 'site_codes' is a input defined before the loop 'for n in range(0,n_grids):'
+                mypct_sand = row[4]
+                mypct_clay = row[5]
+        if (mypct_sand == 0.0 and mypct_clay == 0.0):
+            print('*** Warning:  Soil data NOT found.  Using gridded data ***')
 
         # ends japg [04-10-2025]: Location of the PFTs in the column matrix ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-
-
 
         #landfrac_pft[0][0] = 1.0
         #pftdata_mask[0][0] = 1
