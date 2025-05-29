@@ -20,7 +20,7 @@ lon_coordinates=(-76.550043 -76.550043 -76.550043)                      # [japg]
 lon_coordinates_str=$(IFS=','; echo "${lon_coordinates[*]}")
 
 python ./site_fullrun.py \
-      --sitegroup Wetland --caseidprefix C3v4 \
+      --sitegroup Wetland --caseidprefix C3v5 \
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --tstep 1 \
       --cpl_bypass --machine $MYMACH --compiler gnu --mpilib openmpi \
       --model_root /ccsopen/home/ji8/E3SM_baseline \

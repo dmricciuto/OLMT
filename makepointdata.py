@@ -13,10 +13,13 @@ parser = OptionParser()
 
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
+
 #added by wei huang 2022-07-28 for 3 columns run
 parser.add_option("--site3rd", dest="site3rd", default='', \
                   help = '6-character FLUXNET code to run (optional)')
 
+parser.add_option("--col3rd", dest="col3rd", default=False, \
+                  help = 'Adding 3rd column/gridcell', action="store_true")
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 parser.add_option("--site4th", dest="site4th", default='', \
                   help = '6-character FLUXNET code to run (optional)')
@@ -80,9 +83,7 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
-#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
-parser.add_option("--col3rd", dest="col3rd", default=False, \
-                  help = 'Adding 3rd column/gridcell', action="store_true")
+
 #adding option for a 4th column (gridcell) [japg 11-01-2024]
 parser.add_option("--col4th", dest="col4th", default=False, \
                   help = 'Adding 4th column/gridcell', action="store_true")
@@ -263,7 +264,7 @@ elif (options.point_list != ''):
 # start japg [05-08-2025] Just the first condition is working (resx = 0.5 & resy = 0.5) >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
-elif number_of_columns >= 3:
+elif number_of_columns >= 2:
     issite = True # japg [04-09-2025] => This is needed to create the .nc file
 
     lat_y = lat_coor
@@ -284,92 +285,8 @@ elif number_of_columns >= 3:
 
     n_grids = number_of_columns
 
-
-# elif (options.site != ''):
-#     print('\nCreating datasets for '+options.site+' using '+options.res+' resolution')
-#     issite = True
-#     AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-#     for row in AFdatareader:
-#         if row[0] == options.site:        # japg [3-27-2025] ==> this checks the first column in the file Wetland_sitedata.txt (US-GC3)
-#             mylon=float(row[3])
-#             if (mylon < 0):
-#                 mylon=360.0+float(row[3])
-#             lon.append(mylon)
-#             lat.append(float(row[4]))
-#             # print('1st grid lat='+str(lat))
-
-#             if ('US-SPR' in options.site or    # japg [04-04-2025] => This is for two-column system 
-#                 (options.marsh or options.humhol)):
-#                 lon.append(mylon)
-#                 lat.append(float(row[4]))
-#                 n_grids = 2
-            
-#             if (number_of_columns == 3): # japg [05-06-2024] 
-#                 AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-#                 for row in AFdatareader:
-#                     if row[0] == options.site3rd:
-#                         mylon=float(row[3])
-#                         if (mylon < 0):
-#                             mylon=360.0+float(row[3])
-                        
-#                         lon.append(mylon)#append lat/lon for 2nd column from site3rd
-#                         lat.append(float(row[4]))
-#                         print('2nd grid lat='+str(lat))
-#                         lon.append(mylon)#append twice so that lon ahd lat has 3 elements
-#                         lat.append(float(row[4]))
-#                         print('3rd grid lat='+str(lat))
-                
-#                 n_grids = number_of_columns
-            
-#             # starts japg [11-01-2024]: Adding 4th grid cell ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-           
-            
-#             # ends japg [11-01-2024]: Adding 4th grid cell ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-            
-#             startyear=int(row[6])
-#             print('startyear =' + str(startyear))
-#             endyear=int(row[7])
-#             print('endyear =' + str(endyear))
-#             alignyear = int(row[8])
-#             print('alignyear =' + str(alignyear))
-
 else:
     isglobal=True
-
-# starts japg [04-09-2025]: Adding 4th grid cell with interpolation ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-
-
-# if (number_of_columns == 4): # japg [05-06-2025] =>
-
-#     issite = True # japg [04-09-2025] => This is needed to create the .nc file
-
-#     lat_y = lat_coor
-#     lon_x = lon_coor
-
-#     funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
-
-#     lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
-
-#     lon = numpy.round(lon,6)    
-#     lat = funct_int(lon) # japg [04-21-2025] => Interporlation
-#     lat = numpy.round(lat,6)    
-    
-#     print('numcols =' + str(number_of_columns) +' grid lon='+str(lon))   
-#     print('numcols =' + str(number_of_columns) +' grid lat='+str(lat))     
-
-#     n_grids = number_of_columns
-
-    # AFdatareader = csv.reader(open(ccsm_input+'/lnd/clm2/PTCLM/'+options.sitegroup+'_sitedata.txt',"r"))
-    # for row in AFdatareader:
-    #     if row[0] == site_codes[0]:        # japg [05-06-2025] ==> this checks the first column in the file Wetland_sitedata.txt (US-GC3)   
-    #         startyear=int(row[6])
-    #         print('startyear =' + str(startyear))
-    #         endyear=int(row[7])
-    #         print('endyear =' + str(endyear))
-    #         alignyear = int(row[8])
-    #         print('alignyear =' + str(alignyear))
-
-# ends japg [04-09-2025]: Adding 4th grid cell with interpolation ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 
 #get corresponding 0.5x0.5 and 1.9x2.5 degree grid cells
@@ -807,30 +724,6 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
             #if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
 
-            # if options.marsh and n==1 and not (options.col3rd): # # [Wei Huang 2022-07-11] Set tidal channel column in marsh mode to zero PFT area
-            #     print('Setting PFT area in tidal column to zero')
-            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
-            #     mypft_frac[0]=100.0
-            # # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
-            # # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
-
-            # if options.marsh and n==1 and not (options.col4th): # # [japg 11-01-2024] Set tidal channel column in marsh mode to zero PFT area
-            #     print('Setting PFT area in tidal column to zero')
-            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float)
-            #     mypft_frac[0]=100.0
-            # # [Wei Huang 2022-07-11] adding option for 3rd column, tidal channel will be the 3rd column
-            # # [Wei Huang 2022-07-11] 1st and 2nd columns are same plants sharing same pfts
-
-            # if options.col3rd and n==2: # [Wei Huang 2022-07-11]
-            #     print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [Wei Huang 2022-07-11]
-            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [Wei Huang 2022-07-11]
-            #     mypft_frac[0]=100.0 # [Wei Huang 2022-07-11]
-
-            # if options.col4th and n == number_of_columns-1: # [japg 03-31-2025] => Here, I can specify the tidal 
-            #     print('Setting PFT area in tidal column to zero and setting first 2 columns to have same pft') # [japg 11-01-2024]
-            #     mypft_frac = numpy.zeros([npft+npft_crop], numpy.float64) # [japg 11-01-2024]
-            #     mypft_frac[0]=100.0 # [japg 11-01-2024]
-
             # start japg [05-28-2025]: Tidal assignation. 100% in the last column ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
             if n == number_of_columns-1: 
@@ -864,24 +757,20 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
                     #monthly_sai[t][p][j][i] = monthly_sai[t][p][0][0]
                     #monthly_height_top[t][p][j][i] = monthly_height_top[t][p][0][0]
                     #monthly_height_bot[t][p][j][i] = monthly_height_bot[t][p][0][0]
+        
+        # start japg [05-28-2025]: Tidal assignation. 100% in the last column ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
-        if (options.col3rd and n==0):
-            for k in range(0,10): #[Wei Huang 05/26/2023]:change organic for soil characteristics at high marsh
-             organic[k][0][0] = 1 #39.0 #1.6 #max/min for upland at CB
-             #organic[k][0][0] = 0.5 #44.9 #0.5 #max/min for upland at GL
-        if (options.col3rd and n>0):
-            for k in range(0,10):#[Wei Huang 05/26/2023]:change organic for soil characteristics at low marsh
-             organic[k][0][0] = 1.2 #43.0 #2.1 #max/min for wetland at CB
-             #organic[k][0][0] = 2.6 #31.6 #2.6 #max/min for wetland at GL
+        if (number_of_columns >= 2 and n==0):
+            for k in range(0,10):
+                organic[k][0][0] = 1.0 #39.0 #1.6 #max/min for upland at CB
+                #organic[k][0][0] = 0.5 #44.9 #0.5 #max/min for upland at GL
 
-        if (options.col4th and n==0):
-            for k in range(0,10): #[japg 11-01-2024]:change organic for soil characteristics at high marsh
-             organic[k][0][0] = 1 #39.0 #1.6 #max/min for upland at CB
-             #organic[k][0][0] = 0.5 #44.9 #0.5 #max/min for upland at GL
-        if (options.col4th and n>0):
-            for k in range(0,10):#[japg 11-01-2024]:change organic for soil characteristics at low marsh
-             organic[k][0][0] = 1.2 #43.0 #2.1 #max/min for wetland at CB
-             #organic[k][0][0] = 2.6 #31.6 #2.6 #max/min for wetland at GL
+        if (number_of_columns >= 2 and n>0):
+            for k in range(0,10): #[japg 11-01-2024]:change organic for soil characteristics at low marsh
+                organic[k][0][0] = 1.2 #43.0 #2.1 #max/min for wetland at CB
+                #organic[k][0][0] = 2.6 #31.6 #2.6 #max/min for wetland at GL
+
+        # ends japg [05-28-2025] ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 
         ierr = nffun.putvar(surffile_new, 'LANDFRAC_PFT', landfrac_pft)
