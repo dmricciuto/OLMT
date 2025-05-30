@@ -847,7 +847,7 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if (options.humhol or options.marsh or options.col3rd or options.col4th):
+            if (options.humhol or number_of_columns >= 2): # Potentially to be deleted japg => options.marsh or options.col3rd or options.col4th
                 numxpts=2
             else:
                 numxpts=1
@@ -899,27 +899,27 @@ else:
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-    if (options.humhol or options.marsh or options.col3rd or options.col4th):                                           # ======================================> japg [2-20-2025]
+    if (options.humhol or number_of_columns >= 2): # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025]
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
     #   print('humhol_ht = 0.15m')
     #   print('humhol_dist = 1.0m')
       print('setting rsub_top_globalmax = 1.2e-5')
     #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (options.col3rd):
+      if (number_of_columns == 3): # Potentially to be deleted col3rd =====> japg [05-29-2025]
         os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
 
-      if (options.col4th):                                                                                              # ======================================> japg [2-20-2025]
+      if (number_of_columns == 4): # Potentially to be deleted col4th =====> japg [05-29-2025]                                                                                             
         os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')       
 
-      if (options.marsh or options.col3rd or options.col4th):                                                           # ======================================> japg [2-20-2025]                                             
+      if (number_of_columns >= 2): # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025]  
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')            
         print('hum_frac  = 0.50')
       else:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.64')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (options.marsh or options.col3rd or options.col4th):                                                           # ======================================> japg [2-20-2025]
+      if (number_of_columns >= 2):  # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025]                                                         # ======================================> japg [2-20-2025]
         print('qflx_h2osfc_surfrate = 0.0')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       else:
@@ -930,7 +930,7 @@ else:
     #   flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     #   os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     #   ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    if ((options.marsh or options.col3rd or options.col4th) and options.tide_components_file != ''):
+    if ((number_of_columns >= 2) and options.tide_components_file != ''): # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025] 
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
         print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
         print('Tide datum (tide_baseline parameter) needs to be specified separately. Default is 800 mm')
@@ -943,7 +943,7 @@ else:
             os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    elif (options.marsh or options.col3rd or options.col4th) and options.tide_forcing_file == '':
+    elif (number_of_columns >= 2) and options.tide_forcing_file == '': # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025] 
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -1683,7 +1683,7 @@ for i in range(1,int(options.ninst)+1):
 
     if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
-    if (cpl_bypass and options.col3rd and options.tide_forcing_file != ''):
+    if (cpl_bypass and number_of_columns == 3  and options.tide_forcing_file != ''): # Potentially to be deleted options.col3rd =====> japg [05-29-2025]
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
     if (cpl_bypass and options.col4th and options.tide_forcing_file != ''):  # ==================================================================================> japg [2-20-2025]
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
