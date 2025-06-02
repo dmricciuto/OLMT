@@ -15,11 +15,16 @@ parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
 
 #added by wei huang 2022-07-28 for 3 columns run
-parser.add_option("--site3rd", dest="site3rd", default='', \
-                  help = '6-character FLUXNET code to run (optional)')
 
-parser.add_option("--col3rd", dest="col3rd", default=False, \
-                  help = 'Adding 3rd column/gridcell', action="store_true")
+
+# parser.add_option("--site3rd", dest="site3rd", default='',                        # japg [06-02-2025] => Potentially not needed
+#                   help = '6-character FLUXNET code to run (optional)')            # japg [06-02-2025] => Potentially not needed
+
+
+# parser.add_option("--col3rd", dest="col3rd", default=False, \                     # japg [06-02-2025] => Potentially not needed
+#                   help = 'Adding 3rd column/gridcell', action="store_true")       # japg [06-02-2025] => Potentially not needed
+
+
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 parser.add_option("--site4th", dest="site4th", default='', \
                   help = '6-character FLUXNET code to run (optional)')

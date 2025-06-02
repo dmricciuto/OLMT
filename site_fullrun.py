@@ -92,8 +92,8 @@ parser.add_option("--notrans", action="store_true", dest="notrans", default=Fals
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
 # add site3rd for 3 columns run Wei Huang 2022-07-28
-parser.add_option("--site3rd", dest="site3rd", default='', \
-                  help = '6-character FLUXNET code to run (optional)')
+# parser.add_option("--site3rd", dest="site3rd", default='', \              # japg [06-02-2025] => Potentially not needed                                    
+#                   help = '6-character FLUXNET code to run (optional)')    # japg [06-02-2025] => Potentially not needed
 
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 parser.add_option("--site4th", dest="site4th", default='', \
@@ -189,9 +189,9 @@ parser.add_option("--humhol", dest="humhol", default=False, action="store_true",
                   help = 'Use hummock/hollow microtopography')
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
-#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
-parser.add_option("--col3rd", dest="col3rd", default=False, \
-                  help = 'Adding 3rd column/gridcell', action="store_true")
+#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06] 
+# parser.add_option("--col3rd", dest="col3rd", default=False, \                         # japg [06-02-2025] => Potentially not needed
+#                   help = 'Adding 3rd column/gridcell', action="store_true")           # japg [06-02-2025] => Potentially not needed
 
 #adding option for a 4th column (gridcell) [japg 11-01-2024]
 parser.add_option("--col4th", dest="col4th", default=False, help = 'Adding 4th column/gridcell', action="store_true")
@@ -607,12 +607,12 @@ for row in AFdatareader:
         if (options.marsh):
             basecmd = basecmd+' --marsh'
         # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
-        if(options.col3rd):
-            basecmd = basecmd + ' --col3rd'
+        # if(options.col3rd):                       # japg [06-02-2025] => Potentially not needed
+        #     basecmd = basecmd + ' --col3rd'       # japg [06-02-2025] => Potentially not needed
         if(options.col4th):                     # ==============================================================================> japg [02-24-2025]
             basecmd = basecmd + ' --col4th'
-        if(options.site3rd != ''):
-            basecmd = basecmd + ' --site3rd '+options.site3rd
+        # if(options.site3rd != ''):                                # japg [06-02-2025] => Potentially not needed
+        #     basecmd = basecmd + ' --site3rd '+options.site3rd     # japg [06-02-2025] => Potentially not needed
         if(options.site4th != ''):
             basecmd = basecmd + ' --site4th '+options.site4th                         # ========================> japg [02-24-2025]
 
@@ -1010,13 +1010,13 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --humhol'
                 if (options.marsh):
                     ptcmd = ptcmd+' --marsh'
-                if (options.col3rd):
-                    ptcmd = ptcmd+' --col3rd'
+                # if (options.col3rd):                                  # ==========================================================> [japg 06-02-2025] => Potentially not needed
+                #     ptcmd = ptcmd+' --col3rd'                         # ==========================================================> [japg 06-02-2025] => Potentially not needed                        
                 
                 if (options.col4th):                # ==========================================================> [japg 11-01-2024] 
                     ptcmd = ptcmd+' --col4th'       # ==========================================================> [japg 11-01-2024]  
-                if (options.site3rd != ''):
-                    ptcmd = ptcmd+' --site3rd '+options.site3rd
+                # if (options.site3rd != ''):                                   # ==========================> japg [06-02-2025] => Potentially not needed   
+                #     ptcmd = ptcmd+' --site3rd '+options.site3rd               # ==========================> japg [06-02-2025] => Potentially not needed
                 if (options.site4th != ''):
                     ptcmd = ptcmd+' --site4th '+options.site4th                     # ==========================> japg [02-24-2025]
                 if (options.nsite_codes != ''):

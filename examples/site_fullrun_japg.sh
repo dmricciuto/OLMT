@@ -39,8 +39,6 @@ python ./site_fullrun.py \
       --parm_file /ccsopen/home/ji8/OLMT_baseline/parm_GC4_9 \
       --parm_file_2nd /ccsopen/home/ji8/OLMT_baseline/parm_short_GC3_12 \
       --site US-GC3 \
-      --col3rd \
-      --site3rd US-GC3 \
       --nsite_codes "$nsite_codes" \
       --lat_coordinates "$lat_coordinates_str" \
       --lon_coordinates "$lon_coordinates_str" \

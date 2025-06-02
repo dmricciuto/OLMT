@@ -93,8 +93,9 @@ parser.add_option("--humhol", dest="humhol", default=False, \
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
 #adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
-parser.add_option("--col3rd", dest="col3rd", default=False, \
-                  help = 'Adding 3rd column/gridcell', action="store_true")
+
+# parser.add_option("--col3rd", dest="col3rd", default=False, \                     # japg [06-02-2025] => Potentially not needed
+#                   help = 'Adding 3rd column/gridcell', action="store_true")       # japg [06-02-2025] => Potentially not needed
 
 #adding option for a 4th column (gridcell) [Jorge A. Penaloza-Giraldo 2024]
 parser.add_option("--col4th", dest="col4th", default=False, \
@@ -134,8 +135,8 @@ parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
 #site3rd added by Wei Huang for 3 columns run
-parser.add_option("--site3rd", dest="site3rd", default='', \
-                  help = '6-character FLUXNET code to run (optional)')
+# parser.add_option("--site3rd", dest="site3rd", default='', \                              # japg [06-02-2025] => Potentially not needed
+#                   help = '6-character FLUXNET code to run (optional)')                    # japg [06-02-2025] => Potentially not needed                
 
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 parser.add_option("--site4th", dest="site4th", default='', \
@@ -739,14 +740,14 @@ if (options.nopointdata == False):
     if(options.marsh):
         ptcmd = ptcmd + ' --marsh'
     # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
-    if(options.col3rd):
-        ptcmd = ptcmd + ' --col3rd'
+    # if(options.col3rd):                                                   # japg [06-02-2025] => Potentially not needed
+    #     ptcmd = ptcmd + ' --col3rd'                                       # japg [06-02-2025] => Potentially not needed
     # adding option for 4th column (gridcell) [JAPG 11-5-2024] <====
     if(options.col4th):
         ptcmd = ptcmd + ' --col4th'
 
-    if(options.site3rd != ''):
-        ptcmd = ptcmd + ' --site3rd '+options.site3rd
+    # if(options.site3rd != ''):                                            # japg [02-24-2025] => Potentially not needed                   
+    #     ptcmd = ptcmd + ' --site3rd '+options.site3rd                     # japg [02-24-2025] => Potentially not needed
     if(options.site4th != ''):
         ptcmd = ptcmd + ' --site4th '+options.site4th                         # ======================> japg [02-24-2025]
 
