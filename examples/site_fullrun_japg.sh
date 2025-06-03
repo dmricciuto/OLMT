@@ -19,8 +19,12 @@ lat_coordinates_str=$(IFS=','; echo "${lat_coordinates[*]}")
 lon_coordinates=(-76.550043 -76.550043 -76.550043)                      # [japg] => From Wetland_sitedata.txt
 lon_coordinates_str=$(IFS=','; echo "${lon_coordinates[*]}")
 
+
+# Extract first site code for --site argument
+IFS=',' read -r first_site_code _ <<< "$nsite_codes"
+
 python ./site_fullrun.py \
-      --sitegroup Wetland --caseidprefix C3v7 \
+      --sitegroup Wetland --caseidprefix C3v8 \
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --tstep 1 \
       --cpl_bypass --machine $MYMACH --compiler gnu --mpilib openmpi \
       --model_root /ccsopen/home/ji8/E3SM_baseline \
@@ -38,7 +42,7 @@ python ./site_fullrun.py \
       --tide_forcing_file /ccsopen/home/ji8/OLMT_baseline/Annapolis_elev_sal_35yrs_MSL.nc \
       --parm_file /ccsopen/home/ji8/OLMT_baseline/parm_GC4_9 \
       --parm_file_2nd /ccsopen/home/ji8/OLMT_baseline/parm_short_GC3_12 \
-      --site US-GC3 \
+      --site "$first_site_code" \
       --nsite_codes "$nsite_codes" \
       --lat_coordinates "$lat_coordinates_str" \
       --lon_coordinates "$lon_coordinates_str" \

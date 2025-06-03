@@ -91,17 +91,8 @@ parser.add_option("--notrans", action="store_true", dest="notrans", default=Fals
 # model input options
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
-# add site3rd for 3 columns run Wei Huang 2022-07-28
-# parser.add_option("--site3rd", dest="site3rd", default='', \              # japg [06-02-2025] => Potentially not needed                                    
-#                   help = '6-character FLUXNET code to run (optional)')    # japg [06-02-2025] => Potentially not needed
 
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-
-# parser.add_option("--site4th", dest="site4th", default='', \                          # japg [06-02-2025] => Potentially not needed
-                #   help = '6-character FLUXNET code to run (optional)')             # japg [06-02-2025] => Potentially not needed
-
-#parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
-#                  help='Number of the columns for the saltmarsh system')
 
 parser.add_option("--nsite_codes", dest="nsite_codes", default='', type="string", \
                   help = 'vector with the PFT codes for each column. Example: [US-TREE, US-GC3, US-GC4]')
@@ -190,12 +181,6 @@ parser.add_option("--humhol", dest="humhol", default=False, action="store_true",
                   help = 'Use hummock/hollow microtopography')
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
-#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06] 
-# parser.add_option("--col3rd", dest="col3rd", default=False, \                         # japg [06-02-2025] => Potentially not needed
-#                   help = 'Adding 3rd column/gridcell', action="store_true")           # japg [06-02-2025] => Potentially not needed
-
-#adding option for a 4th column (gridcell) [japg 11-01-2024]
-# parser.add_option("--col4th", dest="col4th", default=False, help = 'Adding 4th column/gridcell', action="store_true")   # japg [06-02-2025] => Potentially not needed
 
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
@@ -607,15 +592,6 @@ for row in AFdatareader:
             basecmd = basecmd+' --humhol'
         if (options.marsh):
             basecmd = basecmd+' --marsh'
-        # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
-        # if(options.col3rd):                       # japg [06-02-2025] => Potentially not needed
-        #     basecmd = basecmd + ' --col3rd'       # japg [06-02-2025] => Potentially not needed
-        # if(options.col4th):                     # japg [06-02-2025] => Potentially not needed
-            # basecmd = basecmd + ' --col4th'    # japg [06-02-2025] => Potentially not needed
-        # if(options.site3rd != ''):                                # japg [06-02-2025] => Potentially not needed
-        #     basecmd = basecmd + ' --site3rd '+options.site3rd     # japg [06-02-2025] => Potentially not needed
-        # if(options.site4th != ''):                                    # japg [06-02-2025] => Potentially not needed   
-            # basecmd = basecmd + ' --site4th '+options.site4th         # japg [06-02-2025] => Potentially not needed
 
         if options.nsite_codes is not None:                                           # ========================> japg [04-29-2025], transfering nsite_codes to runcase.py
             basecmd = basecmd + ' --nsite_codes ' + options.nsite_codes          # ========================> japg [04-29-2025]
@@ -1011,15 +987,7 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --humhol'
                 if (options.marsh):
                     ptcmd = ptcmd+' --marsh'
-                # if (options.col3rd):                                  # ==========================================================> [japg 06-02-2025] => Potentially not needed
-                #     ptcmd = ptcmd+' --col3rd'                         # ==========================================================> [japg 06-02-2025] => Potentially not needed                        
-                
-                # if (options.col4th):                # japg [06-02-2025] => Potentially not needed
-                    # ptcmd = ptcmd+' --col4th'       # japg [06-02-2025] => Potentially not needed
-                # if (options.site3rd != ''):                                   # ==========================> japg [06-02-2025] => Potentially not needed   
-                #     ptcmd = ptcmd+' --site3rd '+options.site3rd               # ==========================> japg [06-02-2025] => Potentially not needed
-                # if (options.site4th != ''):                       # japg [06-02-2025] => Potentially not needed
-                    # ptcmd = ptcmd+' --site4th '+options.site4th   # japg [06-02-2025] => Potentially not needed
+
                 if (options.nsite_codes != ''):
                     ptcmd = ptcmd+' --nsite_codes '+options.nsite_codes             # ==========================> japg [04-29-2025]
 

@@ -14,23 +14,8 @@ parser = OptionParser()
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
 
-#added by wei huang 2022-07-28 for 3 columns run
-
-
-# parser.add_option("--site3rd", dest="site3rd", default='',                        # japg [06-02-2025] => Potentially not needed
-#                   help = '6-character FLUXNET code to run (optional)')            # japg [06-02-2025] => Potentially not needed
-
-
-# parser.add_option("--col3rd", dest="col3rd", default=False, \                     # japg [06-02-2025] => Potentially not needed
-#                   help = 'Adding 3rd column/gridcell', action="store_true")       # japg [06-02-2025] => Potentially not needed
-
 
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-# parser.add_option("--site4th", dest="site4th", default='', \                     # japg [06-02-2025] => Potentially not needed
-                #   help = '6-character FLUXNET code to run (optional)')             # japg [06-02-2025] => Potentially not needed
-
-#parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
-#                  help='Number of the columns for the saltmarsh system')
 
 parser.add_option("--nsite_codes", dest="nsite_codes", default='', type="string", \
                   help = 'vector with the PFT codes for each column. Example: [US-TREE, US-GC3, US-GC4]')
@@ -88,11 +73,7 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
-
-#adding option for a 4th column (gridcell) [japg 11-01-2024]
-# parser.add_option("--col4th", dest="col4th", default=False, \                         # japg [06-02-2025] => Potentially not needed
-#                   help = 'Adding 4th column/gridcell', action="store_true")               # japg [06-02-2025] => Potentially not needed                           
-
+         
 parser.add_option("--usersurfnc", dest="usersurfnc", default="none", \
                   help = 'User-provided surface data nc file, with one or more variable(s) as defined')
 parser.add_option("--usersurfvar", dest="usersurfvar", default="none", \
@@ -108,6 +89,7 @@ ccsm_input = os.path.abspath(options.ccsm_input)
 site_codes = options.nsite_codes.split(',')                                             # assigning the site codes to a variable "site_codes"
 number_of_columns = len(site_codes)                                                     # assigning the number of columns to a variable "number_of_columns"
 print('japg/makepointdata.py =========> number_of_columns =', number_of_columns)        # printing the number of columns
+print('japg/makepointdata.py =========> site_codes[0] =', site_codes[0])                # printing the site codes
 
 
 lat_coor = numpy.fromstring(options.lat_coordinates, sep=',')                           # assigning the latitude coordinates to a variable "lat_coor"
@@ -121,6 +103,8 @@ for i in range(len(lon_coor)):
         lon_coor[i] = lon_coor[i]+360
 
 print('japg/makepointdata.py =========> lon_coor =', lon_coor)         
+
+print('japg/makepointdata.py =========> site =', options.site)      # printing the site name to check if it is correct
 
 # japg [05-07-2024]: Obtaining the variable associate to the number of columns ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -365,7 +349,7 @@ for n in range(0,n_grids):
         elif (lat_bounds[1] >= latixy[i+1]):
             ygrid_max[n] = i
     #print n, lat[n], lon[n], xgrid_max[n], ygrid_max[n]
-if (n_grids > 1 and options.site == ''):       #remove duplicate points
+if (n_grids > 1 and options.site == ''):   # remove duplicate points # japg [06-03-2025] ===> need to be changed 
   n_grids_uniq = 1
   n_dups = 0
   xgrid_min_uniq = [xgrid_min[0]]
@@ -701,7 +685,7 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
             else:
                 pct_nat_veg[0][0] = 100.0
 
-            if ('US-SPR' in options.site and mysimyr !=2000):
+            if ('US-SPR' in options.site and mysimyr !=2000):  # japg [06-03-2025] => this assign values into variables when a specific 'site' is selected. 
                 #SPRUCE P initial data
                 soil_order[0][0] = 3
                 labilep[0][0]    = 1.0
@@ -718,7 +702,7 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
                        print('Setting %clay to '+str(mypct_clay))
                     pct_sand[k][0][0]   = mypct_sand
                     pct_clay[k][0][0]   = mypct_clay
-                if ('US-SPR' in options.site):
+                if ('US-SPR' in options.site): # japg [06-03-2025] => this assign values into variables when a specific 'site' is selected.
                     if (k < 8):
                         organic[k][0][0] = 130.0
                     elif (k == 8):

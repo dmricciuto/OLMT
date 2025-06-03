@@ -92,14 +92,6 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
-#adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
-
-# parser.add_option("--col3rd", dest="col3rd", default=False, \                     # japg [06-02-2025] => Potentially not needed
-#                   help = 'Adding 3rd column/gridcell', action="store_true")       # japg [06-02-2025] => Potentially not needed
-
-#adding option for a 4th column (gridcell) [Jorge A. Penaloza-Giraldo 2024]
-# parser.add_option("--col4th", dest="col4th", default=False, \                             # japg [06-02-2025] => Potentially not needed    
-                #   help = 'Adding 3rd column/gridcell', action="store_true")                           # japg [06-02-2025] => Potentially not needed
 
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
@@ -134,16 +126,9 @@ parser.add_option("--sitegroup", dest="sitegroup", default="AmeriFlux", \
                   help = "site group to use (default AmeriFlux)")
 parser.add_option("--site", dest="site", default='', \
                   help = '6-character FLUXNET code to run (required)')
-#site3rd added by Wei Huang for 3 columns run
-# parser.add_option("--site3rd", dest="site3rd", default='', \                              # japg [06-02-2025] => Potentially not needed
-#                   help = '6-character FLUXNET code to run (optional)')                    # japg [06-02-2025] => Potentially not needed                
+             
 
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-# parser.add_option("--site4th", dest="site4th", default='', \                 # japg [06-02-2025] => Potentially not needed
-                #   help = '6-character FLUXNET code to run (optional)')        # japg [06-02-2025] => Potentially not needed   
-
-#parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
-#                  help='Number of the columns for the saltmarsh system')
 
 parser.add_option("--nsite_codes", dest="nsite_codes", default='', type="string", \
                   help = 'vector with the PFT codes for each column. Example: [US-TREE, US-GC3, US-GC4]')
@@ -512,9 +497,10 @@ if (options.daymet4):
 
 compset = options.compset
 isglobal = False
-if (options.site == ''):
-    isglobal = True
-    options.site=options.res
+
+# if (options.site == ''):
+#     isglobal = True
+#     options.site=options.res
 
 if ('CBCN' in compset or 'ICB' in compset or 'CLM45CB' in compset):
     cpl_bypass = True
@@ -739,18 +725,7 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --nosurfdata '
     if(options.marsh):
         ptcmd = ptcmd + ' --marsh'
-    # adding option for 3rd column (gridcell) [Wei Huang 2022-07-06]
-    # if(options.col3rd):                                                   # japg [06-02-2025] => Potentially not needed
-    #     ptcmd = ptcmd + ' --col3rd'                                       # japg [06-02-2025] => Potentially not needed
-    # adding option for 4th column (gridcell) [JAPG 11-5-2024] <====
-    # if(options.col4th):                                                # japg [02-24-2025] => Potentially not needed      
-    #     ptcmd = ptcmd + ' --col4th'                                   # japg [02-24-2025] => Potentially not needed  
-
-    # if(options.site3rd != ''):                                            # japg [02-24-2025] => Potentially not needed                   
-    #     ptcmd = ptcmd + ' --site3rd '+options.site3rd                     # japg [02-24-2025] => Potentially not needed
-    # if(options.site4th != ''):                                        # japg [02-24-2025] => Potentially not needed   
-        # ptcmd = ptcmd + ' --site4th '+options.site4th                  # japg [06-02-2025] => Potentially not needed
-
+        
     if (options.nsite_codes is not None):                                     # ======================> japg [04-29-2025], transfering nsite_codes to makepointdata.py
         ptcmd = ptcmd + ' --nsite_codes ' + str(options.nsite_codes)
 
@@ -848,7 +823,7 @@ if (isglobal == False):
             alignyear = int(row[8])
             if (options.diags):
                 timezone = int(row[9])
-            if (options.humhol or number_of_columns >= 2): # Potentially to be deleted japg => options.marsh or options.col3rd or options.col4th
+            if (options.humhol or number_of_columns >= 2): # japg [06-03-2025]
                 numxpts=2
             else:
                 numxpts=1
@@ -900,27 +875,27 @@ else:
       myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
-    if (options.humhol or number_of_columns >= 2): # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025]
+    if (options.humhol or number_of_columns >= 2): #  japg [05-29-2025]
       print('Adding hummock-hollow parameters (default for SPRUCE site)')
     #   print('humhol_ht = 0.15m')
     #   print('humhol_dist = 1.0m')
       print('setting rsub_top_globalmax = 1.2e-5')
     #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (number_of_columns == 3): # Potentially to be deleted col3rd =====> japg [05-29-2025]
+      if (number_of_columns == 3): # japg [05-29-2025]
         os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
 
-      if (number_of_columns == 4): # Potentially to be deleted col4th =====> japg [05-29-2025]                                                                                             
+      if (number_of_columns == 4): # japg [05-29-2025]                                                                                             
         os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')       
 
-      if (number_of_columns >= 2): # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025]  
+      if (number_of_columns >= 2): # japg [05-29-2025]  
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')            
         print('hum_frac  = 0.50')
       else:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.64')
       os.system(myncap+' -O -s "humhol_dist = br_mr*0+1.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-      if (number_of_columns >= 2):  # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025]                                                         # ======================================> japg [2-20-2025]
+      if (number_of_columns >= 2):  # japg [05-29-2025]                                                         # ======================================> japg [2-20-2025]
         print('qflx_h2osfc_surfrate = 0.0')
         os.system(myncap+' -O -s "qflx_h2osfc_surfrate = br_mr*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
       else:
@@ -931,7 +906,7 @@ else:
     #   flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
     #   os.system(myncap+' -O -s "br_mr = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     #   ierr = nffun.putvar(tmpdir+'/clm_params.nc','br_mr', flnr*0.0+2.52e-6)
-    if ((number_of_columns >= 2) and options.tide_components_file != ''): # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025] 
+    if ((number_of_columns >= 2) and options.tide_components_file != ''): # japg [05-29-2025] 
         print('Adding tidal cycle components from file %s'%options.tide_components_file)
         print('Assuming file is in NOAA tide component format, degrees and meters units (e.g.: https://tidesandcurrents.noaa.gov/harcon.html?id=8441241&unit=0)')
         print('Tide datum (tide_baseline parameter) needs to be specified separately. Default is 800 mm')
@@ -944,7 +919,7 @@ else:
             os.system(myncap+' -O -s "tide_coeff_period_%d = humhol_ht*0+%1.4e" '%(comp+1,3600/tidecomps['Speed'].iloc[comp])+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
             os.system(myncap+' -O -s "tide_coeff_phase_%d = humhol_ht*0+%1.4e" '%(comp+1,tidecomps['Phase'].iloc[comp]*math.pi/180)+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         os.system(myncap+' -O -s "tide_baseline = humhol_ht*0+0.0" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-    elif (number_of_columns >= 2) and options.tide_forcing_file == '': # Potentially to be deleted options.marsh or options.col3rd or options.col4th=====> japg [05-29-2025] 
+    elif (number_of_columns >= 2) and options.tide_forcing_file == '': # japg [05-29-2025] 
         print('Tidal cycle coefficients not specified. Model will use GCREW defaults. Can also edit in parm file.')
     os.system(myncap+' -O -s "crit_gdd1 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
     os.system(myncap+' -O -s "crit_gdd2 = flnr" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
@@ -1684,9 +1659,9 @@ for i in range(1,int(options.ninst)+1):
 
     if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
-    if (cpl_bypass and number_of_columns == 3  and options.tide_forcing_file != ''): # Potentially to be deleted options.col3rd =====> japg [05-29-2025]
+    if (cpl_bypass and number_of_columns == 3  and options.tide_forcing_file != ''): # japg [05-29-2025]
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
-    if (cpl_bypass and number_of_columns == 4 and options.tide_forcing_file != ''):  # ==================================================================================> japg [2-20-2025]
+    if (cpl_bypass and number_of_columns == 4 and options.tide_forcing_file != ''):  # japg [2-20-2025]
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
     output.close()
 
