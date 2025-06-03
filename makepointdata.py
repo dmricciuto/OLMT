@@ -26,8 +26,8 @@ parser.add_option("--site", dest="site", default='', \
 
 
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-parser.add_option("--site4th", dest="site4th", default='', \
-                  help = '6-character FLUXNET code to run (optional)')
+# parser.add_option("--site4th", dest="site4th", default='', \                     # japg [06-02-2025] => Potentially not needed
+                #   help = '6-character FLUXNET code to run (optional)')             # japg [06-02-2025] => Potentially not needed
 
 #parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
 #                  help='Number of the columns for the saltmarsh system')
@@ -90,8 +90,8 @@ parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
 
 #adding option for a 4th column (gridcell) [japg 11-01-2024]
-parser.add_option("--col4th", dest="col4th", default=False, \
-                  help = 'Adding 4th column/gridcell', action="store_true")
+# parser.add_option("--col4th", dest="col4th", default=False, \                         # japg [06-02-2025] => Potentially not needed
+#                   help = 'Adding 4th column/gridcell', action="store_true")               # japg [06-02-2025] => Potentially not needed                           
 
 parser.add_option("--usersurfnc", dest="usersurfnc", default="none", \
                   help = 'User-provided surface data nc file, with one or more variable(s) as defined')

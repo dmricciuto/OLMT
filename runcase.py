@@ -98,8 +98,8 @@ parser.add_option("--marsh", dest="marsh", default=False, \
 #                   help = 'Adding 3rd column/gridcell', action="store_true")       # japg [06-02-2025] => Potentially not needed
 
 #adding option for a 4th column (gridcell) [Jorge A. Penaloza-Giraldo 2024]
-parser.add_option("--col4th", dest="col4th", default=False, \
-                  help = 'Adding 3rd column/gridcell', action="store_true")       
+# parser.add_option("--col4th", dest="col4th", default=False, \                             # japg [06-02-2025] => Potentially not needed    
+                #   help = 'Adding 3rd column/gridcell', action="store_true")                           # japg [06-02-2025] => Potentially not needed
 
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
@@ -139,8 +139,8 @@ parser.add_option("--site", dest="site", default='', \
 #                   help = '6-character FLUXNET code to run (optional)')                    # japg [06-02-2025] => Potentially not needed                
 
 # japg [02-24-2025] ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-parser.add_option("--site4th", dest="site4th", default='', \
-                  help = '6-character FLUXNET code to run (optional)')
+# parser.add_option("--site4th", dest="site4th", default='', \                 # japg [06-02-2025] => Potentially not needed
+                #   help = '6-character FLUXNET code to run (optional)')        # japg [06-02-2025] => Potentially not needed   
 
 #parser.add_option("--number_of_columns", dest="number_of_columns", type="int", \
 #                  help='Number of the columns for the saltmarsh system')
@@ -743,13 +743,13 @@ if (options.nopointdata == False):
     # if(options.col3rd):                                                   # japg [06-02-2025] => Potentially not needed
     #     ptcmd = ptcmd + ' --col3rd'                                       # japg [06-02-2025] => Potentially not needed
     # adding option for 4th column (gridcell) [JAPG 11-5-2024] <====
-    if(options.col4th):
-        ptcmd = ptcmd + ' --col4th'
+    # if(options.col4th):                                                # japg [02-24-2025] => Potentially not needed      
+    #     ptcmd = ptcmd + ' --col4th'                                   # japg [02-24-2025] => Potentially not needed  
 
     # if(options.site3rd != ''):                                            # japg [02-24-2025] => Potentially not needed                   
     #     ptcmd = ptcmd + ' --site3rd '+options.site3rd                     # japg [02-24-2025] => Potentially not needed
-    if(options.site4th != ''):
-        ptcmd = ptcmd + ' --site4th '+options.site4th                         # ======================> japg [02-24-2025]
+    # if(options.site4th != ''):                                        # japg [02-24-2025] => Potentially not needed   
+        # ptcmd = ptcmd + ' --site4th '+options.site4th                  # japg [06-02-2025] => Potentially not needed
 
     if (options.nsite_codes is not None):                                     # ======================> japg [04-29-2025], transfering nsite_codes to makepointdata.py
         ptcmd = ptcmd + ' --nsite_codes ' + str(options.nsite_codes)
@@ -1686,7 +1686,7 @@ for i in range(1,int(options.ninst)+1):
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
     if (cpl_bypass and number_of_columns == 3  and options.tide_forcing_file != ''): # Potentially to be deleted options.col3rd =====> japg [05-29-2025]
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
-    if (cpl_bypass and options.col4th and options.tide_forcing_file != ''):  # ==================================================================================> japg [2-20-2025]
+    if (cpl_bypass and number_of_columns == 4 and options.tide_forcing_file != ''):  # ==================================================================================> japg [2-20-2025]
         output.write(" tide_file = '%s'"%options.tide_forcing_file)
     output.close()
 
