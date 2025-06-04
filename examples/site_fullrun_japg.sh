@@ -6,7 +6,7 @@
 MYROOT=/gpfs/wolf2/cades/cli185/
 MYMACH=cades-baseline
 
-# nsite_codes="US-GC3,US-GC3"                                             # No space between the variable, the =, and the values inside the " "
+# nsite_codes="US-GC3,US-GC3"                                           # No space between the variable, the =, and the values inside the " "
 nsite_codes="US-GC3,US-GC3,US-GC4"
 
 # lat_coordinates=(38.874076 38.874473 38.874957)                       # [japg] => Chesapeake Bay Coordinates 
@@ -24,7 +24,7 @@ lon_coordinates_str=$(IFS=','; echo "${lon_coordinates[*]}")
 IFS=',' read -r first_site_code _ <<< "$nsite_codes"
 
 python ./site_fullrun.py \
-      --sitegroup Wetland --caseidprefix C3v8 \
+      --sitegroup Wetland --caseidprefix C3v9 \
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --tstep 1 \
       --cpl_bypass --machine $MYMACH --compiler gnu --mpilib openmpi \
       --model_root /ccsopen/home/ji8/E3SM_baseline \

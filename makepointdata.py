@@ -71,8 +71,9 @@ parser.add_option("--mysimyr", dest="mysimyr", default=1850, \
                      help = 'Simulation year (1850 or 2000)')
 parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
-parser.add_option("--marsh", dest="marsh", default=False, \
-                  help = 'Use marsh hydrology/elevation', action="store_true")
+
+# parser.add_option("--marsh", dest="marsh", default=False, \                           # japg [06-03-2025]to be deleted
+#                   help = 'Use marsh hydrology/elevation', action="store_true")            # japg [06-03-2025]to be deleted
          
 parser.add_option("--usersurfnc", dest="usersurfnc", default="none", \
                   help = 'User-provided surface data nc file, with one or more variable(s) as defined')
@@ -712,7 +713,7 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
                        'EBF Temperate', 'DBF Tropical', 'DBF Temperate', 'DBF Boreal', 'EB Shrub' \
                        , 'DB Shrub Temperate', 'BD Shrub Boreal', 'C3 arctic grass', \
                        'C3 non-arctic grass', 'C4 grass', 'Crop','xxx','xxx']
-            #if options.marsh and n==1: # Set tidal channel column in marsh mode to zero PFT area
+
 
             # start japg [05-28-2025]: Tidal assignation. 100% in the last column ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
@@ -722,7 +723,7 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
 
             # ends japg [05-28-2025] ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-            if (options.mypft >= 0 and not (options.marsh and n==1)):
+            if (options.mypft >= 0 and not (number_of_columns==2 and n==1)): # japg [06-03-2025] options.marsh to be deleted
               print('Setting PFT '+str(options.mypft)+'('+pft_names[int(options.mypft)]+') to 100%')
               pct_pft[:,0,0] = 0.0
               pct_pft[int(options.mypft),0,0] = 100.0

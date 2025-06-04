@@ -179,8 +179,8 @@ parser.add_option("--crop", action="store_true", default=False, \
                   help="Perform a crop model simulation")
 parser.add_option("--humhol", dest="humhol", default=False, action="store_true", \
                   help = 'Use hummock/hollow microtopography')
-parser.add_option("--marsh", dest="marsh", default=False, \
-                  help = 'Use marsh hydrology/elevation', action="store_true")
+# parser.add_option("--marsh", dest="marsh", default=False, \                               # japg [06-03-2025]to be deleted
+#                   help = 'Use marsh hydrology/elevation', action="store_true")             # japg [06-03-2025]to be deleted
 
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
@@ -590,8 +590,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --harvmod'
         if (options.humhol):
             basecmd = basecmd+' --humhol'
-        if (options.marsh):
-            basecmd = basecmd+' --marsh'
+        # if (options.marsh):                           # japg [06-03-2025]to be deleted
+        #     basecmd = basecmd+' --marsh'              # japg [06-03-2025]to be deleted
 
         if options.nsite_codes is not None:                                           # ========================> japg [04-29-2025], transfering nsite_codes to runcase.py
             basecmd = basecmd + ' --nsite_codes ' + options.nsite_codes          # ========================> japg [04-29-2025]
@@ -985,8 +985,8 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --pft '+str(options.mypft)
                 if (options.humhol):
                     ptcmd = ptcmd+' --humhol'
-                if (options.marsh):
-                    ptcmd = ptcmd+' --marsh'
+                # if (options.marsh):                       # japg [06-03-2025]to be deleted
+                #     ptcmd = ptcmd+' --marsh'              # japg [06-03-2025]to be deleted
 
                 if (options.nsite_codes != ''):
                     ptcmd = ptcmd+' --nsite_codes '+options.nsite_codes             # ==========================> japg [04-29-2025]

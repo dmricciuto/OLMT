@@ -90,8 +90,9 @@ parser.add_option("--lon_bounds", dest="lon_bounds", default='-999,-999', \
 
 parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
-parser.add_option("--marsh", dest="marsh", default=False, \
-                  help = 'Use marsh hydrology/elevation', action="store_true")
+
+# parser.add_option("--marsh", dest="marsh", default=False, \                           # japg [06-03-2025]to be deleted
+#                   help = 'Use marsh hydrology/elevation', action="store_true")        # japg [06-03-2025]to be deleted
 
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
@@ -723,8 +724,8 @@ if (options.nopointdata == False):
         ptcmd = ptcmd + ' --nodomain '
     if(options.surffile !=''):
         ptcmd = ptcmd + ' --nosurfdata '
-    if(options.marsh):
-        ptcmd = ptcmd + ' --marsh'
+    # if(options.marsh):                            # japg [06-03-2025]to be deleted
+    #     ptcmd = ptcmd + ' --marsh'                # japg [06-03-2025]to be deleted
         
     if (options.nsite_codes is not None):                                     # ======================> japg [04-29-2025], transfering nsite_codes to makepointdata.py
         ptcmd = ptcmd + ' --nsite_codes ' + str(options.nsite_codes)
@@ -882,11 +883,16 @@ else:
       print('setting rsub_top_globalmax = 1.2e-5')
     #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+
+     # japg [06-03-2025]: What means this:  ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+     
       if (number_of_columns == 3): # japg [05-29-2025]
         os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
 
       if (number_of_columns == 4): # japg [05-29-2025]                                                                                             
         os.system(myncap+' -O -s "humhol_ht_frac = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')       
+
+     # japg [06-03-2025]: What means this: ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
       if (number_of_columns >= 2): # japg [05-29-2025]  
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')            
@@ -1657,12 +1663,19 @@ for i in range(1,int(options.ninst)+1):
       output.write(" add_co2 = "+str(options.addco2)+"\n")
       output.write(" startdate_add_co2 = '"+str(options.sd_addco2)+"'\n")
 
-    if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
-        output.write(" tide_file = '%s'"%options.tide_forcing_file)
-    if (cpl_bypass and number_of_columns == 3  and options.tide_forcing_file != ''): # japg [05-29-2025]
-        output.write(" tide_file = '%s'"%options.tide_forcing_file)
-    if (cpl_bypass and number_of_columns == 4 and options.tide_forcing_file != ''):  # japg [2-20-2025]
-        output.write(" tide_file = '%s'"%options.tide_forcing_file)
+    if (cpl_bypass and number_of_columns>= 2 and options.tide_forcing_file != ''):
+      output.write(" tide_file = '%s'"%options.tide_forcing_file)
+
+    # japg [06-03-2025]: Potentally to be deleted ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
+    # if (cpl_bypass and options.marsh and options.tide_forcing_file != ''):
+    #     output.write(" tide_file = '%s'"%options.tide_forcing_file)
+    # if (cpl_bypass and number_of_columns == 3  and options.tide_forcing_file != ''): # japg [05-29-2025]
+    #     output.write(" tide_file = '%s'"%options.tide_forcing_file)
+    # if (cpl_bypass and number_of_columns == 4 and options.tide_forcing_file != ''):  # japg [2-20-2025]
+    #     output.write(" tide_file = '%s'"%options.tide_forcing_file)
+
+    # japg [06-03-2025]: Potentally to be deleted ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
     output.close()
 
 
@@ -1684,7 +1697,7 @@ if (options.humhol):
     print("Turning on HUM_HOL modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHUM_HOL'")
 
-if (options.marsh):
+if (number_of_columns == 2): # japg [06-03-2025] options.marsh to be deleted
     print("Turning on MARSH modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DMARSH'")
 #Added option for COL3RD, 3rd column [Wei Huang 2022-07-11]
