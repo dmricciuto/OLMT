@@ -260,15 +260,17 @@ elif number_of_columns >= 2:
 
     lat_y = lat_coor
     lon_x = lon_coor
-
-    # funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
-    # lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
-    # lon = numpy.round(lon,6)    
-    # lat = funct_int(lon) # japg [04-21-2025] => Interporlation
-    # lat = numpy.round(lat,6)    
+   
+    # comment these lines to skip the interpolation and uncomment the two lines (next block):
     
-    lat = lat_y
-    lon = lon_x
+    funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
+    lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
+    lon = numpy.round(lon,6)    
+    lat = funct_int(lon) # japg [04-21-2025] => Interporlation
+    lat = numpy.round(lat,6)    
+    
+    # lat = lat_y
+    # lon = lon_x
 
 
     print('numcols =' + str(number_of_columns) +' grid lon='+str(lon))   
