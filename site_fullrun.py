@@ -171,7 +171,7 @@ parser.add_option("--marsh", dest="marsh", default=False, \
 #adding option for a 3rd column (gridcell) [Wei Huang 2022-07-06]
 parser.add_option("--col3rd", dest="col3rd", default=False, \
                   help = 'Adding 3rd column/gridcell', action="store_true")
-parser.add_option("--tai_xcols", dest="tai_xcols", default=3, \
+parser.add_option("--tai_xcols", dest="tai_xcols", default=0, \
                   help = 'TAI multi-cols number for lateral hydrology')
 parser.add_option("--tide_components_file", dest="tide_components_file", default='', \
                     help = 'NOAA tide components file')
@@ -583,7 +583,7 @@ for row in AFdatareader:
             basecmd = basecmd+' --humhol'
         if (options.marsh):
             basecmd = basecmd+' --marsh'
-        if (int(options.tai_xcols)>=3):
+        if (int(options.tai_xcols)>=2):
             basecmd = basecmd + ' --tai_xcols '+str(options.tai_xcols)            
         if (options.tide_components_file != ''):
             basecmd = basecmd + ' --tide_components_file %s'%options.tide_components_file
@@ -969,7 +969,7 @@ for row in AFdatareader:
                     ptcmd = ptcmd+' --humhol'
                 if (options.marsh):
                     ptcmd = ptcmd+' --marsh'
-                if (int(options.tai_xcols)>=3):
+                if (int(options.tai_xcols)>=2):
                     ptcmd = ptcmd + ' --tai_xcols '+str(options.tai_xcols)            
                 result = runcmd(ptcmd)
                 if (result > 0):
