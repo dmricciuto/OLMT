@@ -13,7 +13,7 @@ from optparse import OptionParser
 #  2. Use create_newcase to build the new case with specified options
 #  3. Set point and case-epecific namelist options
 #  4. configure case
-#  5. build (compile) ACME with clean_build first if requested
+#  5. build (compile) E3SM with clean_build first if requested
 #  6. apply user-specified PBS and submit information
 #  7. submit single run or parameter ensemble job to PBS queue.
 #
@@ -143,8 +143,6 @@ parser.add_option("--daymet", dest="daymet", default=False, \
                   action="store_true", help = "Daymet correction to GSWP3 precip (CONUS only)")
 parser.add_option("--era5", dest="era5", default=False, \
                   action="store_true", help = 'Use ERA5 atmospheric reanalysis')
-parser.add_option("--era5_land", dest="era5_land", default=False, \
-                  action="store_true", help ="Use ERA5-Land reanalysis data")
 parser.add_option("--monthly_metdata", dest="monthly_metdata", default = '', \
                   help = "File containing met data (cpl_bypass only)")
 parser.add_option("--add_temperature", dest="addt", default=0.0, \
@@ -364,10 +362,6 @@ parser.add_option("--use_IM2_hillslope_hydrology", dest="use_IM2_hillslope_hydro
 parser.add_output("--arctic_topounit_output", dest="arctic_topounit_output",default=False, \
                   help="Activate topounit-level and pft-level outputs by turning on hist_dov2xy")
 
-#CI testing:
-parser.add_option("--test", dest = "test_mode", default=False,
-                  help = "Run in test mode? (5 day simulation)", action = "store_true")
-
 (options, args) = parser.parse_args()
 #-------------------------------------------------------------------------------
 # If only make point(s) data, reset relevant options.
@@ -437,7 +431,7 @@ elif ('pm-cpu' in options.machine):
 elif ('docker' in options.machine or 'mac' in options.machine):
     ppn=4
 elif ('ees' in options.machine):
-    ppn=32 # could probably choose more, but this seems a safe option.
+    ppn=32
 if (options.ensemble_file == ''):
   ppn=min(ppn, int(options.np))
 
@@ -1163,12 +1157,8 @@ if (int(options.ninst) > 1):
     os.system('./xmlchange NINST_LND='+options.ninst)
     os.system('./xmlchange NTASKS_LND='+options.ninst)
 
-if (options.test_mode):
-    os.system('./xmlchange STOP_OPTION=ndays')
-    os.system('./xmlchange STOP_N=5')
-else:
-    os.system('./xmlchange STOP_OPTION='+options.run_units)
-    os.system('./xmlchange STOP_N='+str(options.run_n))
+os.system('./xmlchange STOP_OPTION='+options.run_units)
+os.system('./xmlchange STOP_N='+str(options.run_n))
 
 if (options.rest_n > 0):
   print('Setting REST_N to '+str(options.rest_n))
@@ -1635,8 +1625,6 @@ for i in range(1,int(options.ninst)+1):
                 output.write(" metdata_type = 'gswp3'\n") # This needs to be updated for other types
             elif (options.era5):
                 output.write(" metdata_type = 'era5'\n")
-            elif (options.era5_land):
-                output.write(" metdata_type = 'era5land'\n")
             output.write(" metdata_bypass = '%s'\n"%options.metdir)
         # not reanalysis
         else:

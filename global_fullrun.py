@@ -180,7 +180,8 @@ parser.add_option("--walltime", dest="walltime", default=24, \
                   help = "desired walltime for each job (hours)")
 parser.add_option("--no_submit",dest="no_submit",default=False,action="store_true",
                     help='Do not submit jobs')
-#Add topounits (R Fiorella, NGEE-Arctic):
+# NGEE Arctic testing options
+#Add topounits (NGEE-Arctic):
 parser.add_option("--topounits", dest="topounits", default=False,
                   help="Turn on topounits > 1", action='store_true')
 parser.add_option("--topounits_atmdownscale", dest = "topounits_atmdownscale", default=False,
@@ -192,6 +193,19 @@ parser.add_option("--no_snicar_ad", dest="no_snicar_ad", default=False, \
                   help = "Turn off SNICAR-AD snow microphysics model", action = "store_true")
 parser.add_option("--use_extra_snow_layers", dest = "use_extra_snow_layers", default=False, \
                   help = "Turn on extra snow layers", action="store_true")
+parser.add_option("--use_firn_percolation_and_compaction ", dest = "use_firn_percolation_and_compaction", default=False, \
+                  help = "Turn on firn percolation and compaction", action="store_true")
+# polygonal tundra:
+parser.add_option("--use_polygonal_tundra", dest="use_polygonal_tundra", default=False, \
+                  help= "Turn on the polygonal tundra parameterizations, NGEE Arctic Phase 3 IM1", action="store_true")
+parser.add_option("--use_arctic_init", dest = "use_arctic_init", default = False, \
+                  help = "Use colder and saturated initial conditions, NGEE Arctic IM2 and IM0", action="store_true")
+# Arctic hillslope hydrology
+parser.add_option("--use_IM2_hillslope_hydrology", dest="use_IM2_hillslope_hydrology", default=False, \
+                  help="Use NGEE Arctic Hillslope Hydrology across topounits", action="store_true")
+# adjust topounit/pft output:
+parser.add_output("--arctic_topounit_output", dest="arctic_topounit_output",default=False, \
+                  help="Activate topounit-level and pft-level outputs by turning on hist_dov2xy")
 
 (options, args) = parser.parse_args()
 
@@ -566,16 +580,31 @@ if (options.domainfile != ''):
     basecmd = basecmd+' --domainfile '+options.domainfile
 if (options.pftdynfile != ''):
     basecmd = basecmd + ' --landusefile '+options.pftdynfile
-if (options.topounits):
-    basecmd = basecmd+' --topounits'
-if (options.topounits_atmdownscale):
-    basecmd = basecmd+' --topounits_atmdownscale'
+# snow opts
 if (options.dust_snow_mixing):
-    basecmd = basecmd+' --dust_snow_mixing'
-if (options.no_snicar_ad):
-    basecmd = basecmd+' --no_snicar_ad'
+    basecmd = basecmd + ' --dust_snow_mixing'
 if (options.use_extra_snow_layers):
-    basecmd = basecmd+' --use_extra_snow_layers'
+    basecmd = basecmd + ' --use_extra_snow_layers'
+if (options.use_firn_percolation_and_compaction):
+    basecmd = basecmd + ' --use_firn_percolation_and_compaction'
+if (options.no_snicar_ad):
+    basecmd = basecmd + ' --no_snicar_ad'
+# topounits
+if (options.topounits_atmdownscale):
+    basecmd = basecmd + ' --topounits_atmdownscale'
+if (options.topounits_raddownscale):
+    basecmd = basecmd + ' --topounits_raddownscale'
+# polygonal tundra
+if (options.use_polygonal_tundra):
+    basecmd = basecmd + ' --use_polygonal_tundra'
+if (options.use_arctic_init):
+    basecmd = basecmd + ' --use_arctic_init'
+# Arctic hillslope hydrology
+if (options.use_IM2_hillslope_hydrology):
+    basecmd = basecmd + ' --use_IM2_hillslope_hydrology'
+# topounit-level output
+if (options.arctic_topounit_output):
+    basecmd = basecmd + ' --arctic_topounit_output'
 basecmd = basecmd + ' --np '+str(options.np)
 basecmd = basecmd + ' --tstep '+str(options.tstep)
 basecmd = basecmd + ' --co2_file '+options.co2_file

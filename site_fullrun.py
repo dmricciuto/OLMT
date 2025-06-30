@@ -117,8 +117,6 @@ parser.add_option("--princeton", dest="princeton", default=False, action="store_
                   help = 'Use Princeton meteorology')
 parser.add_option("--era5", dest="era5", default=False, action="store_true", \
                   help = 'Use ERA5 reanalysis')
-parser.add_option("--era5_land", dest="era5_land", default=False, action="store_true", \
-                  help = 'Use ERA5-Land reanalysis')
 parser.add_option("--co2_file", dest="co2_file", default="fco2_datm_rcp4.5_1765-2500_c130312.nc", \
                   help = 'co2 data filename')
 parser.add_option("--eco2_file", dest="eco2_file", default="", \
@@ -507,8 +505,8 @@ for row in AFdatareader:
             endyear_trans=2019
           elif (options.princeton):
             endyear_trans=2012
-          elif (options.era5 or options.era5_land):
-            endyear_trans=2022
+          elif (options.era5):
+            endyear_trans=2025
           else:
             endyear_trans=2010
         else:
@@ -536,7 +534,7 @@ for row in AFdatareader:
                 translen = translen - ncycle     # if experiment sim, stop first transient at exp start yr - 1
             if (options.cpl_bypass and (options.cruncep or options.gswp3 or \
                 options.princeton or options.cruncepv8 or options.gswp3_w5e5 or \
-                options.era5 or options.era5_land)):
+                options.era5)):
                 print(endyear_trans, site_endyear)
                 translen = min(site_endyear,endyear_trans)-1850+1
 
@@ -640,8 +638,6 @@ for row in AFdatareader:
             if (not options.gswp3): basecmd = basecmd+' --gswp3'
         if (options.era5):
             basecmd = basecmd+' --era5'
-        if (options.era5_land):
-            basecmd = basecmd+' --era5_land'
         if (options.fates_paramfile != ''):
             basecmd = basecmd+ ' --fates_paramfile '+options.fates_paramfile
         if (options.fates_nutrient != ''):
