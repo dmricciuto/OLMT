@@ -7,7 +7,7 @@ import numpy
 import re
 
 ### Run options
-parser = OptionParser()
+parser = OptionParser();
 
 # general OLMT options
 parser.add_option("--no_submit", dest="no_submit", default=False, action="store_true", \
@@ -1171,7 +1171,8 @@ for row in AFdatareader:
                                 output.write('#SBATCH -A NOAA_CSDL_NWI_SCHISM  # Allocation name \n')
                             if ('cades-baseline' in options.machine):
                                 output.write('#SBATCH -A cli185\n')
-                                output.write('#SBATCH -p batch\n')
+                                # output.write('#SBATCH -p batch\n') #batch_ccsi
+                                output.write('#SBATCH -p batch_ccsi\n')
                                 output.write('#SBATCH --mem=0G\n')
                                 output.write('#SBATCH --ntasks-per-node '+str(npernode)+'\n')
                             elif ('cades' in options.machine):

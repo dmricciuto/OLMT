@@ -6,16 +6,15 @@
 MYROOT=/gpfs/wolf2/cades/cli185/
 MYMACH=cades-baseline
 
-# nsite_codes="US-GC3,US-GC3,US-GC4"
-nsite_codes="US-GC3,US-GC3,US-GC3,US-GC3"                         # No space between the variable, the =, and the values inside the " "
+# nsite_codes="US-GC3,US-GC3,US-GC3,US-GC3"                                           # No space between the variable, the =, and the values inside the " "
+nsite_codes="US-GC3,US-GC3,US-GC4"
 
-
-# lat_coordinates=(38.874941 38.874941 38.874941)                 # [japg] => Benchmark Coordinates to test code
-lat_coordinates=(37.219244 37.219377 37.218901 37.21806)          # [japg] => Goodwin Island Coordinates
+# lat_coordinates=(38.874076 38.874473 38.874957)                       # [japg] => Chesapeake Bay Coordinates 
+lat_coordinates=(38.874941 38.874941 38.874941)                     # [japg] => Benchmark Coordinates to test code
 lat_coordinates_str=$(IFS=','; echo "${lat_coordinates[*]}")
 
-# lon_coordinates=(-76.550043 -76.550043 -76.550043)                  # [japg] => Benchmark Coordinates to test code
-lon_coordinates=(-76.408673 -76.409241 -76.410094 -76.41228)          # [japg] => Goodwin Island Coordinates
+# lon_coordinates=(-76.549978 -76.551469 -76.552129)                    # [japg] => Chesapeake Bay Coordinates
+lon_coordinates=(-76.550043 -76.550043 -76.550043)                  # [japg] => Benchmark Coordinates to test code
 lon_coordinates_str=$(IFS=','; echo "${lon_coordinates[*]}")
 
 
@@ -23,10 +22,10 @@ lon_coordinates_str=$(IFS=','; echo "${lon_coordinates[*]}")
 IFS=',' read -r first_site_code _ <<< "$nsite_codes"
 
 python ./site_fullrun.py \
-      --sitegroup Wetland --caseidprefix C4_GWI_v1 \
+      --sitegroup Wetland --caseidprefix C3jwv2 \
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --tstep 1 \
       --cpl_bypass --machine $MYMACH --compiler gnu --mpilib openmpi \
-      --model_root /ccsopen/home/ji8/E3SM_baseline \
+      --model_root /ccsopen/home/ji8/Wei_ELM/E3SM  \
       --caseroot /ccsopen/home/ji8/cases \
       --ccsm_input $MYROOT/world-shared/e3sm/inputdata \
       --runroot $MYROOT/scratch/$USER \

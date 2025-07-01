@@ -498,10 +498,9 @@ if (options.daymet4):
 
 compset = options.compset
 isglobal = False
-
-# if (options.site == ''):
-#     isglobal = True
-#     options.site=options.res
+if (options.site == ''):
+    isglobal = True
+    options.site=options.res
 
 if ('CBCN' in compset or 'ICB' in compset or 'CLM45CB' in compset):
     cpl_bypass = True

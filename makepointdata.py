@@ -115,9 +115,6 @@ print('japg/makepointdata.py =========> site =', options.site)      # printing t
 #Remove existing temp files
 os.system('find ./temp/ -name "*.nc*" -exec rm {} \; ')
 
-
-
-
 lat_bounds = options.lat_bounds.split(',')
 lon_bounds = options.lon_bounds.split(',')
 lat_bounds = [float(l) for l in lat_bounds]
@@ -263,15 +260,14 @@ elif number_of_columns >= 2:
    
     # comment these lines to skip the interpolation and uncomment the two lines (next block):
     
-    funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
-    lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
-    lon = numpy.round(lon,6)    
-    lat = funct_int(lon) # japg [04-21-2025] => Interporlation
-    lat = numpy.round(lat,6)    
+    # funct_int = interp1d(lon_x, lat_y, kind='linear') # japg [04-04-2025] => Create interpolation function
+    # lon = numpy.linspace(min(lon_x), max(lon_x),number_of_columns)
+    # lon = numpy.round(lon,6)    
+    # lat = funct_int(lon) # japg [04-21-2025] => Interporlation
+    # lat = numpy.round(lat,6)    
     
-    # lat = lat_y
-    # lon = lon_x
-
+    lat = lat_y
+    lon = lon_x
 
     print('numcols =' + str(number_of_columns) +' grid lon='+str(lon))   
     print('numcols =' + str(number_of_columns) +' grid lat='+str(lat))     
@@ -753,12 +749,12 @@ for n in range(0,n_grids):                  # japg [03-31-2025] ================
         
         # start japg [05-28-2025]: Organic fixation  ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
-        if (number_of_columns >= 2 and n==0):
+        if (number_of_columns > 2 and n==0):
             for k in range(0,10):
-                organic[k][0][0] = 1.0 #39.0 #1.6 #max/min for upland at CB
+                organic[k][0][0] = 1 #39.0 #1.6 #max/min for upland at CB
                 #organic[k][0][0] = 0.5 #44.9 #0.5 #max/min for upland at GL
 
-        if (number_of_columns >= 2 and n>0):
+        if (number_of_columns > 2 and n>0):
             for k in range(0,10): #[japg 11-01-2024]:change organic for soil characteristics at low marsh
                 organic[k][0][0] = 1.2 #43.0 #2.1 #max/min for wetland at CB
                 #organic[k][0][0] = 2.6 #31.6 #2.6 #max/min for wetland at GL
