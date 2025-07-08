@@ -359,7 +359,7 @@ parser.add_option("--use_arctic_init", dest = "use_arctic_init", default = False
 parser.add_option("--use_IM2_hillslope_hydrology", dest="use_IM2_hillslope_hydrology", default=False, \
                   help="Use NGEE Arctic Hillslope Hydrology across topounits", action="store_true")
 # adjust topounit/pft output:
-parser.add_output("--arctic_topounit_output", dest="arctic_topounit_output",default=False, \
+parser.add_oution("--arctic_topounit_output", dest="arctic_topounit_output",default=False, \
                   help="Activate topounit-level and pft-level outputs by turning on hist_dov2xy")
 
 (options, args) = parser.parse_args()
