@@ -67,8 +67,8 @@ parser.add_option("--machine", dest="machine", default = '', \
                   help = "machine to use")
 parser.add_option("--np", dest="np", default=1, \
                   help = 'number of processors')
-parser.add_option("--walltime", dest="walltime", default=6, \
-                  help = "desired walltime for each job (hours)")
+parser.add_option("--walltime", dest="walltime", default=24, \
+                  help = "desired walltime for each job (hours)")      # japg [07-02-2025] THis controls the walltime for each job, not the total walltime of the run
 parser.add_option("--pio_version", dest="pio_version", default='2', \
                       help = "PIO version (1 or 2)")
 

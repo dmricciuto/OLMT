@@ -23,7 +23,7 @@ lon_coordinates_str=$(IFS=','; echo "${lon_coordinates[*]}")
 IFS=',' read -r first_site_code _ <<< "$nsite_codes"
 
 python ./site_fullrun.py \
-      --sitegroup Wetland --caseidprefix C4_GWI_v1 \
+      --sitegroup Wetland --caseidprefix C4_GWI_v6 \
       --nyears_ad_spinup 20 --nyears_final_spinup 40 --tstep 1 \
       --cpl_bypass --machine $MYMACH --compiler gnu --mpilib openmpi \
       --model_root /ccsopen/home/ji8/E3SM_baseline \
@@ -45,7 +45,7 @@ python ./site_fullrun.py \
       --nsite_codes "$nsite_codes" \
       --lat_coordinates "$lat_coordinates_str" \
       --lon_coordinates "$lon_coordinates_str" \
-      --nopftdyn
+      --nopftdyn \
       #--nopointdata  
       
 
