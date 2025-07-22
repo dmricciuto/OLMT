@@ -274,6 +274,50 @@ elif number_of_columns >= 2:
 
     n_grids = number_of_columns
 
+    # Calculating distances from coordinates
+
+    lon_x = numpy.where(lon_x > 180, lon_x - 360, lon_x) # japg [04-04-2025] => Convert to -180,180
+    # Convert degrees to radians
+    lat_rad = numpy.radians(lat_y)
+    lon_rad = numpy.radians(lon_x)
+
+    # Earth's radius in meters
+    R = 6371000.0
+
+    # Compute differences between consecutive points
+    dlat = numpy.diff(lat_rad)
+    dlon = numpy.diff(lon_rad)
+
+    # Apply haversine formula vectorized
+    a_h = numpy.sin(dlat / 2)**2 + numpy.cos(lat_rad[:-1]) * numpy.cos(lat_rad[1:]) * numpy.sin(dlon / 2)**2
+    c_h = 2 * numpy.arctan2(numpy.sqrt(a_h), numpy.sqrt(1 - a_h))
+
+    # Distance in meters between consecutive points
+    coor_distance = R * c_h
+    print("Horizontal distances between consecutive points (in meters):")
+    print(coor_distance)
+
+    # Calculating distances from the tidal channel (reference point) 
+    
+    # Fixed reference point → last coordinate
+    lat_ref = lat_rad[-1]
+    lon_ref = lon_rad[-1]
+    
+    # Differences relative to the reference point
+    dlat_Fromtidal = lat_rad - lat_ref
+    dlon_Fromtidal = lon_rad - lon_ref
+    
+    # Haversine formula vectorized
+    a_tidal = numpy.sin(dlat_Fromtidal / 2)**2 + numpy.cos(lat_rad) * numpy.cos(lat_ref) * numpy.sin(dlon_Fromtidal / 2)**2
+    c_tidal = 2 * numpy.arctan2(numpy.sqrt(a_tidal), numpy.sqrt(1 - a_tidal))
+
+    # Distances from each point to the last one
+    distances_tidal = R * c_tidal
+    print("Horizontal distances from tidal (in meters):")
+    print(distances_tidal)   
+
+
+
 else:
     isglobal=True
 
