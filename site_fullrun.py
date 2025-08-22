@@ -1221,7 +1221,7 @@ for row in AFdatareader:
                                     output.write('#SBATCH --partition=regular\n')
                             if ('cades-baseline' in options.machine):
                                 output.write('#SBATCH -A CLI185\n')
-                                output.write('#SBATCH -p batch\n')
+                                output.write('#SBATCH -p batch_ccsi\n')
                                 output.write('#SBATCH --ntasks-per-node 128\n')
                             elif ('cades' in options.machine):
                                 output.write('#SBATCH -A ccsi\n')
