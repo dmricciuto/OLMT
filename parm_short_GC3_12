@@ -21,5 +21,5 @@ ndays_off 0 20
 ndays_on 0 25
 stress_decid 13 1
 humhol_ht 0 0.5
-humhol_ht_frac 0 1.8
-humhol_ht_2frac 0 1.2
+humhol_ht_frac 0 1.3
+humhol_ht_2frac 0 1.8

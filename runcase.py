@@ -1705,9 +1705,10 @@ if (number_of_columns == 3):
     print("Turning on COL3RD modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL3RD'")
 
-if (number_of_columns == 4):   # japg [05-06-2025] => activating the 4th-column system 
+if (number_of_columns >= 4):   # japg [05-06-2025] => activating the 4th-column system 
     print("Turning on COL4TH modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL4TH'")
+
 if (options.alquimia != ""):
     print("Turning on alquimia interface for compilation and running")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DUSE_ALQUIMIA_LIB'")

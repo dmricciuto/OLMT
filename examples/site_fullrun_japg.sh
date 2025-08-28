@@ -7,8 +7,8 @@ MYROOT=/gpfs/wolf2/cades/cli185/
 MYMACH=cades-baseline
 
 # nsite_codes="US-GC3,US-GC3,US-GC4"
-nsite_codes="US-GC3,US-GC3,US-GC3,US-GC3"                         # No space between the variable, the =, and the values inside the " "
-
+nsite_codes="US-GC3,US-GC3,US-GC3,US-GC3"                                           # No space between the variable, the =, and the values inside the " "
+# nsite_codes="US-GC3,US-GC3,US-GC3,US-GC3,US-GC3,US-GC3,US-GC3,US-GC3,US-GC3"        # 9 columns 
 
 # lat_coordinates=(38.874941 38.874941 38.874941)                 # [japg] => Benchmark Coordinates to test code
 lat_coordinates=(37.219244 37.219377 37.218901 37.21806)          # [japg] => Goodwin Island Coordinates

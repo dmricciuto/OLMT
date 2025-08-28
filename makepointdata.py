@@ -266,8 +266,78 @@ elif number_of_columns >= 2:
     # lat = funct_int(lon) # japg [04-21-2025] => Interporlation
     # lat = numpy.round(lat,6)    
     
-    lat = lat_y
-    lon = lon_x
+
+    # Interpolation keepking the original coordinate: ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+    n_orig = lon_x.size
+    if number_of_columns < n_orig:
+        raise ValueError(f"numcols_japg ({number_of_columns}) must be at least the number of original points ({n_orig}).")
+
+    # ---- Sort by longitude (in case inputs are not strictly ordered) ----
+    order = numpy.argsort(lon_x)
+    lon_sorted = lon_x[order]
+    lat_sorted = lat_y[order]
+
+    # ---- Distribute extra points across segments proportional to segment length ----
+    extra_needed = number_of_columns - n_orig
+    seg_lengths = numpy.diff(lon_sorted)
+    total_len = numpy.sum(seg_lengths)
+
+    # Handle degenerate case (all x equal) defensively
+    if total_len == 0 and extra_needed > 0:
+        # If all longitudes equal, just duplicate the same x and y
+        lon_all = numpy.concatenate([lon_sorted, numpy.repeat(lon_sorted[-1], extra_needed)])
+    else:
+        # Ideal (non-integer) allocation
+        ideal = extra_needed * (seg_lengths / total_len) if total_len > 0 else numpy.zeros_like(seg_lengths)
+        base = numpy.floor(ideal).astype(int)
+        remainder = extra_needed - numpy.sum(base)
+
+        # Distribute the remaining points to segments with largest fractional parts
+        frac = ideal - base
+        if remainder > 0:
+            winners = numpy.argsort(-frac)[:remainder]
+            base[winners] += 1
+
+        # ---- Build the final longitude array: originals + evenly spaced internal points per segment ----
+        parts = []
+        for i in range(n_orig - 1):
+            # always include the left endpoint of the segment
+            parts.append(numpy.array([lon_sorted[i]]))
+            m = base[i]  # number of internal points to add in this segment
+            if m > 0:
+                # create m internal points strictly inside (exclude both endpoints to avoid duplicates)
+                internal = numpy.linspace(lon_sorted[i], lon_sorted[i+1], m + 2)[1:-1]
+                parts.append(internal)
+        # append the very last original point
+        parts.append(numpy.array([lon_sorted[-1]]))
+
+        lon_all = numpy.concatenate(parts)
+
+    # ---- Interpolate latitudes at the constructed longitudes (linear) ----
+    interp_linear = interp1d(lon_sorted, lat_sorted, kind='linear')
+    lat_all = interp_linear(lon_all)
+
+    # ---- Sanity checks ----
+    assert lon_all.size == number_of_columns, f"Got {lon_all.size} points, expected {number_of_columns}"
+    # Ensure all original longitudes are present (within floating point tolerance)
+    for x0 in lon_sorted:
+        if not numpy.any(numpy.isclose(lon_all, x0, rtol=0, atol=1e-12)):
+            raise AssertionError("An original coordinate is missing from the final set.")
+
+    lon_all = lon_all[::-1]  # reverse order
+    lat_all = lat_all[::-1]  # reverse order
+    
+    print("Final count:", lon_all.size)
+    print("Includes originals:", all(numpy.any(numpy.isclose(lon_all, x0, atol=1e-12)) for x0 in lon_sorted))
+    print("lon_interpo:", lon_all)
+    print("lat_interpo:", lat_all)
+
+    lat = lat_all    
+    lon = lon_all
+    # Interpolation keepking the original coordinate: ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
+    # lat = lat_y
+    # lon = lon_x
 
     print('numcols =' + str(number_of_columns) +' grid lon='+str(lon))   
     print('numcols =' + str(number_of_columns) +' grid lat='+str(lat))     
