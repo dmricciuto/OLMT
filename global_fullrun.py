@@ -786,7 +786,7 @@ if (options.mc_ensemble <= 0):
                       output.write('#SBATCH -p short\n')
                     if ('cades-baseline' in options.machine):
                       output.write('#SBATCH -A cli185\n')
-                      output.write('#SBATCH -p batch\n')
+                      output.write('#SBATCH -p batch_ccsi\n')
                       output.write('#SBATCH --mem=0G\n')
                       output.write('#SBATCH --ntasks-per-node 128\n')
                     elif ('cades' in options.machine):
@@ -801,8 +801,7 @@ if (options.mc_ensemble <= 0):
    
         if (options.machine == 'cades-baseline'):
             output.write('source $MODULESHOME/init/bash\n')
-            output.write('module unload python\n')
-            output.write('module load python/3.11-anaconda3\n\n')
+            output.write('module load miniforge3/24.11.3-0\n\n')
         elif (options.machine == 'cades'):
             output.write('source $MODULESHOME/init/bash\n')
             output.write('module unload python\n')

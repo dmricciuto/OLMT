@@ -1148,10 +1148,9 @@ for row in AFdatareader:
                                 output.write('#SBATCH -N 1               # Total # of nodes\n')
                                 output.write('#SBATCH -A NOAA_CSDL_NWI_SCHISM  # Allocation name \n')
                             if ('cades-baseline' in options.machine):
-                                output.write('#SBATCH -A cli185\n')
-                                output.write('#SBATCH -p batch\n')
-                                output.write('#SBATCH --mem=0G\n')
-                                output.write('#SBATCH --ntasks-per-node '+str(npernode)+'\n')
+                                output.write('#SBATCH -A CLI185\n')
+                                output.write('#SBATCH -p batch_ccsi\n')
+                                output.write('#SBATCH --ntasks-per-node 128\n')
                             elif ('cades' in options.machine):
                                 output.write('#SBATCH -A ccsi\n')
                                 output.write('#SBATCH -p batch\n')
@@ -1204,8 +1203,7 @@ for row in AFdatareader:
                     output.write('module load nco\n')     
                 if ('cades-baseline' in options.machine):
                     output.write('source $MODULESHOME/init/bash\n')
-                    output.write('module unload python\n')
-                    output.write('module load python/3.11-anaconda3\n')
+                    output.write('module load miniforge3/24.11.3-0\n')
                 elif ('cades' in options.machine):
                     output.write('source $MODULESHOME/init/bash\n')
                     output.write('module unload python\n')
