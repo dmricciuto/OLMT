@@ -54,6 +54,8 @@ parser.add_option("--humhol", dest="humhol", default=False, \
                   help = 'Use hummock/hollow microtopography', action="store_true")
 parser.add_option("--marsh", dest="marsh", default=False, \
                   help = 'Use marsh hydrology/elevation', action="store_true")
+parser.add_option("--tai_xcols", dest="tai_xcols", default=0, \
+                  help = 'TAI multi-cols number for lateral hydrology')
 parser.add_option("--usersurfnc", dest="usersurfnc", default="none", \
                   help = 'User-provided surface data nc file, with one or more variable(s) as defined')
 parser.add_option("--usersurfvar", dest="usersurfvar", default="none", \
@@ -210,6 +212,12 @@ elif (options.site != ''):
                 lon.append(mylon)
                 lat.append(float(row[4]))
                 n_grids = 2
+            elif (int(options.tai_xcols)>=2):
+                n_grids = 1                
+                while n_grids<int(options.tai_xcols):
+                    lon.append(mylon)
+                    lat.append(float(row[4]))
+                    n_grids = n_grids + 1                
             startyear=int(row[6])
             endyear=int(row[7])
             alignyear = int(row[8])

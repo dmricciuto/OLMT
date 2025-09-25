@@ -1661,10 +1661,10 @@ elif (int(options.tai_xcols)==3):
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL3RD'")
 
 elif (int(options.tai_xcols)==4):
-    print("Turning on COL3RD modification\n")
+    print("Turning on COL4TH modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DCOL4TH'")
 elif (int(options.tai_xcols)>4):
-    print("Turning on COL3RD modification\n")
+    print("Turning on HYDRO_XCOLS modification\n")
     os.system("./xmlchange --id "+mylsm+"_CONFIG_OPTS --append --val '-cppdefs -DHYDRO_XCOLS'")
 
 if (options.alquimia != ""):
