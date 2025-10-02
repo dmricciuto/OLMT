@@ -362,8 +362,7 @@ os.system('mkdir -p ./temp')
 area_orig = nffun.getvar(surffile_orig, 'AREA')
 
 # in case NCO bin path not in $PATH
-os.environ["PATH"] += ':/usr/local/nco/bin'
-os.environ["PATH"] += ':/Users/f9y/ATS_ROOT/amanzi_tpls-install-master-Debug/bin'
+#os.environ["PATH"] += ':/usr/local/nco/bin'
 
 domainfile_tmp = 'domain??????.nc' # filename pattern of 'domainfile_new'
 for n in range(0,n_grids):
