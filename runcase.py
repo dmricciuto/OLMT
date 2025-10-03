@@ -1547,7 +1547,7 @@ for i in range(1,int(options.ninst)+1):
             elif (options.crujra):
                     output.write(" metdata_type = 'crujra'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
-                         +"atm_forcing.datm7.CRUJRA.0.5d.v1.c190604/cpl_bypass_full'\n")
+                         +"atm_forcing.CRUJRA_trendy_2025/cpl_bypass_full'\n")
             elif (options.gswp3):
                 if (options.livneh):
                     output.write(" metdata_type = 'gswp3_livneh'\n")
