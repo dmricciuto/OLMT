@@ -137,6 +137,8 @@ parser.add_option("--cruncepv8", dest="cruncepv8", default=False, \
                   help = "use cru-ncep data", action="store_true")
 parser.add_option("--crujra", dest="crujra", default=False, \
                   help = "use crujra data", action="store_true")
+parser.add_option("--trendy25", dest="trendy25", default=False, \
+                  help = "use trendy2025 data", action="store_true")
 parser.add_option("--cplhist", dest="cplhist", default=False, \
                   help= "use CPLHIST forcing", action="store_true")
 parser.add_option("--era5", dest="era5", default=False, \
@@ -635,7 +637,7 @@ if (options.metdir!='none'):# obviously user-provided met forcing is not reanaly
     use_reanalysis = False
 #CRU-NCEP 2 transient phases
 elif ('CRU' in compset or options.cruncep or options.era5 or options.gswp3 or options.gswp3_w5e5 or \
-            options.crujra or options.cruncepv8 or options.princeton or options.cplhist):
+            options.crujra or options.trendy25 or options.cruncepv8 or options.princeton or options.cplhist):
     use_reanalysis = True
 else:
     use_reanalysis = False
@@ -1546,6 +1548,10 @@ for i in range(1,int(options.ninst)+1):
                          +"atm_forcing.datm7.cruncep_qianFill.0.5d.V5.c140715/cpl_bypass_full'\n")
             elif (options.crujra):
                     output.write(" metdata_type = 'crujra'\n")
+                    output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
+                         +"atm_forcing.datm7.CRUJRA.0.5d.v1.c190604/cpl_bypass_full'\n")
+            elif (options.trendy25):
+                    output.write(" metdata_type = 'crujra_trendy2025'\n")
                     output.write(" metdata_bypass = '"+options.ccsm_input+"/atm/datm7/" \
                          +"atm_forcing.CRUJRA_trendy_2025/cpl_bypass_full'\n")
             elif (options.gswp3):

@@ -122,6 +122,8 @@ parser.add_option("--era5", dest="era5", default=False, action="store_true", \
                   help = 'Use ERA5 meteorology')
 parser.add_option("--crujra", dest="crujra", default=False, \
                   help = "use crujra data", action="store_true")
+parser.add_option("--trendy25", dest="trendy25", default=False, \
+                  help = "use trendy2025 data", action="store_true")
 parser.add_option("--gswp3", dest="gswp3", default=False, action="store_true", \
                   help = 'Use GSWP3 meteorology')
 parser.add_option("--gswp3_w5e5", dest="gswp3_w5e5", default=False, action="store_true", \
@@ -498,7 +500,7 @@ for row in AFdatareader:
             firstsite=site
         site_lat  = row[4]
         site_lon  = row[3]
-        if (options.cruncepv8 or options.cruncep or options.era5 or options.gswp3 or options.gswp3_w5e5 or options.princeton or options.crujra):
+        if (options.cruncepv8 or options.cruncep or options.era5 or options.gswp3 or options.gswp3_w5e5 or options.princeton or options.crujra or options.trendy25):
           startyear = 1901
           endyear = 1920
           if (options.cruncepv8):
@@ -511,7 +513,9 @@ for row in AFdatareader:
             endyear_trans=2019
           elif (options.princeton):
             endyear_trans=2012
-        elif (options.crujra):
+          elif (options.crujra):
+            endyear_trans=2021
+          elif options.trendy25:
             endyear_trans=2024
           else:
             endyear_trans=2010
@@ -538,8 +542,8 @@ for row in AFdatareader:
             translen = endyear-1850+1            # length of transient run
             if (options.eco2_file != ''):
                 translen = translen - ncycle     # if experiment sim, stop first transient at exp start yr - 1
-            if (options.cpl_bypass and (options.cruncep or options.era5 or options.gswp3 or options.crujra \
-                options.princeton or options.cruncepv8 or options.gswp3_w5e5)):
+            if (options.cpl_bypass and (options.cruncep or options.era5 or options.gswp3 or options.crujra or options.trendy25 \
+                or options.princeton or options.cruncepv8 or options.gswp3_w5e5)):
                 print(endyear_trans, site_endyear)
                 translen = min(site_endyear,endyear_trans)-1850+1
 
@@ -637,6 +641,8 @@ for row in AFdatareader:
             basecmd = basecmd+' --era5'
         if (options.crujra):
             basecmd = basecmd+' --crujra'
+        if (options.trendy25):
+            basecmd = basecmd+' --trendy25'
         if (options.gswp3):
             basecmd = basecmd+' --gswp3'
         if (options.gswp3_w5e5):
