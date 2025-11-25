@@ -90,7 +90,7 @@ ccsm_input = os.path.abspath(options.ccsm_input)
 site_codes = options.nsite_codes.split(',')                                             # assigning the site codes to a variable "site_codes"
 number_of_columns = len(site_codes)                                                     # assigning the number of columns to a variable "number_of_columns"
 print('japg/makepointdata.py =========> number_of_columns =', number_of_columns)        # printing the number of columns
-print('japg/makepointdata.py =========> site_codes[0] =', site_codes[0])                # printing the site codes
+print('japg/makepointdata.py =========> site_codes =', site_codes)                # printing the site codes
 
 
 lat_coor = numpy.fromstring(options.lat_coordinates, sep=',')                           # assigning the latitude coordinates to a variable "lat_coor"
