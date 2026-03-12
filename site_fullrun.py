@@ -1078,6 +1078,7 @@ for row in AFdatareader:
         for c in case_list:
             mysubmit_type = 'qsub'
             groupnum = int(sitenum/npernode)
+            print(groupnum)
             if ('cades' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine or \
                 'compy' in options.machine or 'cori' in options.machine):
                 mysubmit_type = 'sbatch'

@@ -798,9 +798,11 @@ if ( 'chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in
       print('setting rsub_top_globalmax = 1.2e-5')
     #   print('Making br_mr a PFT-specific parameter')
       os.system(myncap+' -O -s "humhol_ht = br_mr*0+0.15" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+      
       if options.marsh:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.50" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
-        print('hum_frac  = 0.50')
+        os.system(myncap+' -O -s "bd_adj = br_mr*0+1" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
+        print('hum_frac  = 0.50, bd_adj')
       else:
         os.system(myncap+' -O -s "hum_frac = br_mr*0+0.64" '+tmpdir+'/clm_params.nc '+tmpdir+'/clm_params.nc')
         print('hum_frac  = 0.64')
