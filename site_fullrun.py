@@ -1223,12 +1223,12 @@ for row in AFdatareader:
                     output.write('module unload python\n')
                     output.write('module unload scipy\n')
                     output.write('module unload numpy\n')
-                    output.write('module load python/2.7-anaconda\n')
+                    # output.write('module load python/2.7-anaconda\n')
                     output.write('module load nco\n')     
                 if ('cades-baseline' in options.machine):
                     output.write('source $MODULESHOME/init/bash\n')
                     output.write('module unload python\n')
-                    output.write('module load python/3.11-anaconda3\n')
+                    # output.write('module load python/3.11-anaconda3\n')
                 elif ('cades' in options.machine):
                     output.write('source $MODULESHOME/init/bash\n')
                     output.write('module unload python\n')
