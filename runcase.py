@@ -441,6 +441,8 @@ if (options.clmpf_source_dir != ''):
 ppn=1
 if ('cades-baseline' in options.machine):
     ppn=128
+elif ('pathfinder' in options.machine):
+    ppn=84
 elif ('cori-haswell' in options.machine or 'cades' in options.machine):
     ppn=32
 elif ('cori-knl' in options.machine):
@@ -853,7 +855,8 @@ else:
 
 myncap = 'ncap'
 if ( 'chrysalis' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine \
-        or 'mymac' in options.machine or 'anvil' in options.machine or 'cades-baseline' in options.machine):
+        or 'mymac' in options.machine or 'anvil' in options.machine or 'cades-baseline' in options.machine \
+        or 'pathfinder' in options.machine):
     myncap='ncap2'
 
     flnr = nffun.getvar(tmpdir+'/clm_params.nc','flnr')
@@ -1172,7 +1175,7 @@ if (options.drydep):
 
 # for spinup and transient runs, PIO_TYPENAME is pnetcdf, which now not works well
 if('mymac' in options.machine or 'cades' in options.machine \
-   or 'wsl' in options.machine or 'docker' in options.machine): 
+   or 'wsl' in options.machine or 'docker' in options.machine or 'pathfinder' in options.machine): 
     os.system("./xmlchange --id PIO_TYPENAME --val netcdf ")
 
 
@@ -2020,7 +2023,7 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
     #Launch ensemble if requested 
     mysubmit_type = 'qsub'
     if ('cades' in options.machine or 'compy' in options.machine or 'ubuntu' in options.machine or 'cori' in options.machine or \
-        options.machine == 'anvil' or options.machine == 'chrysalis'):
+        options.machine == 'anvil' or options.machine == 'chrysalis' or 'pathfinder' in options.machine):
         mysubmit_type = 'sbatch'
     if (options.ensemble_file != ''):
         os.system('mkdir -p '+PTCLMdir+'/scripts/'+myscriptsdir)
@@ -2054,6 +2057,13 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
                 output_run.write('#SBATCH --constraint=knl\n')
             if ('compy' in options.machine and options.debug):
               output_run.write('#SBATCH --qos=short\n')
+            if ('pathfinder' in options.machine):
+              output_run.write('#SBATCH -A hpcl-cli185\n')
+              output_run.write('#SBATCH -p parallel\n')
+              output_run.write('#SBATCH -c 1\n')
+              output_run.write('#SBATCH -q normal\n')
+              output_run.write('#SBATCH --mem=0gb\n')
+              output_run.write('#SBATCH --ntasks-per-node 84\n')
             if ('cades-baseline' in options.machine):
               output_run.write('#SBATCH -A CLI185\n')
               output_run.write('#SBATCH -p batch_ccsi\n')
@@ -2067,7 +2077,8 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
               output_run.write('#SBATCH -A condo\n')
               output_run.write('#SBATCH -p acme-small\n')
         output_run.write("\n")
-        if ('cades' in options.machine or 'compy' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine):
+        if ('cades' in options.machine or 'compy' in options.machine or 'anvil' in options.machine \
+            or 'chrysalis' in options.machine or 'pathfinder' in options.machine):
             #get the software environment
             softenvfile = open(casedir+'/software_environment.txt','r')
             for line in softenvfile:
@@ -2078,9 +2089,10 @@ if ((options.ensemble_file != '' or int(options.mc_ensemble) != -1) and (options
         cnp = 'True'
         if (options.cn_only or options.c_only):
             cnp= 'False'
-        if ('docker' in options.machine or 'oic' in options.machine or 'cades' in options.machine or 'ubuntu' in options.machine):
+        if ('docker' in options.machine or 'oic' in options.machine or 'cades' in options.machine \
+            or 'ubuntu' in options.machine or 'pathfinder' in options.machine):
             mpicmd = 'mpirun'
-            if ('cades' in options.machine):
+            if ('cades' in options.machineor or 'pathfinder' in options.machine):
                #mpicmd = '/software/dev_tools/swtree/cs400_centos7.2_pe2016-08/openmpi/1.10.3/centos7.2_gnu5.3.0/bin/mpirun'
                mpicmd = 'srun'
                cmd = mpicmd+' -n '+str(np_total)+' python3 manage_ensemble.py ' \

@@ -383,6 +383,8 @@ if (options.machine == ''):
 
 if (options.ccsm_input != ''):
     ccsm_input = options.ccsm_input
+elif (options.machine == 'pathfinder'):
+    ccsm_input = '/projects/hpcl-cli185/world-shared/E3SM/inputdata/'
 elif (options.machine == 'cades'):
     ccsm_input = '/nfs/data/ccsi/proj-shared/E3SM/inputdata/'
 elif (options.machine == 'edison' or 'cori' in options.machine):
@@ -422,6 +424,8 @@ if (options.runroot == '' or (os.path.exists(options.runroot) == False)):
     myuser = getpass.getuser()
     if (options.machine == 'cades'):
         runroot='/lustre/or-scratch/cades-ccsi/scratch/'+myuser
+    elif (options.machine == 'pathfinder'):
+        runroot='/scratch/hpcl-cli185/'+myuser
     elif ('cori' in options.machine):
         runroot='/global/cscratch1/sd/'+myuser
         myinput = open(os.environ.get('HOME')+'/.cesm_proj','r')
@@ -1175,7 +1179,7 @@ for row in AFdatareader:
             mysubmit_type = 'qsub'
             groupnum = int(sitenum/npernode)
             if ('cades' in options.machine or 'anvil' in options.machine or 'chrysalis' in options.machine or \
-                'compy' in options.machine or 'cori' in options.machine):
+                'compy' in options.machine or 'cori' in options.machine or 'pathfinder' in options.machine):
                 mysubmit_type = 'sbatch'
             if ('ubuntu' in options.machine):
                 mysubmit_type = ''
@@ -1206,7 +1210,8 @@ for row in AFdatareader:
                         if ('cades' in options.machine \
                             or 'mymac' in options.machine \
                             or 'wsl' in options.machine \
-                            or 'docker' in options.machine):
+                            or 'docker' in options.machine \
+                            or 'pathfinder' in options.machine):
                           output.write("#!/bin/bash -f\n")
                         else:
                           output.write("#!/bin/csh -f\n")
@@ -1240,6 +1245,13 @@ for row in AFdatareader:
                                 output.write('#SBATCH -p batch\n')
                                 output.write('#SBATCH --mem=64G\n')
                                 output.write('#SBATCH --ntasks-per-node 32\n')
+                            elif ('pathfinder' in options.machine):
+                                output.write('#SBATCH -A hpcl-cli185\n')
+                                output.write('#SBATCH -p parallel\n')
+                                output.write('#SBATCH -c 1\n')
+                                output.write('#SBATCH -q normal\n')
+                                output.write('#SBATCH --mem=0gb\n')
+                                output.write('#SBATCH --ntasks-per-node 84\n')
                     elif ("#" in s and "ppn" in s):
                         if ('cades' in options.machine):
                             #if ('diags' in c or 'iniadjust' in c):

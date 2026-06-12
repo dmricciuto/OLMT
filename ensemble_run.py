@@ -132,7 +132,7 @@ for casename in casenames:
     orig_dir = str(os.path.abspath(options.runroot)+'/'+casename+'/run')
     ens_dir  = os.path.abspath(options.runroot)+'/UQ/'+casename+'/g'+gst[1:]
     os.system('mkdir -p '+options.runroot+'/UQ/'+casename+'/g'+gst[1:]+'/timing/checkpoints')
-    os.system('rm '+ens_dir+'/*.nc')
+    os.system('rm '+ens_dir+'/*.nc 2>/dev/null')
     os.system('cp '+orig_dir+'/*_in* '+ens_dir)
     os.system('cp '+orig_dir+'/*nml '+ens_dir)
     os.system('cp '+orig_dir+'/*stream* '+ens_dir)
