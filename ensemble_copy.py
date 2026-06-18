@@ -31,7 +31,7 @@ parser.add_option("--cnp", dest="cnp", default = False, action="store_true", \
                   help = 'CNP mode - initialize P pools')
 parser.add_option("--site", dest="site", default='parm_list', \
                   help = 'Site name')
-parser.add_option('--model_name', dest='model_name', default="clm2", \
+parser.add_option('--model_name', dest='model_name', default="elm", \
                     help='Model name used in restart file (clm2 or elm)')
 (options, args) = parser.parse_args()
 
@@ -86,14 +86,14 @@ orig_dir = str(os.path.abspath(options.runroot)+'/'+casename+'/run')
 ens_dir  = os.path.abspath(options.runroot)+'/UQ/'+casename+'/g'+gst[1:]
 		
 os.system('mkdir -p '+options.runroot+'/UQ/'+casename+'/g'+gst[1:]+'/timing/checkpoints')
-os.system('cp  '+orig_dir+'/*_in* '+ens_dir)
-os.system('cp  '+orig_dir+'/*nml '+ens_dir)
+os.system('cp  '+orig_dir+'/*_in* '+ens_dir +' 2>/dev/null')
+os.system('cp  '+orig_dir+'/*nml '+ens_dir +' 2>/dev/null')
 if (not ('CB' in casename)):
-    os.system('cp  '+orig_dir+'/*stream* '+ens_dir)
-os.system('cp  '+orig_dir+'/*.rc '+ens_dir)
-os.system('cp  '+orig_dir+'/surf*.nc '+ens_dir)
-os.system('cp  '+orig_dir+'/domain*.nc '+ens_dir)
-os.system('cp  '+orig_dir+'/*para*.nc '+ens_dir)
+    os.system('cp  '+orig_dir+'/*stream* '+ens_dir +' 2>/dev/null')
+os.system('cp  '+orig_dir+'/*.rc '+ens_dir +' 2>/dev/null')
+os.system('cp  '+orig_dir+'/surf*.nc '+ens_dir +' 2>/dev/null')
+os.system('cp  '+orig_dir+'/domain*.nc '+ens_dir +' 2>/dev/null')
+os.system('cp  '+orig_dir+'/*para*.nc '+ens_dir +' 2>/dev/null')
 
 
 # loop through all filenames, change directories in namelists, change parameter values

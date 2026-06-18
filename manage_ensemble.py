@@ -26,7 +26,7 @@ parser.add_option("--mc_ensemble", dest="mc_ensemble", default=0, \
                   help = 'Create monte carlo ensemble')
 parser.add_option("--microbe", dest="microbe", default = False, action="store_true", \
                   help = 'CNP mode - initialize P pools')
-parser.add_option('--model_name', dest='model_name', default="clm2", \
+parser.add_option('--model_name', dest='model_name', default="elm", \
                     help='Model name used in restart file (clm2 or elm)')
 parser.add_option("--postproc_file", dest="postproc_file", default="", \
                   help="Location of post_processing info")
